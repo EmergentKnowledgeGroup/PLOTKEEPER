@@ -14,6 +14,7 @@ CLAIM_RE = re.compile(r"(?:claim|report)\s*[:=]\s*(.+)", re.IGNORECASE)
 EVIDENCE_RE = re.compile(r"https?://[^\s)]+", re.IGNORECASE)
 GOAL_COMPLETE_RE = re.compile(r"(?:PK:GOAL_COMPLETE_REQUEST|\bgoal\s+(?:is\s+)?complete\b)", re.IGNORECASE)
 REVIEW_RESULT_RE = re.compile(r"PK:REVIEW_RESULT\s+run_id=(\S+)\s+verdict=(PASS|PARTIAL|FAIL|BLOCKED)\s+open_items=(\d+)", re.IGNORECASE)
+ATTACH_RE = re.compile(r"Plotkeeper-Run-ID\s*:\s*([A-Za-z0-9_-]+)", re.IGNORECASE)
 
 
 def _text(value: Any) -> str:
@@ -68,6 +69,7 @@ class _Parsed:
     idle: bool = False
     goal_complete: bool = False
     review_results: list[dict[str, Any]] | None = None
+    attach_run_ids: list[str] | None = None
     claims: list[dict[str, Any]] | None = None
     reports: list[dict[str, Any]] | None = None
     evidence: list[str] | None = None
@@ -101,7 +103,7 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
         if not sid:
             continue
         if parsed is None:
-            parsed = _Parsed(sid, path, cwd, parent, not bool(parent), claims=[], reports=[], evidence=[], review_results=[])
+            parsed = _Parsed(sid, path, cwd, parent, not bool(parent), claims=[], reports=[], evidence=[], review_results=[], attach_run_ids=[])
         parsed.cwd = cwd
         parsed.parent = parent
         parsed.root = not bool(parent)
@@ -116,6 +118,7 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
             parsed.goal_complete = True
         for result in REVIEW_RESULT_RE.finditer(text):
             parsed.review_results.append({"run_id": result.group(1), "verdict": result.group(2).upper(), "open_items": int(result.group(3)), "timestamp": obj.get("timestamp")})
+        parsed.attach_run_ids.extend(ATTACH_RE.findall(text))
         match = CLAIM_RE.search(text)
         if match:
             parsed.claims.append({"text": match.group(1).strip(), "timestamp": obj.get("timestamp")})
@@ -130,6 +133,7 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
         invoked_specswarm=parsed.invoked, root_complete=parsed.complete,
         root_idle=parsed.idle, goal_complete_requested=parsed.goal_complete,
         review_results=parsed.review_results or [], claims=parsed.claims or [],
+        attach_run_ids=list(dict.fromkeys(parsed.attach_run_ids or [])),
         reports=parsed.reports or [], evidence_links=parsed.evidence or [],
         last_timestamp=parsed.timestamp,
     )
@@ -172,9 +176,12 @@ class SessionScanner:
                         pass
                     handle.seek(offset if offset > 0 else 0)
                     raw = handle.read()
-                lines = raw.decode("utf-8", "ignore").splitlines()
+                consumed = raw.rfind(b"\n") + 1
+                if consumed == 0:
+                    continue
+                lines = raw[:consumed].decode("utf-8", "ignore").splitlines()
                 obs = parse_session(path, lines, delta_only=offset > 0, metadata=metadata)
-                self._set(str(path), size)
+                self._set(str(path), offset + consumed)
                 if obs:
                     found.append(obs)
             except (OSError, UnicodeError):

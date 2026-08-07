@@ -58,7 +58,8 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.REVIEW_REQUIRED)
             self.assertTrue(service.inject_review(run.run_id, runner=lambda _args: 0)["ok"])
             self.assertFalse(service.close(run.run_id)["ok"])
-            self.assertTrue(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "summary": "ok"})["ok"])
+            self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "FAIL", "open_items": 1})["ok"])
+            self.assertTrue(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0})["ok"])
             self.assertTrue(service.close(run.run_id)["ok"])
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.CLOSED)
             child = root / "child.jsonl"
@@ -86,6 +87,29 @@ class BackendTests(unittest.TestCase):
             result = service.sync_plan(run.run_id, [str(plan)])
             self.assertEqual(result["count"], 2)
             self.assertEqual([t["status"] for t in service.ledger.tasks(run.run_id)], ["pending", "completed"])
+            service.close_db()
+
+    def test_partial_jsonl_line_is_not_lost(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            source = root / "root.jsonl"; source.write_text("", encoding="utf-8")
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            complete = line("1", "message", {"role": "user", "content": "$specswarm"})
+            source.write_text(line("0", "session_meta", {"id": "root-1", "cwd": td}) + complete[:-2], encoding="utf-8")
+            self.assertEqual(service.poll_once(), [])
+            with source.open("a", encoding="utf-8") as handle: handle.write(complete[-2:])
+            self.assertEqual(service.poll_once()[0]["type"], "run_enrolled")
+            service.close_db()
+
+    def test_independent_root_attaches_by_run_marker(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            run = service.ledger.enroll("spec-root", td, service.dashboard_url)
+            source = root / "implementation.jsonl"
+            source.write_text(line("1", "session_meta", {"id": "implementation-root", "cwd": td}) + line("2", "message", {"role": "assistant", "content": f"Plotkeeper-Run-ID: {run.run_id}"}), encoding="utf-8")
+            service.poll_once()
+            self.assertIn("implementation-root", service.ledger.get(run.run_id).children)
             service.close_db()
 
     def test_child_session_maps_to_root(self):

@@ -26,6 +26,7 @@ class SessionObservation:
     root_idle: bool = False
     goal_complete_requested: bool = False
     review_results: list[dict[str, Any]] = field(default_factory=list)
+    attach_run_ids: list[str] = field(default_factory=list)
     claims: list[dict[str, Any]] = field(default_factory=list)
     reports: list[dict[str, Any]] = field(default_factory=list)
     evidence_links: list[str] = field(default_factory=list)

@@ -4,7 +4,7 @@
 (() => {
   'use strict';
 
-  const state = { runs: [], run: null, tasks: [], events: [], sessions: [], selected: null, filter: '' };
+  const state = { runs: [], run: null, tasks: [], events: [], reports: [], sessions: [], selected: null, filter: '' };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const text = (value, fallback = '—') => value === null || value === undefined || value === '' ? fallback : String(value);
@@ -84,6 +84,7 @@
       state.run = normalizeRun(payload?.run ?? payload ?? runFromList);
       state.tasks = asArray(payload?.tasks ?? payload?.run?.tasks).map(normalizeTask);
       state.events = asArray(payload?.events ?? payload?.run?.events);
+      state.reports = asArray(payload?.reports ?? payload?.run?.reports);
       state.sessions = asArray(payload?.sessions ?? payload?.run?.sessions);
       setRunHeader(state.run); renderBoard(state.tasks); selectTask(state.run.currentTaskId || state.tasks[0]?.id, false);
       $('#board-updated').textContent = state.run.updatedAt ? `Updated ${formatDate(state.run.updatedAt)}` : 'Updated time unknown';
@@ -137,7 +138,7 @@
   function relatedEvents(task) { return state.events.filter(event => !event.task_id || event.task_id === task.id); }
   function renderTimeline(task) { const events = relatedEvents(task); $('#detail-timeline').innerHTML = events.length ? events.map(event => `<li class="timeline-item"><time>${escape(formatDate(event.timestamp ?? event.created_at))}</time><span class="timeline-dot" aria-hidden="true"></span><span>${escape(event.text ?? event.kind ?? 'State changed')}</span><span class="timeline-agent">${escape(event.agent_path ?? event.session_id ?? 'system')}</span></li>`).join('') : '<li class="empty-inline">No timeline events attached to this task.</li>'; }
   function renderEvidence(task) { const evidence = task.evidence.length ? task.evidence : relatedEvents(task).filter(event => event.evidence || event.receipt).map(event => event.evidence ?? event.receipt); $('#detail-evidence').innerHTML = evidence.length ? evidence.map(item => `<div class="detail-card"><strong>${escape(item.name ?? item.kind ?? 'Evidence')}</strong><p>${escape(item.result ?? item.status ?? item.value ?? item.path ?? item)}</p><small>${escape(item.authority ?? item.source ?? 'Authority not recorded')}</small></div>`).join('') : '<p class="empty-inline">No evidence attached. Plotkeeper will not infer success.</p>'; }
-  function renderReports(task) { $('#detail-reports').innerHTML = task.reports.length ? task.reports.map(item => `<div class="detail-card"><strong>${escape(item.title ?? item.name ?? 'Report')}</strong><p>${escape(item.summary ?? item.text ?? item.status ?? item)}</p><small>${escape(item.created_at ?? item.timestamp ?? 'Timestamp unknown')}</small></div>`).join('') : '<p class="empty-inline">No reports attached.</p>'; }
+  function renderReports(task) { const reports = task.reports.length ? task.reports : state.reports; $('#detail-reports').innerHTML = reports.length ? reports.map(item => `<div class="detail-card"><strong>${escape(item.title ?? item.name ?? item.kind ?? 'Report')}</strong><p>${escape(item.summary ?? item.text ?? item.status ?? item)}</p><small>${escape(item.created_at ?? item.timestamp ?? 'Timestamp unknown')}</small></div>`).join('') : '<p class="empty-inline">No reports attached.</p>'; }
   function renderAgents(task) { const agents = state.sessions.filter(session => !session.task_id || session.task_id === task.id); $('#detail-agents').innerHTML = agents.length ? agents.map(agent => `<div class="agent-card"><span class="agent-avatar" aria-hidden="true">${escape(text(agent.agent_path ?? agent.session_id, '?').slice(0, 1).toUpperCase())}</span><span><strong>${escape(agent.agent_path ?? 'Agent identity unknown')}</strong><small>${escape(statusLabel(agent.status))} · session ${escape(agent.session_id ?? 'unknown')}</small></span></div>`).join('') : '<p class="empty-inline">No agent identities attached.</p>'; }
 
   $$('.tab').forEach(tab => tab.addEventListener('click', () => { $$('.tab').forEach(item => { const active = item === tab; item.classList.toggle('is-active', active); item.setAttribute('aria-selected', String(active)); }); $$('.inspector-panel').forEach(panel => panel.classList.toggle('is-visible', panel.dataset.panel === tab.dataset.tab)); }));

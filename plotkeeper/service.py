@@ -43,6 +43,12 @@ class PlotkeeperService:
                 if run is None:
                     run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url)
                     events.append({"type": "run_enrolled", "run_id": run.run_id, "session_id": obs.session_id})
+            if run is None and obs.attach_run_ids:
+                candidate = self.ledger.get(obs.attach_run_ids[-1])
+                if candidate and candidate.state != RunState.CLOSED:
+                    run = candidate
+                    self.ledger.attach_child(run.run_id, obs.session_id)
+                    events.append({"type": "session_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if run is None and obs.parent_session_id:
                 parent = self.ledger.by_root(obs.parent_session_id)
                 if parent:
@@ -232,7 +238,7 @@ class PlotkeeperService:
                         reports = service.ledger.reports(rid)
                         sessions = [{"session_id": run.root_session_id, "status": run.state.value, "task_id": None}]
                         sessions.extend({"session_id": sid, "status": "observed", "task_id": None} for sid in run.children)
-                        events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"]} for item in reports]
+                        events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"], "evidence": json.loads(item["evidence"] or "[]")} for item in reports]
                         self._json({"run": run.to_dict(), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
                     else:
                         self._json({"error": "not_found"}, 404)

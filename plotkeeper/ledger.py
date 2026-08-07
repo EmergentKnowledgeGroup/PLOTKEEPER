@@ -153,7 +153,9 @@ class Ledger:
             return True
 
     def record_receipt(self, run_id: str, receipt: dict[str, Any]) -> bool:
-        if not receipt.get("terminal") or not receipt.get("injected"):
+        if (not receipt.get("terminal") or not receipt.get("injected") or
+                str(receipt.get("verdict", "")).upper() != "PASS" or
+                int(receipt.get("open_items", -1)) != 0):
             return False
         with self._lock, self.db:
             row = self.db.execute("SELECT state FROM runs WHERE run_id=?", (run_id,)).fetchone()
