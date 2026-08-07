@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+runtime/plotkeeper.sqlite3*
+runtime/qa/

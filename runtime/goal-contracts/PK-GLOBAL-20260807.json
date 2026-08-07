@@ -1,0 +1,14 @@
+{
+  "contract_id": "PK-GLOBAL-20260807",
+  "state": "ACTIVE",
+  "risk": "HIGH",
+  "baseline": "new-standalone-project",
+  "goal": "Globally integrate Plotkeeper for future Specswarm sessions with automatic dashboard opening and mandatory closeout review injection.",
+  "invariants": [
+    "specswarm-only enrollment",
+    "read-only Codex session inputs",
+    "immutable closed runs",
+    "mandatory injected review before closure",
+    "failed injection remains review-required"
+  ]
+}

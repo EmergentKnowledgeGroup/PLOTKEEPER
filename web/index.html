@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Plotkeeper run dashboard">
+  <title>Plotkeeper · Runs</title>
+  <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to runs</a>
+  <div class="app-shell" data-testid="plotkeeper-app">
+    <header class="topbar">
+      <div class="topbar-line">
+        <a class="brand" href="/" aria-label="Plotkeeper home"><span class="brand-mark" aria-hidden="true">⌁</span><span>PLOTKEEPER</span></a>
+        <div class="connection" id="connection-status" role="status" aria-live="polite"><span class="connection-dot" aria-hidden="true"></span><span>Connecting…</span></div>
+      </div>
+      <div class="goal-row">
+        <div class="goal-copy">
+          <span class="eyebrow">SpecSwarm run</span>
+          <h1 id="run-goal">Loading run…</h1>
+        </div>
+        <span class="run-state state-unknown" id="run-state">UNKNOWN</span>
+      </div>
+      <div class="progress-row" aria-label="Run progress">
+        <div class="progress-track"><span id="run-progress-bar" style="width:0%"></span></div>
+        <strong id="run-progress-value">—</strong>
+      </div>
+      <label class="run-picker"><span>Run</span><select id="run-selector" aria-label="Select run"><option value="">Loading runs…</option></select></label>
+    </header>
+
+    <section class="working-strip" aria-label="Current work">
+      <div class="working-copy">
+        <span class="eyebrow">Working now</span>
+        <strong id="working-title">No active task reported</strong>
+        <span class="subtle" id="working-meta">Select a run to inspect its current work.</span>
+      </div>
+      <button class="button button-outline" id="check-in" type="button" disabled>Request check-in</button>
+    </section>
+
+    <main id="main-content">
+      <section class="board-shell" id="board-shell" aria-labelledby="work-heading">
+        <div class="board-toolbar">
+          <div>
+            <span class="eyebrow">Execution board</span>
+            <h2 id="work-heading">Workstreams</h2>
+          </div>
+          <div class="toolbar-actions">
+            <label class="search-wrap"><span class="sr-only">Filter tasks</span><input id="task-filter" type="search" placeholder="Filter tasks" autocomplete="off"></label>
+            <button class="button button-quiet" id="collapse-all" type="button">Collapse all</button>
+          </div>
+        </div>
+        <div class="board-meta"><span id="board-count">Loading tasks…</span><span id="board-updated">—</span></div>
+        <div class="column-head" aria-hidden="true"><span>ID</span><span>Task</span><span>Owner</span><span>Status</span><span>Progress</span><span></span></div>
+        <div id="workstreams" class="workstreams" aria-live="polite"></div>
+        <div id="board-message" class="empty-state">Loading runs…</div>
+      </section>
+
+      <aside class="inspector" aria-labelledby="detail-heading">
+        <div class="inspector-heading">
+          <div>
+            <span class="eyebrow" id="detail-path">Run detail</span>
+            <h2 id="detail-heading">Select a task</h2>
+          </div>
+          <span id="detail-status" class="run-state state-unknown">UNKNOWN</span>
+        </div>
+        <nav class="tabs" aria-label="Task detail">
+          <button class="tab is-active" type="button" data-tab="summary" aria-selected="true">Summary</button>
+          <button class="tab" type="button" data-tab="timeline" aria-selected="false">Timeline</button>
+          <button class="tab" type="button" data-tab="evidence" aria-selected="false">Evidence</button>
+          <button class="tab" type="button" data-tab="reports" aria-selected="false">Reports</button>
+          <button class="tab" type="button" data-tab="agents" aria-selected="false">Agents</button>
+        </nav>
+        <div class="inspector-panel is-visible" data-panel="summary">
+          <div class="summary-grid">
+            <div><span class="label">What this changes</span><p id="detail-change">No task selected.</p></div>
+            <div><span class="label">Must remain true</span><ul id="detail-preserve" class="plain-list"><li>Evidence-backed status only.</li></ul></div>
+            <div><span class="label">Latest return</span><p id="detail-return">Select a task to see the latest worker return.</p></div>
+          </div>
+        </div>
+        <div class="inspector-panel" data-panel="timeline"><ol id="detail-timeline" class="timeline"><li class="empty-inline">No timeline available.</li></ol></div>
+        <div class="inspector-panel" data-panel="evidence"><div id="detail-evidence" class="evidence-list"><p class="empty-inline">No evidence attached.</p></div></div>
+        <div class="inspector-panel" data-panel="reports"><div id="detail-reports" class="report-list"><p class="empty-inline">No reports attached.</p></div></div>
+        <div class="inspector-panel" data-panel="agents"><div id="detail-agents" class="agent-list"><p class="empty-inline">No agent identities attached.</p></div></div>
+      </aside>
+    </main>
+    <footer class="footer"><span>Plotkeeper reports claims, receipts, and links. It does not certify correctness.</span><span id="footer-api">API: /api/runs</span></footer>
+  </div>
+  <script src="/web/app.js" defer></script>
+</body>
+</html>
