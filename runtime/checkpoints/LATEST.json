@@ -5,7 +5,7 @@
       "step": "post-green-tests",
       "note": "Global watcher, dashboard, Specswarm enrollment, task ingestion, check-in, and receipt-gated closeout implemented and deployed.",
       "branch": "main",
-      "head": "unborn",
+      "head": "48a66ee",
       "next_cmd": "Invoke-RestMethod http://127.0.0.1:47831/health",
       "validations": [
         "11 unit/static tests green",
