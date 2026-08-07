@@ -5,10 +5,10 @@
       "step": "post-green-tests",
       "note": "Global watcher, dashboard, Specswarm enrollment, task ingestion, check-in, and receipt-gated closeout implemented and deployed.",
       "branch": "main",
-      "head": "48a66ee",
+      "head": "da35d34",
       "next_cmd": "Invoke-RestMethod http://127.0.0.1:47831/health",
       "validations": [
-        "11 unit/static tests green",
+        "13 unit/static tests green including adversarial closeout, independent-root attachment, and split-line tailing",
         "compileall and JavaScript syntax green",
         "live HTTP 200 and desktop/mobile browser QA with zero console errors",
         "HKCU startup registered and Codex right-panel open queued",
