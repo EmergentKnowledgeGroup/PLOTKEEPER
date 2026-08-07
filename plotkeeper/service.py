@@ -145,14 +145,22 @@ class PlotkeeperService:
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
             return {"ok": False, "error": "run_closed_or_missing"}
-        if self.ledger.has_report_kind(run_id, "check-in"):
+        if self.ledger.has_report_kind(run_id, "check-in-request"):
             return {"ok": True, "already_requested": True}
-        self.ledger.add_report(run_id, "check-in", "Human requested: complete the current objective, report status, and end the turn.")
+        self.ledger.add_report(run_id, "check-in-request", "Human requested: complete the current objective, report status, and end the turn.")
+        return {"ok": True, "queued": True}
+
+    def inject_check_in(self, run_id: str) -> dict[str, Any]:
+        run = self.ledger.get(run_id)
+        if not run or run.state == RunState.CLOSED:
+            return {"ok": False, "error": "run_closed_or_missing"}
         args = ["codex.exe", "exec", "resume", run.root_session_id,
                 "PLOTKEEPER CHECK-IN REQUEST: Complete only your current bounded objective, update Plotkeeper with your status/evidence, then check in with the human and end this turn. Do not begin another task.",
                 "--json", "--skip-git-repo-check"]
         try:
             result = self._run_codex(args)
+            if result.returncode == 0:
+                self.ledger.add_report(run_id, "check-in-injected", "Check-in turn injected into the root session.")
             return {"ok": result.returncode == 0, "returncode": result.returncode}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
@@ -266,6 +274,9 @@ class PlotkeeperService:
             try:
                 self.poll_once()
                 for run in self.ledger.list_runs(active_only=True):
+                    if (self.ledger.has_report_kind(run.run_id, "check-in-request") and
+                            not self.ledger.has_report_kind(run.run_id, "check-in-injected")):
+                        self.inject_check_in(run.run_id)
                     if run.state == RunState.REVIEW_REQUIRED:
                         result = self.inject_review(run.run_id)
                         if result.get("ok"):
