@@ -7,8 +7,8 @@ Track: `PLOTKEEPER GLOBAL WORK`
 ## PLOTKEEPER GLOBAL WORK
 
 - step: post-green-tests
-- note: Production goal contract ingestion/display and mandatory production-goal-review closeout injection implemented; deployment restart pending.
+- note: Production goal contract ingestion/display and mandatory production-goal-review closeout injection implemented and deployed; first real Specswarm end-to-end remains unproven.
 - branch: main
-- head: 6516f25
+- head: f7d5fb3
 - next_cmd: `Invoke-RestMethod http://127.0.0.1:47831/health`
-- validations: 14 unit/static tests green; sealed production contract validates; compileall and JS syntax green; independent review pending
+- validations: 14 unit/static tests green; sealed production contract validates; compileall and JS syntax green; live service and desktop/mobile empty-state browser QA green; independent review PARTIAL only because no real enrolled contract-bearing run exists yet
