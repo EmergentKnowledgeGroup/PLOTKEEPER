@@ -89,6 +89,23 @@ class BackendTests(unittest.TestCase):
             self.assertEqual([t["status"] for t in service.ledger.tasks(run.run_id)], ["pending", "completed"])
             service.close_db()
 
+    def test_sync_plan_persists_goal_contract_and_closeout_invokes_review_skill(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            run = service.ledger.enroll("root-1", td, service.dashboard_url)
+            plan = Path(td) / "CHECKLIST.md"; plan.write_text("- [ ] Ship safely\n", encoding="utf-8")
+            contract = Path(td) / "contract.json"
+            contract.write_text(json.dumps({"id": "PROD-1", "status": "ACTIVE", "user_goal": "Preserve v1 while adding v2", "contract_hash": "abc", "baseline": {"sha": "deadbeef"}, "invariants": ["v1 remains live"]}), encoding="utf-8")
+            result = service.sync_plan(run.run_id, [str(plan)], str(contract))
+            self.assertTrue(result["ok"])
+            self.assertEqual(service.ledger.goal_contract(run.run_id)["user_goal"], "Preserve v1 while adding v2")
+            prompt = service.review_prompt(run.run_id)
+            self.assertIn("$production-goal-review", prompt)
+            self.assertIn("contract PROD-1", prompt)
+            self.assertIn("entire Plotkeeper run", prompt)
+            service.close_db()
+
     def test_partial_jsonl_line_is_not_lost(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "sessions"; root.mkdir()

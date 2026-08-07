@@ -4,7 +4,7 @@
 (() => {
   'use strict';
 
-  const state = { runs: [], run: null, tasks: [], events: [], reports: [], sessions: [], selected: null, filter: '' };
+  const state = { runs: [], run: null, contract: null, tasks: [], events: [], reports: [], sessions: [], selected: null, filter: '' };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const text = (value, fallback = '—') => value === null || value === undefined || value === '' ? fallback : String(value);
@@ -44,6 +44,22 @@
     const state = $('#run-state'); state.className = `run-state ${statusClass(run.status)}`; state.textContent = statusLabel(run.status).toUpperCase();
     $('#working-meta').textContent = run.updatedAt ? `Updated ${formatDate(run.updatedAt)}` : `Run ${run.id || 'without an id'}`;
   }
+  function renderContract(contract) {
+    state.contract = contract;
+    const payload = contract?.payload ?? contract;
+    const badge = $('#contract-badge');
+    if (!payload) {
+      $('#contract-goal').textContent = 'No goal contract synced'; $('#contract-id').textContent = '—';
+      $('#contract-baseline').textContent = '—'; $('#contract-invariants').innerHTML = '<li>No contract data available.</li>';
+      badge.textContent = 'MISSING'; badge.className = 'run-state state-unknown'; return;
+    }
+    $('#contract-goal').textContent = text(payload.user_goal, 'Goal not recorded');
+    $('#contract-id').textContent = text(payload.id ?? contract.contract_id);
+    $('#contract-baseline').textContent = text(payload.baseline?.sha ?? contract.baseline_sha);
+    const invariants = asArray(payload.invariants);
+    $('#contract-invariants').innerHTML = (invariants.length ? invariants : ['No invariants recorded.']).map(item => `<li>${escape(item)}</li>`).join('');
+    badge.textContent = statusLabel(payload.status ?? contract.status).toUpperCase(); badge.className = `run-state ${statusClass(payload.status ?? contract.status)}`;
+  }
   function formatDate(value) { if (!value) return 'time unknown'; const date = new Date(value); return Number.isNaN(date.valueOf()) ? text(value) : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); }
   function formatProgress(value) { return value === null ? '—' : `${Math.max(0, Math.min(100, value))}%`; }
 
@@ -82,6 +98,7 @@
     try {
       const payload = await getJson(`/api/runs/${encodeURIComponent(id)}`);
       state.run = normalizeRun(payload?.run ?? payload ?? runFromList);
+      renderContract(payload?.contract ?? null);
       state.tasks = asArray(payload?.tasks ?? payload?.run?.tasks).map(normalizeTask);
       state.events = asArray(payload?.events ?? payload?.run?.events);
       state.reports = asArray(payload?.reports ?? payload?.run?.reports);

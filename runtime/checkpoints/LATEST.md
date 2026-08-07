@@ -7,8 +7,8 @@ Track: `PLOTKEEPER GLOBAL WORK`
 ## PLOTKEEPER GLOBAL WORK
 
 - step: post-green-tests
-- note: Global watcher, dashboard, Specswarm enrollment, task ingestion, check-in, and receipt-gated closeout implemented and deployed.
+- note: Production goal contract ingestion/display and mandatory production-goal-review closeout injection implemented; deployment restart pending.
 - branch: main
-- head: da35d34
+- head: 6516f25
 - next_cmd: `Invoke-RestMethod http://127.0.0.1:47831/health`
-- validations: 13 unit/static tests green including adversarial closeout, independent-root attachment, and split-line tailing; compileall green; JS syntax green; live HTTP 200; desktop/mobile browser QA with zero console errors; HKCU startup registered; Codex right-panel open queued
+- validations: 14 unit/static tests green; sealed production contract validates; compileall and JS syntax green; independent review pending

@@ -26,6 +26,8 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
             self.assertIn(marker, self.index)
         for marker in ("run-progress-bar", "workstreams", "detail-timeline", "detail-evidence", "detail-reports", "detail-agents"):
             self.assertIn(f'id="{marker}"', self.index)
+        for marker in ("goal-contract", "contract-goal", "contract-invariants"):
+            self.assertIn(f'id="{marker}"', self.index)
 
     def test_api_contract_and_truthful_missing_state_are_present(self):
         self.assertIn("/api/runs", self.js)
@@ -35,6 +37,7 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
         self.assertIn("payload?.tasks", self.js)
         self.assertIn("payload?.events", self.js)
         self.assertIn("payload?.sessions", self.js)
+        self.assertIn("payload?.contract", self.js)
 
     def test_accessibility_and_mobile_contract(self):
         self.assertIn('aria-live="polite"', self.index)

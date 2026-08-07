@@ -1,0 +1,140 @@
+{
+  "id": "PROD-20260807-pk-goal-integration",
+  "status": "ACTIVE",
+  "contract_hash": "004d7e1cf2df2399dd7c4bdd1201c182dd4ffcab14d666fae6c022327ad2513d",
+  "origin": "DIRECT",
+  "user_goal": "Display the Specswarm production goal contract in Plotkeeper and require production-goal-review during Plotkeeper closeout.",
+  "authority": {
+    "original_request_ref": "codex://session/019fd91f-c8ff-7961-a9a8-6417c8d7cab3/turn/019fde70-b938-7130-88df-de8eef42a211",
+    "original_request_hash": "40ce1f586d0aa5040bf090d73c9e35b6d6d85f87e1d1183c904a9a993ff82ced",
+    "verbatim_text": "okay wow great job I see it.  Its a bit wonky, but Im about to test it out in production level work.\n\ncan you do me TWO favors - I have created two new skills right? I need the first skills output, which should trigger on a specswarm, to be integrated into the surface of PK.\n\nC:/Users/UltariumV3/.codex/skills/production-goal-contract/SKILL.md\n\nAND THEN\n\nI need, on the goal complete on the main thread, instead of just saying 'review the PK', it should ALSO tell it to invoke the SECOND skill (which is ANOTHER layer of review JUST against the original goal).\n\nC:/Users/UltariumV3/.codex/skills/production-goal-review/SKILL.md\n\nmake sense?\n",
+    "captured_at_utc": "2026-08-07T22:56:31.0235423Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fd91f-c8ff-7961-a9a8-6417c8d7cab3/turn/019fde70-b938-7130-88df-de8eef42a211"
+  },
+  "baseline": {
+    "protected_ref": "main",
+    "sha": "6516f25f018281bb1f31f5881d9794c02b5f0ae7",
+    "retrieved_at_utc": "2026-08-07T22:56:31.0235423Z",
+    "protection_evidence": "Clean primary checkout on main before task mutation.",
+    "selection_reason": "Current committed Plotkeeper deployment immediately before this requested integration."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "tests/",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260807-pk-goal-integration.json",
+      "C:/Users/UltariumV3/.codex/skills/specswarm/SKILL.md"
+    ],
+    "resources": [
+      "Plotkeeper local Windows service on 127.0.0.1:47831",
+      "HKCU Plotkeeper startup registration"
+    ],
+    "semantic_changes": [
+      "Persist and display a Specswarm production goal contract.",
+      "Require production-goal-review in the injected Plotkeeper closeout prompt."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "C:/Users/UltariumV3/.codex/skills/production-goal-contract/SKILL.md",
+      "C:/Users/UltariumV3/.codex/skills/production-goal-review/SKILL.md"
+    ],
+    "semantic_changes": [
+      "Do not weaken Plotkeeper enrollment, receipt gating, closed-run isolation, or read-only session observation."
+    ]
+  },
+  "invariants": [
+    "Only Specswarm enrolls automatic runs.",
+    "Only PASS with zero open items closes a run.",
+    "Plotkeeper never mutates Codex JSONL session history."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "A synced production goal contract is available in the run API and human dashboard.",
+      "forbidden_behavior": "Contract data remains hidden or requires reading raw files.",
+      "target_and_actor": "Human viewing a Specswarm run in Plotkeeper.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "Goal closeout explicitly invokes production-goal-review against the original contract and full PK run.",
+      "forbidden_behavior": "The injected turn merely asks for a generic PK review.",
+      "target_and_actor": "Root Codex agent receiving Plotkeeper closeout injection.",
+      "required_proof_ids": [
+        "PR-2"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Contract ingestion and dashboard/API exposure are tested.",
+      "required_environment": "Local Plotkeeper test and browser surface.",
+      "command_or_read_only_check": "python -m unittest discover -s tests -v",
+      "expected_observation": "Contract fields are persisted, returned, and rendered."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Injected prompt names the production-goal-review skill and original contract.",
+      "required_environment": "Local Plotkeeper unit test.",
+      "command_or_read_only_check": "python -m unittest discover -s tests -v",
+      "expected_observation": "Focused prompt assertion passes."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "ATTESTED",
+      "required_role": "independent read-only reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Local service health and browser attestation"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected dirty or auxiliary worktree state.",
+    "Contract schema cannot be represented without weakening existing gates.",
+    "Live service fails to restart cleanly."
+  ],
+  "known_discrepancies": [
+    "Checkpoint head field trails the latest checkpoint-only commit and will be refreshed at closeout."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "requirement": "Show production goal contract output in PK",
+      "acceptance_case_ids": [
+        "AC-1"
+      ]
+    },
+    {
+      "requirement": "Invoke production-goal-review on goal completion",
+      "acceptance_case_ids": [
+        "AC-2"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

@@ -23,6 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync = sub.add_parser("sync-plan")
     sync.add_argument("--run-id", required=True)
     sync.add_argument("--file", action="append", required=True)
+    sync.add_argument("--contract")
     serve = sub.add_parser("serve")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=47831)
@@ -43,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "report":
         print(json.dumps(service.report(args.run_id, args.kind, args.text, evidence=args.evidence), sort_keys=True))
     elif args.command == "sync-plan":
-        print(json.dumps(service.sync_plan(args.run_id, args.file), sort_keys=True))
+        print(json.dumps(service.sync_plan(args.run_id, args.file, args.contract), sort_keys=True))
     elif args.command == "poll":
         print(json.dumps({"events": service.poll_once()}, sort_keys=True))
     elif args.command == "serve":

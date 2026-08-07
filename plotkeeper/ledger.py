@@ -65,6 +65,14 @@ class Ledger:
                     ordinal INTEGER NOT NULL DEFAULT 0,
                     PRIMARY KEY(run_id, task_id)
                 );
+                CREATE TABLE IF NOT EXISTS goal_contracts (
+                    run_id TEXT PRIMARY KEY, contract_id TEXT NOT NULL,
+                    path TEXT NOT NULL, status TEXT NOT NULL,
+                    user_goal TEXT NOT NULL, contract_hash TEXT,
+                    baseline_sha TEXT, payload TEXT NOT NULL,
+                    synced_at TEXT NOT NULL,
+                    FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
             """)
 
     def get_meta(self, key: str) -> str | None:
@@ -135,6 +143,29 @@ class Ledger:
 
     def tasks(self, run_id: str) -> list[dict[str, Any]]:
         return [dict(r) for r in self.db.execute("SELECT * FROM tasks WHERE run_id=? ORDER BY ordinal", (run_id,))]
+
+    def set_goal_contract(self, run_id: str, path: str, payload: dict[str, Any]) -> None:
+        baseline = payload.get("baseline") if isinstance(payload.get("baseline"), dict) else {}
+        with self._lock, self.db:
+            self.db.execute(
+                """INSERT INTO goal_contracts(run_id,contract_id,path,status,user_goal,contract_hash,baseline_sha,payload,synced_at)
+                   VALUES(?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(run_id) DO UPDATE SET contract_id=excluded.contract_id,path=excluded.path,
+                   status=excluded.status,user_goal=excluded.user_goal,contract_hash=excluded.contract_hash,
+                   baseline_sha=excluded.baseline_sha,payload=excluded.payload,synced_at=excluded.synced_at""",
+                (run_id, str(payload.get("id", "unknown")), path, str(payload.get("status", "unknown")),
+                 str(payload.get("user_goal", "Goal not recorded")), payload.get("contract_hash"),
+                 baseline.get("sha"), json.dumps(payload, sort_keys=True), now_iso()),
+            )
+            self.db.execute("UPDATE runs SET updated_at=? WHERE run_id=?", (now_iso(), run_id))
+
+    def goal_contract(self, run_id: str) -> dict[str, Any] | None:
+        row = self.db.execute("SELECT * FROM goal_contracts WHERE run_id=?", (run_id,)).fetchone()
+        if not row:
+            return None
+        result = dict(row)
+        result["payload"] = json.loads(result["payload"])
+        return result
 
     def mark_review_pending(self, run_id: str) -> bool:
         with self._lock, self.db:

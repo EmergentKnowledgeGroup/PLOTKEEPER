@@ -117,13 +117,17 @@ class PlotkeeperService:
     def _run_codex(args: list[str]):
         return subprocess.run(args, capture_output=True, text=True, check=False)
 
-    @staticmethod
-    def review_prompt(run_id: str) -> str:
-        return (f"Plotkeeper closeout gate for run {run_id}. Before claiming completion, review the entire Plotkeeper run: "
-                "every task, child report, blocker, and evidence link. Resolve anything still open. End with exactly: "
+    def review_prompt(self, run_id: str) -> str:
+        contract = self.ledger.goal_contract(run_id)
+        contract_ref = (f"contract {contract['contract_id']} at {contract['path']}" if contract else
+                        "the original production goal contract (if missing, treat that as an explicit blocker)")
+        return (f"Plotkeeper closeout gate for run {run_id}. Invoke $production-goal-review and follow that skill fully. "
+                f"Run its independent adversarial review against {contract_ref} AND inspect the entire Plotkeeper run: "
+                "every task, child report, blocker, timeline entry, and evidence link. Do not substitute a generic PK review "
+                "for the production goal review. Resolve anything still open. End with exactly: "
                 f"PK:REVIEW_RESULT run_id={run_id} verdict=<PASS|PARTIAL|FAIL|BLOCKED> open_items=<integer>")
 
-    def sync_plan(self, run_id: str, paths: list[str]) -> dict[str, Any]:
+    def sync_plan(self, run_id: str, paths: list[str], contract_path: str | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
             return {"ok": False, "error": "run_closed_or_missing"}
@@ -145,7 +149,20 @@ class PlotkeeperService:
                 title = match.group(2).strip()
                 tasks.append({"task_id": f"T{ordinal:03d}", "title": title, "status": "completed" if done and match.group(1).strip() else "pending", "owner": "unassigned", "workstream": workstream, "source": str(path)})
         self.ledger.replace_tasks(run_id, tasks)
-        return {"ok": True, "count": len(tasks)}
+        contract = None
+        if contract_path:
+            path = Path(contract_path)
+            if not path.is_file():
+                return {"ok": False, "error": "contract_not_found", "path": str(path)}
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                return {"ok": False, "error": "contract_invalid_json", "detail": str(exc)}
+            if not isinstance(payload, dict) or not payload.get("id") or not payload.get("user_goal"):
+                return {"ok": False, "error": "contract_missing_required_fields"}
+            self.ledger.set_goal_contract(run_id, str(path.resolve()), payload)
+            contract = self.ledger.goal_contract(run_id)
+        return {"ok": True, "count": len(tasks), "contract": contract}
 
     def request_check_in(self, run_id: str) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -239,7 +256,7 @@ class PlotkeeperService:
                         sessions = [{"session_id": run.root_session_id, "status": run.state.value, "task_id": None}]
                         sessions.extend({"session_id": sid, "status": "observed", "task_id": None} for sid in run.children)
                         events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"], "evidence": json.loads(item["evidence"] or "[]")} for item in reports]
-                        self._json({"run": run.to_dict(), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
+                        self._json({"run": run.to_dict(), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
                     else:
                         self._json({"error": "not_found"}, 404)
                 elif parsed.path == "/api/events":

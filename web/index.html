@@ -39,6 +39,15 @@
       <button class="button button-outline" id="check-in" type="button" disabled>Request check-in</button>
     </section>
 
+    <details class="contract-strip" id="goal-contract">
+      <summary><span><span class="eyebrow">Original production goal</span><strong id="contract-goal">No goal contract synced</strong></span><span id="contract-badge" class="run-state state-unknown">MISSING</span></summary>
+      <div class="contract-body">
+        <div><span class="label">Contract</span><p id="contract-id">—</p></div>
+        <div><span class="label">Protected baseline</span><p id="contract-baseline">—</p></div>
+        <div><span class="label">Must remain true</span><ul id="contract-invariants" class="plain-list"><li>No contract data available.</li></ul></div>
+      </div>
+    </details>
+
     <main id="main-content">
       <section class="board-shell" id="board-shell" aria-labelledby="work-heading">
         <div class="board-toolbar">
