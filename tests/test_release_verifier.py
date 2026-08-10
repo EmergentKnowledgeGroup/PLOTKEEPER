@@ -115,6 +115,21 @@ class ReleaseVerifierTests(unittest.TestCase):
         self.assertTrue(any("review signature mismatch" in error for error in errors))
         self.assertTrue(any("source evidence binding mismatch" in error for error in errors))
 
+    def test_validated_predecessor_needs_only_phase_relevant_obligations(self):
+        contract, bundle = self.documents()
+        validated = bundle["predecessors"][0]
+        validated["obligation_results"] = [item for item in validated["obligation_results"] if item["id"] in {"AC-1", "PR-1", "PR-2"}]
+        validated["review_receipt_hash"] = VERIFIER.canonical_hash(validated, "review_receipt_hash")
+        merge = bundle["predecessors"][1]
+        merge["predecessor_receipt_hashes"] = [validated["review_receipt_hash"]]
+        merge["review_receipt_hash"] = VERIFIER.canonical_hash(merge, "review_receipt_hash")
+        deploy = bundle["deploy"]
+        deploy["predecessor_receipt_hashes"] = [validated["review_receipt_hash"], merge["review_receipt_hash"]]
+        deploy["review_receipt_hash"] = VERIFIER.canonical_hash(deploy, "review_receipt_hash")
+        documents = [validated, merge, deploy]
+        bundle["signatures"] = {item["review_receipt_hash"]: VERIFIER.receipt_signature(item, self.review_key) for item in documents}
+        self.assertEqual(self.verify(contract, bundle), [])
+
 
 if __name__ == "__main__":
     unittest.main()

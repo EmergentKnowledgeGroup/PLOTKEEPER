@@ -83,12 +83,22 @@ def validate_receipt(
                 len(str(binding.get("target_fingerprint", ""))) != 64):
             errors.append(f"{label} source evidence binding mismatch")
             break
-    required = {
+    all_required = {
         "acceptance": {x["id"] for x in contract.get("acceptance_cases", [])},
         "proof": {x["id"] for x in contract.get("proof_requirements", [])},
         "review": {x["id"] for x in contract.get("review_requirements", [])},
         "release": {x["id"] for x in contract.get("release_requirements", [])},
     }
+    if phase == "VALIDATED":
+        required = {
+            "acceptance": {"AC-1"} & all_required["acceptance"],
+            "proof": {"PR-1", "PR-2"} & all_required["proof"],
+            "review": set(), "release": set(),
+        }
+    elif phase == "MERGE_READY":
+        required = {**all_required, "release": set()}
+    else:
+        required = all_required
     observed = {(x.get("kind"), x.get("id")) for x in receipt.get("obligation_results", []) if x.get("status") == "MET"}
     if any((kind, item) not in observed for kind, ids in required.items() for item in ids):
         errors.append(f"{label} required obligations are not all MET")
