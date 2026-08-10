@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -49,6 +50,7 @@ def validate_receipt(
     signature: str,
     evidence_hashes: dict[str, str],
     evidence_policy: dict[str, str],
+    candidate_timestamp: int,
 ) -> list[str]:
     errors: list[str] = []
     label = phase.lower().replace("_", "-")
@@ -66,6 +68,12 @@ def validate_receipt(
         errors.append(f"{label} diff hash mismatch")
     if receipt.get("phase") != phase or receipt.get("verdict") != "PASS":
         errors.append(f"receipt is not {phase} PASS")
+    try:
+        created_at = int(datetime.fromisoformat(str(receipt.get("created_at_utc", "")).replace("Z", "+00:00")).timestamp())
+        if created_at < candidate_timestamp:
+            errors.append(f"{label} receipt predates candidate")
+    except (TypeError, ValueError):
+        errors.append(f"{label} receipt timestamp invalid")
     reviewer = receipt.get("reviewer") or {}
     if any((reviewer.get("independent") is not True,
             reviewer.get("implemented_candidate") is not False,
@@ -117,7 +125,7 @@ def validate_receipt(
 
 
 def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str], diff_sha256: str,
-           review_key: str, evidence_hashes: dict[str, str], evidence_policy: dict[str, str]) -> list[str]:
+           review_key: str, evidence_hashes: dict[str, str], evidence_policy: dict[str, str], candidate_timestamp: int = 0) -> list[str]:
     errors: list[str] = []
     receipt = bundle.get("deploy") or {}
     predecessors = bundle.get("predecessors") or []
@@ -126,7 +134,7 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
         errors.append("contract hash mismatch")
     errors.extend(validate_receipt(receipt, "DEPLOY_READY", contract, candidate, diff_sha256,
                                    {"user-goal", "contract", "diff", "test", "review", "deploy"}, review_key,
-                                   str(signatures.get(receipt.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy))
+                                   str(signatures.get(receipt.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy, candidate_timestamp))
     predecessor_by_phase = {item.get("phase"): item for item in predecessors}
     if set(predecessor_by_phase) != {"VALIDATED", "MERGE_READY"}:
         errors.append("validated and merge-ready predecessors are required")
@@ -136,11 +144,14 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
             item = predecessor_by_phase[phase]
             errors.extend(validate_receipt(item, phase, contract, candidate, diff_sha256,
                                            {"user-goal", "contract", "diff", "test", "review"}, review_key,
-                                           str(signatures.get(item.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy))
+                                           str(signatures.get(item.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy, candidate_timestamp))
             expected_hashes.append(item.get("review_receipt_hash"))
         validated_hash = predecessor_by_phase["VALIDATED"].get("review_receipt_hash")
         if predecessor_by_phase["MERGE_READY"].get("predecessor_receipt_hashes") != [validated_hash]:
             errors.append("merge-ready predecessor hash chain mismatch")
+        phase_times = [predecessor_by_phase[phase].get("created_at_utc", "") for phase in ("VALIDATED", "MERGE_READY")] + [receipt.get("created_at_utc", "")]
+        if phase_times != sorted(phase_times) or len(set(phase_times)) != 3:
+            errors.append("receipt phase timestamps are not strictly ordered")
         if set(receipt.get("predecessor_receipt_hashes") or []) != set(expected_hashes):
             errors.append("deploy predecessor hash chain mismatch")
     allowed = contract.get("allowed", {}).get("paths", [])
@@ -168,7 +179,7 @@ def main() -> int:
         diff_sha256 = hashlib.sha256(diff_bytes).hexdigest()
         contract_rel = contract_path.resolve().relative_to(Path.cwd().resolve()).as_posix()
         evidence_policy = {
-            "user-goal": contract_rel, "contract": contract_rel, "diff": "git-diff.name-status",
+            "user-goal": contract_rel, "contract": contract_rel, "diff": "scripts/verify_public_release.py",
             "test": "tests/test_release_verifier.py", "review": "scripts/verify_public_release.py",
             "deploy": ".github/workflows/release-verifier.yml",
         }
@@ -179,11 +190,11 @@ def main() -> int:
                 continue
             blob = subprocess.run(["git", "show", f"{candidate}:{path}"], check=True, capture_output=True).stdout
             evidence_hashes[path] = hashlib.sha256(blob).hexdigest()
-        evidence_hashes["git-diff.name-status"] = diff_sha256
+        candidate_timestamp = int(git("show", "-s", "--format=%ct", candidate))
     except (json.JSONDecodeError, KeyError, OSError, subprocess.CalledProcessError) as exc:
         print(f"invalid verification input: {exc}", file=sys.stderr)
         return 2
-    errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes, evidence_policy)
+    errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes, evidence_policy, candidate_timestamp)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2

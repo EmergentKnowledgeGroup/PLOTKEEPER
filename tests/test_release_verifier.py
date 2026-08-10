@@ -16,7 +16,7 @@ class ReleaseVerifierTests(unittest.TestCase):
     review_key = "test-review-key"
     evidence_policy = {
         "user-goal": "runtime/goal-contracts/active.json", "contract": "runtime/goal-contracts/active.json",
-        "diff": "git-diff.name-status", "test": "tests/test_release_verifier.py",
+        "diff": "scripts/verify_public_release.py", "test": "tests/test_release_verifier.py",
         "review": "scripts/verify_public_release.py", "deploy": ".github/workflows/release-verifier.yml",
     }
 
@@ -36,10 +36,10 @@ class ReleaseVerifierTests(unittest.TestCase):
                 "review_receipt_hash": "", "contract_hash": contract["contract_hash"], "phase": phase,
                 "baseline_sha": "b" * 40, "candidate_sha": self.candidate, "actual_diff_sha256": self.diff_hash,
                 "target": target, "reviewer": reviewer,
-                "source_evidence": [{"path": self.evidence_policy[kind], "sha256": (self.diff_hash if kind == "diff" else "e" * 64), "kind": kind, "binding": binding} for kind in ("user-goal", "contract", "diff", "test", "review", "deploy")],
+                "source_evidence": [{"path": self.evidence_policy[kind], "sha256": "e" * 64, "kind": kind, "binding": binding} for kind in ("user-goal", "contract", "diff", "test", "review", "deploy")],
                 "obligation_results": [{"kind": kind, "id": id_, "status": "MET", "source_sha256": "e" * 64, "observation": "verified"} for kind, id_ in (("acceptance", "AC-1"), ("proof", "PR-1"), ("review", "RR-1"), ("release", "RL-1"))],
                 "delegation": {"declaration": "NO_CHILDREN", "children": []},
-                "predecessor_receipt_hashes": list(predecessors), "verdict": "PASS", "created_at_utc": "2026-08-10T00:00:00Z", "findings": []
+                "predecessor_receipt_hashes": list(predecessors), "verdict": "PASS", "created_at_utc": {"VALIDATED": "2026-08-10T00:00:00Z", "MERGE_READY": "2026-08-10T00:01:00Z", "DEPLOY_READY": "2026-08-10T00:02:00Z"}[phase], "findings": []
             }
             item["review_receipt_hash"] = VERIFIER.canonical_hash(item, "review_receipt_hash")
             return item
@@ -51,7 +51,7 @@ class ReleaseVerifierTests(unittest.TestCase):
         return contract, {"deploy": deploy, "predecessors": [validated, merge], "signatures": signatures}
 
     def verify(self, contract, bundle, paths=None):
-        evidence_hashes = {path: (self.diff_hash if path == "git-diff.name-status" else "e" * 64) for path in set(self.evidence_policy.values())}
+        evidence_hashes = {path: "e" * 64 for path in set(self.evidence_policy.values())}
         return VERIFIER.verify(contract, bundle, self.candidate, paths or ["scripts/x.py", ".github/workflows/x.yml"], self.diff_hash, self.review_key, evidence_hashes, self.evidence_policy)
 
     def test_complete_release_chain_passes(self):
@@ -66,7 +66,7 @@ class ReleaseVerifierTests(unittest.TestCase):
     def test_mismatched_candidate_and_forbidden_path_fail(self):
         contract, bundle = self.documents()
         errors = VERIFIER.verify(contract, bundle, "c" * 40, ["plotkeeper/service.py"], self.diff_hash, self.review_key,
-                                 {path: (self.diff_hash if path == "git-diff.name-status" else "e" * 64) for path in set(self.evidence_policy.values())}, self.evidence_policy)
+                                 {path: "e" * 64 for path in set(self.evidence_policy.values())}, self.evidence_policy)
         self.assertIn("deploy-ready candidate mismatch", errors)
         self.assertTrue(any("outside contract" in error for error in errors))
 
@@ -140,6 +140,13 @@ class ReleaseVerifierTests(unittest.TestCase):
         deploy["review_receipt_hash"] = VERIFIER.canonical_hash(deploy, "review_receipt_hash")
         bundle["signatures"][deploy["review_receipt_hash"]] = VERIFIER.receipt_signature(deploy, self.review_key)
         self.assertIn("deploy-ready source evidence binding mismatch", self.verify(contract, bundle))
+
+    def test_receipt_replay_before_candidate_fails(self):
+        contract, bundle = self.documents()
+        errors = VERIFIER.verify(contract, bundle, self.candidate, ["scripts/x.py"], self.diff_hash, self.review_key,
+                                 {path: "e" * 64 for path in set(self.evidence_policy.values())}, self.evidence_policy,
+                                 candidate_timestamp=2_000_000_000)
+        self.assertTrue(any("receipt predates candidate" in error for error in errors))
 
     def test_validated_predecessor_needs_only_phase_relevant_obligations(self):
         contract, bundle = self.documents()
