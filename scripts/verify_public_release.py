@@ -22,6 +22,11 @@ def receipt_signature(receipt: dict, review_key: str) -> str:
     return hmac.new(review_key.encode(), str(receipt.get("review_receipt_hash", "")).encode(), hashlib.sha256).hexdigest()
 
 
+def target_fingerprint(target: dict) -> str:
+    encoded = json.dumps(target, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def git(*args: str) -> str:
     return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout.strip()
 
@@ -43,6 +48,7 @@ def validate_receipt(
     review_key: str,
     signature: str,
     evidence_hashes: dict[str, str],
+    evidence_policy: dict[str, str],
 ) -> list[str]:
     errors: list[str] = []
     label = phase.lower().replace("_", "-")
@@ -70,17 +76,19 @@ def validate_receipt(
     if target.get("artifact_digest") != f"git:{candidate}" or not target.get("environment") or not target.get("traffic_or_execution_path"):
         errors.append(f"{label} target artifact or execution path mismatch")
     evidence = receipt.get("source_evidence") or []
-    if {item.get("kind") for item in evidence} < required_kinds:
+    if not required_kinds.issubset({item.get("kind") for item in evidence}):
         errors.append(f"{label} required source evidence is incomplete")
+    expected_target_fingerprint = target_fingerprint(target)
     for item in evidence:
         binding = item.get("binding") or {}
         path = str(item.get("path", "")).replace("\\", "/")
-        if (not path or path.startswith("/") or ":" in path or ".." in Path(path).parts or
+        if (evidence_policy.get(str(item.get("kind", ""))) != path or
+                not path or path.startswith("/") or ":" in path or ".." in Path(path).parts or
                 evidence_hashes.get(path) != item.get("sha256") or
                 binding.get("contract_hash") != contract.get("contract_hash") or
                 binding.get("baseline_sha") != contract.get("baseline", {}).get("sha") or
                 binding.get("candidate_sha") != candidate or
-                len(str(binding.get("target_fingerprint", ""))) != 64):
+                binding.get("target_fingerprint") != expected_target_fingerprint):
             errors.append(f"{label} source evidence binding mismatch")
             break
     all_required = {
@@ -109,7 +117,7 @@ def validate_receipt(
 
 
 def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str], diff_sha256: str,
-           review_key: str, evidence_hashes: dict[str, str]) -> list[str]:
+           review_key: str, evidence_hashes: dict[str, str], evidence_policy: dict[str, str]) -> list[str]:
     errors: list[str] = []
     receipt = bundle.get("deploy") or {}
     predecessors = bundle.get("predecessors") or []
@@ -118,7 +126,7 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
         errors.append("contract hash mismatch")
     errors.extend(validate_receipt(receipt, "DEPLOY_READY", contract, candidate, diff_sha256,
                                    {"user-goal", "contract", "diff", "test", "review", "deploy"}, review_key,
-                                   str(signatures.get(receipt.get("review_receipt_hash"), "")), evidence_hashes))
+                                   str(signatures.get(receipt.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy))
     predecessor_by_phase = {item.get("phase"): item for item in predecessors}
     if set(predecessor_by_phase) != {"VALIDATED", "MERGE_READY"}:
         errors.append("validated and merge-ready predecessors are required")
@@ -128,7 +136,7 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
             item = predecessor_by_phase[phase]
             errors.extend(validate_receipt(item, phase, contract, candidate, diff_sha256,
                                            {"user-goal", "contract", "diff", "test", "review"}, review_key,
-                                           str(signatures.get(item.get("review_receipt_hash"), "")), evidence_hashes))
+                                           str(signatures.get(item.get("review_receipt_hash"), "")), evidence_hashes, evidence_policy))
             expected_hashes.append(item.get("review_receipt_hash"))
         validated_hash = predecessor_by_phase["VALIDATED"].get("review_receipt_hash")
         if predecessor_by_phase["MERGE_READY"].get("predecessor_receipt_hashes") != [validated_hash]:
@@ -158,6 +166,12 @@ def main() -> int:
         changed = git("diff", "--name-only", f"{baseline}..{candidate}").splitlines()
         diff_bytes = subprocess.run(["git", "diff", "--name-status", f"{baseline}..{candidate}"], check=True, capture_output=True).stdout
         diff_sha256 = hashlib.sha256(diff_bytes).hexdigest()
+        contract_rel = contract_path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+        evidence_policy = {
+            "user-goal": contract_rel, "contract": contract_rel, "diff": "git-diff.name-status",
+            "test": "tests/test_release_verifier.py", "review": "scripts/verify_public_release.py",
+            "deploy": ".github/workflows/release-verifier.yml",
+        }
         evidence_paths = {str(item.get("path", "")).replace("\\", "/") for document in [bundle.get("deploy") or {}, *(bundle.get("predecessors") or [])] for item in (document.get("source_evidence") or [])}
         evidence_hashes = {}
         for path in evidence_paths:
@@ -165,10 +179,11 @@ def main() -> int:
                 continue
             blob = subprocess.run(["git", "show", f"{candidate}:{path}"], check=True, capture_output=True).stdout
             evidence_hashes[path] = hashlib.sha256(blob).hexdigest()
+        evidence_hashes["git-diff.name-status"] = diff_sha256
     except (json.JSONDecodeError, KeyError, OSError, subprocess.CalledProcessError) as exc:
         print(f"invalid verification input: {exc}", file=sys.stderr)
         return 2
-    errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes)
+    errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes, evidence_policy)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2

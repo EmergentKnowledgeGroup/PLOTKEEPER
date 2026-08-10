@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
-import hmac
 import os
 import re
 import subprocess
@@ -47,11 +45,12 @@ def latest_active_contract(cwd: Path) -> dict | None:
         except (OSError, json.JSONDecodeError):
             continue
         if document.get("status") == "ACTIVE" and document.get("contract_hash"):
+            document["_path"] = str(path)
             return document
     return None
 
 
-def matching_receipt(cwd: Path, contract_hash: str, candidate: str) -> bool:
+def matching_receipt(cwd: Path, contract: dict, candidate: str) -> bool:
     key_path = Path(os.environ.get("PLOTKEEPER_REVIEW_KEY_FILE", str(cwd / "runtime" / "qa" / "plotkeeper-review.key")))
     try:
         review_key = key_path.read_text(encoding="utf-8").strip()
@@ -61,33 +60,17 @@ def matching_receipt(cwd: Path, contract_hash: str, candidate: str) -> bool:
     for folder in folders:
         if not folder.is_dir():
             continue
-        for path in folder.glob("*.json"):
+        for path in folder.glob("*DEPLOY_READY.bundle.json"):
             try:
-                receipt = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                continue
-            reviewer = receipt.get("reviewer") or {}
-            payload = dict(receipt)
-            payload.pop("review_receipt_hash", None)
-            encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-            expected_hash = hashlib.sha256(encoded).hexdigest()
-            expected_signature = hmac.new(review_key.encode(), str(receipt.get("review_receipt_hash", "")).encode(), hashlib.sha256).hexdigest()
-            try:
-                signature = path.with_suffix(path.suffix + ".sig").read_text(encoding="utf-8").strip()
+                bundle_text = path.read_text(encoding="utf-8")
             except OSError:
                 continue
-            if (
-                receipt.get("phase") == "DEPLOY_READY"
-                and receipt.get("verdict") == "PASS"
-                and receipt.get("contract_hash") == contract_hash
-                and receipt.get("candidate_sha") == candidate
-                and reviewer.get("independent") is True
-                and reviewer.get("implemented_candidate") is False
-                and reviewer.get("delegated_candidate") is False
-                and reviewer.get("approved_candidate") is False
-                and receipt.get("review_receipt_hash") == expected_hash
-                and hmac.compare_digest(signature, expected_signature)
-            ):
+            env = dict(os.environ)
+            env.update({"GITHUB_SHA": candidate, "PLOTKEEPER_CONTRACT": contract["_path"],
+                        "PLOTKEEPER_DEPLOY_RECEIPT": bundle_text, "PLOTKEEPER_REVIEW_KEY": review_key})
+            result = subprocess.run([sys.executable, str(cwd / "scripts" / "verify_public_release.py")], cwd=cwd,
+                                    env=env, capture_output=True, text=True, check=False)
+            if result.returncode == 0:
                 return True
     return False
 
@@ -103,7 +86,7 @@ def evaluate(payload: dict) -> tuple[bool, str]:
     candidate = git_head(cwd)
     if not candidate:
         return False, "current Git candidate could not be resolved"
-    if not matching_receipt(cwd, contract["contract_hash"], candidate):
+    if not matching_receipt(cwd, contract, candidate):
         return False, "no independent DEPLOY_READY PASS receipt matches the active contract and current HEAD"
     return True, "release evidence matches"
 
