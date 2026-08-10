@@ -98,6 +98,29 @@ See [Integration](docs/INTEGRATION.md) for the complete marker contract and
 - [Contributing](docs/CONTRIBUTING.md)
 - [Security](docs/SECURITY.md)
 
+## Automatic Codex execution gate
+
+Plotkeeper includes an optional, one-command Codex integration that removes the
+need to invoke MSW or invent a duration on every task:
+
+```powershell
+.\integrations\codex\install.ps1
+```
+
+It installs the upstream Slopware `msw`, `msw-hook`, and `timebox` packages,
+then adds Plotkeeper's adaptive `UserPromptSubmit` and `Stop` hooks. The first
+unfamiliar task runs as an untimed calibration; later comparable work reuses
+measured timing evidence. The stop hook loops an agent back when its execution
+receipt is missing or incomplete.
+
+After installation, run `/hooks` in Codex to inspect and trust the three
+effective hooks. Trust cannot and should not be silently granted by an
+installer. See the [complete Codex integration guide](integrations/codex/README.md).
+
+Credit for MSW, MSW Hook, and Timebox belongs to **Slopware Engineer
+(`@aienginerd`)** and upstream contributors. See
+[third-party notices](THIRD_PARTY_NOTICES.md).
+
 ## Current scope
 
 Plotkeeper is Windows-first and local-only. It binds to loopback by default,
@@ -107,5 +130,6 @@ or authority to bypass the production goal contract.
 
 ## License
 
-No license has been selected yet. Until the repository owner adds one, normal
-copyright restrictions apply.
+Plotkeeper-owned code and documentation are licensed under the
+[Apache License 2.0](LICENSE). Separately distributed Slopware packages retain
+their upstream CC BY 4.0 license.

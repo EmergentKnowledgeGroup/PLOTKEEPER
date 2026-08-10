@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 \"<CODEX_HOME>\\skills\\adaptive-execution\\scripts\\adaptive_execution.py\" hook",
+            "timeout": 10,
+            "statusMessage": "Routing adaptive execution",
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 \"<CODEX_HOME>\\skills\\adaptive-execution\\scripts\\adaptive_execution.py\" hook",
+            "timeout": 10,
+            "statusMessage": "Validating execution receipt"
+          }
+        ]
+      }
+    ]
+  }
+}

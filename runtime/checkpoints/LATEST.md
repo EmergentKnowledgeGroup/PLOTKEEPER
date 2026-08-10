@@ -2,7 +2,16 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER FIRST CLASS REPO WORK`
+Track: `PLOTKEEPER PUBLIC RELEASE WORK`
+
+## PLOTKEEPER PUBLIC RELEASE WORK
+
+- step: post-green-tests
+- note: Slopware plugin integration, Plotkeeper adaptive Codex hooks, attribution, and Apache-2.0 licensing implemented; candidate is ready for exact-SHA independent review before publication.
+- branch: main
+- head: b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a
+- next_cmd: `git diff --check && py -3 -m unittest discover -s tests -v`
+- validations: 21 unit/static/repository/integration tests green; installer hook merge is idempotent and preserves unrelated configuration; all three canonical Slopware packages asserted; full Apache-2.0 text and separate CC BY 4.0 notice present; git diff check green
 
 ## PLOTKEEPER FIRST CLASS REPO WORK
 

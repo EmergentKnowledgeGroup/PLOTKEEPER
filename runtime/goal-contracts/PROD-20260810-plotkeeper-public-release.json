@@ -1,0 +1,268 @@
+{
+  "id": "PROD-20260810-plotkeeper-public-release",
+  "status": "ACTIVE",
+  "contract_hash": "21918e81543db87667fb2e7a72c57325e151b44c3e10bd7eecabda1c35c3722e",
+  "origin": "DIRECT",
+  "user_goal": "Publish PLOTKEEPER at EmergentKnowledgeGroup/PLOTKEEPER with the other Slopware skills, required Codex hooks, appropriate credit to Slopware and OpenAI Codex, and a suitable open-source license.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019feda0-8c27-7b83-824e-bcf00f065178",
+    "original_request_hash": "7aa7a135fbe9983ea4d7dfc5362da9603b203615325e8b0c27f8738d080bcf1b",
+    "verbatim_text": "[https://github.com/EmergentKnowledgeGroup/PLOTKEEPER](https://github.com/EmergentKnowledgeGroup/PLOTKEEPER) - created.\n\nMake sure to include the other skills from Slopware, and the codex hooks required - give both the credit, pick whatever license you think fits cleanly.",
+    "captured_at_utc": "2026-08-10T21:44:12Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019feda0-8c27-7b83-824e-bcf00f065178"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a",
+    "retrieved_at_utc": "2026-08-10T21:44:12Z",
+    "protection_evidence": "Clean local main checkout with one worktree; public GitHub repository exists and is empty before publication.",
+    "selection_reason": "This is the independently reviewed first-class repository candidate that predates the newly authorized integration, attribution, licensing, and publication work."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".gitignore",
+      ".github/",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "README.md",
+      "docs/",
+      "integrations/",
+      "scripts/",
+      "tests/",
+      "pyproject.toml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-public-release.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Git remote named origin",
+      "GitHub repository EmergentKnowledgeGroup/PLOTKEEPER",
+      "GitHub main branch and repository metadata",
+      "Codex integration installer and hook configuration",
+      "Slopware plugin installation references"
+    ],
+    "semantic_changes": [
+      "Add a reproducible Codex integration that installs the canonical Slopware MSW, MSW Hook, and Timebox plugins and the Plotkeeper adaptive-execution skill and hooks.",
+      "Document the exact hook trust boundary and distinguish Slopware-owned and Plotkeeper-owned behavior.",
+      "Add Apache License 2.0 for Plotkeeper-owned code and documentation plus accurate third-party notices and attribution.",
+      "Configure origin for EmergentKnowledgeGroup/PLOTKEEPER and publish the reviewed repository to its default branch.",
+      "Set accurate public repository description and topics."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/web/",
+      "runtime/plotkeeper.sqlite3",
+      "user Codex session JSONL files",
+      "C:/Users/UltariumV3/.codex/config.toml",
+      "C:/Users/UltariumV3/.codex/hooks.json"
+    ],
+    "semantic_changes": [
+      "Do not alter Plotkeeper runtime behavior or review-closeout semantics.",
+      "Do not vendor or relicense Slopware-owned skill text as Plotkeeper work.",
+      "Do not auto-trust Codex hooks or bypass the user's required hook inspection.",
+      "Do not publish secrets, personal data, runtime ledgers, local receipts, or Codex session material.",
+      "Do not claim OpenAI or Slopware endorsement, affiliation, or ownership."
+    ]
+  },
+  "invariants": [
+    "The previously reviewed Plotkeeper package behavior and tests remain unchanged and green.",
+    "Slopware plugins are installed from transcendr/slopware-skills and retain explicit Slopware Engineer / @aienginerd attribution and CC BY 4.0 notice.",
+    "Timebox remains hook-free and durations are never invented.",
+    "The MSW Hook remains the upstream SessionStart reinforcement; Plotkeeper's UserPromptSubmit and Stop hooks are separately identified.",
+    "Hook installation never marks a hook trusted without user inspection in Codex.",
+    "The public repository contains no secrets, personal datasets, runtime ledger, or session JSONL.",
+    "The remote default branch resolves to the exact reviewed release candidate."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "A new Codex user can install MSW, MSW Hook, Timebox, Plotkeeper adaptive execution, and the required hooks from repository instructions without copying machine-specific paths.",
+      "forbidden_behavior": "The installer must not silently overwrite unrelated hooks, trust hooks automatically, or claim Timebox has a hook.",
+      "target_and_actor": "Windows Codex user following the repository's integration quickstart.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "The public repository clearly credits Slopware Engineer for MSW, MSW Hook, and Timebox and credits OpenAI Codex as the host platform while distinguishing Plotkeeper-owned integration code.",
+      "forbidden_behavior": "No copied upstream content is misattributed, relicensed, or presented as endorsed by OpenAI or Slopware.",
+      "target_and_actor": "Public repository reader and upstream rights holder.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "Plotkeeper-owned code and documentation are released under Apache License 2.0 with machine-readable project metadata.",
+      "forbidden_behavior": "The license must not purport to replace the upstream CC BY 4.0 license or cover third-party trademarks.",
+      "target_and_actor": "Downstream user evaluating reuse rights.",
+      "required_proof_ids": [
+        "PR-4"
+      ]
+    },
+    {
+      "id": "AC-4",
+      "promised_behavior": "EmergentKnowledgeGroup/PLOTKEEPER publicly serves the exact independently reviewed candidate on its default branch with accurate repository metadata.",
+      "forbidden_behavior": "No unreviewed SHA, unrelated diff, secret, runtime ledger, or local receipt may be published.",
+      "target_and_actor": "GitHub visitor cloning or browsing EmergentKnowledgeGroup/PLOTKEEPER.",
+      "required_proof_ids": [
+        "PR-5",
+        "PR-6"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The Codex integration installer and hook merge behavior are deterministic and preserve unrelated hook configuration.",
+      "required_environment": "Isolated Z-drive test home with stubbed Codex plugin commands",
+      "command_or_read_only_check": "Run installer/verification tests against empty and pre-populated hook files.",
+      "expected_observation": "All three canonical Slopware packages are requested, adaptive files are installed, two Plotkeeper hooks are merged idempotently, unrelated hooks remain, and trust state is untouched."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Every documented hook event, command, and trust step matches the bundled installer and canonical upstream package behavior.",
+      "required_environment": "Repository documentation and integration files",
+      "command_or_read_only_check": "Cross-check README, integration guide, hook template, installer, and upstream Slopware package manifests.",
+      "expected_observation": "SessionStart belongs only to MSW Hook, UserPromptSubmit and Stop invoke adaptive_execution.py, and the user is told to inspect and trust all three in /hooks."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Attribution and third-party notices name correct owners, links, packages, and licenses without endorsement language.",
+      "required_environment": "Repository documentation and upstream public repository",
+      "command_or_read_only_check": "Compare notices and credits against transcendr/slopware-skills and official OpenAI Codex documentation.",
+      "expected_observation": "Slopware Engineer / @aienginerd and CC BY 4.0 are explicit; OpenAI Codex is identified as the integration host with a non-endorsement statement."
+    },
+    {
+      "id": "PR-4",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Apache-2.0 license text is complete and project metadata declares that license without swallowing third-party notices.",
+      "required_environment": "Repository checkout",
+      "command_or_read_only_check": "Validate LICENSE text, pyproject license expression, README license section, and third-party notice separation.",
+      "expected_observation": "Apache-2.0 is consistently declared for Plotkeeper-owned work and Slopware remains separately CC BY 4.0."
+    },
+    {
+      "id": "PR-5",
+      "acceptance_case_ids": [
+        "AC-4"
+      ],
+      "claim": "The complete final local diff is reviewed, tests pass, and the candidate contains no forbidden or sensitive material.",
+      "required_environment": "Clean local Git candidate",
+      "command_or_read_only_check": "Run full tests, compilation, diff-scope review, secret-sensitive path scan, and independent production-goal review.",
+      "expected_observation": "Required checks and independent phase receipts PASS against the exact candidate SHA."
+    },
+    {
+      "id": "PR-6",
+      "acceptance_case_ids": [
+        "AC-4"
+      ],
+      "claim": "The GitHub default branch, repository contents, Actions result, description, topics, and remote SHA match the reviewed release.",
+      "required_environment": "Public GitHub repository EmergentKnowledgeGroup/PLOTKEEPER",
+      "command_or_read_only_check": "Query GitHub API and clone/browse the public repository after push.",
+      "expected_observation": "Public default branch resolves to the reviewed SHA, required files render, metadata is accurate, and required GitHub Actions checks are not failing."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "MERGE_READY",
+      "required_role": "independent production-goal-review verifier"
+    },
+    {
+      "id": "RR-2",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent release verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Validated candidate SHA, clean scope, authenticated EmergentKnowledgeGroup target, empty-or-expected remote baseline, and rollback command."
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "GitHub API attestation binding default branch SHA, repository visibility, metadata, required files, and Actions status to the deployed candidate."
+    }
+  ],
+  "stop_conditions": [
+    "The local checkout or remote repository contains unexpected unrelated content.",
+    "The final diff touches forbidden runtime behavior or private Codex data.",
+    "The Slopware owner, package list, hook behavior, or license cannot be verified.",
+    "The Codex integration would overwrite unrelated hooks or auto-trust commands.",
+    "Independent review is not PASS for the exact candidate and release phase.",
+    "The authenticated GitHub owner, repository visibility, default branch, or remote baseline differs from EmergentKnowledgeGroup/PLOTKEEPER as authorized.",
+    "GitHub rejects the push or the public branch cannot be attested to the reviewed SHA."
+  ],
+  "known_discrepancies": [
+    "The public GitHub repository exists but is empty and the local checkout has no origin remote.",
+    "The previous contract explicitly prohibited publication; this append-only contract records the user's new publication authority.",
+    "The repository currently has no license or third-party notices.",
+    "Official OpenAI documentation search did not expose a public Codex hook schema page; hook event details will therefore be bound to the installed Codex hook surface and upstream Slopware manifests, with that limitation disclosed."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "include the other skills from Slopware",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ]
+    },
+    {
+      "user_requirement": "include the Codex hooks required",
+      "acceptance_case_ids": [
+        "AC-1"
+      ]
+    },
+    {
+      "user_requirement": "give both the credit",
+      "acceptance_case_ids": [
+        "AC-2"
+      ]
+    },
+    {
+      "user_requirement": "pick whatever license fits cleanly",
+      "acceptance_case_ids": [
+        "AC-3"
+      ]
+    },
+    {
+      "user_requirement": "publish to EmergentKnowledgeGroup/PLOTKEEPER",
+      "acceptance_case_ids": [
+        "AC-4"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-first-class-repo.json",
+    "sha256": "e9bbe6401afe085ef4f54d0a4c204c23bfe603cef5edde33cd76dc0aec2d049a"
+  }
+}
