@@ -163,6 +163,17 @@ class ReleaseVerifierTests(unittest.TestCase):
         bundle["signatures"] = {item["review_receipt_hash"]: VERIFIER.receipt_signature(item, self.review_key) for item in documents}
         self.assertEqual(self.verify(contract, bundle), [])
 
+    def test_merge_ready_excludes_deploy_only_obligations(self):
+        contract, bundle = self.documents()
+        validated, merge = bundle["predecessors"]
+        merge["obligation_results"] = [item for item in merge["obligation_results"] if item["id"] in {"AC-1", "PR-1", "PR-2"}]
+        merge["review_receipt_hash"] = VERIFIER.canonical_hash(merge, "review_receipt_hash")
+        deploy = bundle["deploy"]
+        deploy["predecessor_receipt_hashes"] = [validated["review_receipt_hash"], merge["review_receipt_hash"]]
+        deploy["review_receipt_hash"] = VERIFIER.canonical_hash(deploy, "review_receipt_hash")
+        bundle["signatures"] = {item["review_receipt_hash"]: VERIFIER.receipt_signature(item, self.review_key) for item in (validated, merge, deploy)}
+        self.assertEqual(self.verify(contract, bundle), [])
+
 
 if __name__ == "__main__":
     unittest.main()

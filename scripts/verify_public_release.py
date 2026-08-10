@@ -105,14 +105,12 @@ def validate_receipt(
         "review": {x["id"] for x in contract.get("review_requirements", [])},
         "release": {x["id"] for x in contract.get("release_requirements", [])},
     }
-    if phase == "VALIDATED":
+    if phase in {"VALIDATED", "MERGE_READY"}:
         required = {
             "acceptance": {"AC-1"} & all_required["acceptance"],
             "proof": {"PR-1", "PR-2"} & all_required["proof"],
             "review": set(), "release": set(),
         }
-    elif phase == "MERGE_READY":
-        required = {**all_required, "release": set()}
     else:
         required = all_required
     observed = {(x.get("kind"), x.get("id")) for x in receipt.get("obligation_results", []) if x.get("status") == "MET"}
