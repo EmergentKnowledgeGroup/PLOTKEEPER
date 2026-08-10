@@ -1,0 +1,158 @@
+{
+  "id": "PROD-20260810-plotkeeper-final-release-execution",
+  "status": "ACTIVE",
+  "contract_hash": "c3f216b97b1ceb60cfe27d970db93995d09ad0f539566192b4c0357d55824a5d",
+  "origin": "DIRECT",
+  "user_goal": "Authorize the first public push of the exact enforcement-complete Plotkeeper candidate after local host validation; reserve live GitHub proof for the separate public-readiness attestation contract.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c",
+    "original_request_hash": "632046aa77fdd18887280ff2fcf26ffca856608f74f741ef5b5ddc4e42a69917",
+    "verbatim_text": "approved and authorized.  You are hereby authorized and approved to perform any and all actions in regards to plotkeeper that allow you to continue until PK is on git, sharable and ready for public use",
+    "captured_at_utc": "2026-08-10T22:20:28Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "3da4e419cd061cd9a44d9fb8b806f67490f47c43",
+    "retrieved_at_utc": "2026-08-10T22:36:00Z",
+    "protection_evidence": "Clean candidate with 29 green tests, validated installed plugin, and live PreToolUse execution in Codex 0.147.0 without a trust bypass flag.",
+    "selection_reason": "Enforcement-complete candidate before adding only this final phase contract and its workflow pointer."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-final-release-execution.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Git origin remote",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER",
+      "GitHub Actions repository variable PLOTKEEPER_DEPLOY_RECEIPT",
+      "GitHub repository description and topics"
+    ],
+    "semantic_changes": [
+      "Point the server verifier at this phase-correct release contract.",
+      "Publish the exact independently reviewed candidate to the authenticated empty public repository.",
+      "Set the candidate-bound independent receipt variable and accurate public metadata."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "integrations/",
+      "scripts/",
+      "tests/",
+      "docs/",
+      "README.md",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "pyproject.toml",
+      "C:/Users/UltariumV3/.codex/"
+    ],
+    "semantic_changes": [
+      "Do not change product, integration, guard, verifier logic, documentation, tests, licensing, attribution, or trusted hook state.",
+      "Do not push a dirty or mismatched candidate.",
+      "Do not claim public readiness before the GitHub workflow and separate live attestation pass."
+    ]
+  },
+  "invariants": [
+    "All tracked product and enforcement files remain byte-identical to 3da4e419cd061cd9a44d9fb8b806f67490f47c43 except the workflow contract pointer.",
+    "All 29 tests remain green.",
+    "The trusted PreToolUse guard runs without --dangerously-bypass-hook-trust.",
+    "The GitHub target remains public and empty immediately before push.",
+    "The release receipt variable is exact, independently authored, and bound to the pushed candidate.",
+    "Rollback remains lease-bound to the protected baseline."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "The exact locally enforced and independently reviewed candidate is authorized for the initial public push.",
+      "forbidden_behavior": "No missing trust, mismatched receipt, forbidden diff, unexpected remote, or unreviewed SHA may pass the host guard.",
+      "target_and_actor": "Primary release agent using Codex against EmergentKnowledgeGroup/PLOTKEEPER.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2",
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The managed guard is installed, content-hash trusted, and executes before tools in an ordinary Codex process.",
+      "required_environment": "Codex CLI 0.147.0 without trust bypass",
+      "command_or_read_only_check": "Run a safe shell-tool task and inspect lifecycle output.",
+      "expected_observation": "PreToolUse runs and completes before every shell action."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The final candidate is clean, scope-correct, fully tested, and carries an independent candidate-bound DEPLOY_READY PASS receipt.",
+      "required_environment": "Clean local main checkout",
+      "command_or_read_only_check": "Validate contract, complete diff, plugin, 29 tests, hook fixtures, server fixtures, and independent review receipt.",
+      "expected_observation": "No forbidden change or open release item remains."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The authenticated public target is still empty and rollback is exact before first push.",
+      "required_environment": "GitHub API and docs/RELEASE.md",
+      "command_or_read_only_check": "Query auth, visibility, refs, branches, and inspect force-with-lease rollback.",
+      "expected_observation": "Owner is EmergentKnowledgeGroup, target has no unexpected ref, and rollback is candidate-bound."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Trusted live PreToolUse evidence, exact candidate, clean scope, 29 tests, authenticated empty target, server verifier pointer, receipt-variable procedure, and rollback."
+    }
+  ],
+  "stop_conditions": [
+    "Any forbidden file differs from 3da4e419cd061cd9a44d9fb8b806f67490f47c43.",
+    "PreToolUse does not execute in an ordinary Codex process.",
+    "Independent DEPLOY_READY is not PASS for the exact final candidate.",
+    "The target is no longer empty or authenticated to EmergentKnowledgeGroup.",
+    "The host guard blocks the release or GitHub rejects the receipt variable or push."
+  ],
+  "known_discrepancies": [
+    "Live public SHA and Actions evidence cannot exist until after the first push; those remain mandatory under PROD-20260810-plotkeeper-public-readiness-enforcement and are not claimed by this pre-push contract."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "continue until PK is on git, sharable and ready for public use",
+      "acceptance_case_ids": [
+        "AC-1"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-public-readiness-enforcement.json",
+    "sha256": "7f786cbbd433d98fd729230abd4e190d994cb54dc2afbd274605f8d890d5f881"
+  }
+}

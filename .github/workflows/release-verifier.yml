@@ -21,7 +21,7 @@ jobs:
       - name: Verify contract, receipt, diff, and candidate
         env:
           GITHUB_SHA: ${{ github.sha }}
-          PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260810-plotkeeper-public-readiness-enforcement.json
+          PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260810-plotkeeper-final-release-execution.json
           PLOTKEEPER_DEPLOY_RECEIPT: ${{ vars.PLOTKEEPER_DEPLOY_RECEIPT }}
         run: python scripts/verify_public_release.py
       - name: Run repository tests
