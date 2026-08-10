@@ -13,6 +13,7 @@ SPEC.loader.exec_module(VERIFIER)
 class ReleaseVerifierTests(unittest.TestCase):
     candidate = "a" * 40
     diff_hash = "d" * 64
+    review_key = "test-review-key"
 
     def documents(self):
         contract = {
@@ -40,10 +41,13 @@ class ReleaseVerifierTests(unittest.TestCase):
         validated = receipt("VALIDATED")
         merge = receipt("MERGE_READY", [validated["review_receipt_hash"]])
         deploy = receipt("DEPLOY_READY", [validated["review_receipt_hash"], merge["review_receipt_hash"]])
-        return contract, {"deploy": deploy, "predecessors": [validated, merge]}
+        documents = [validated, merge, deploy]
+        signatures = {item["review_receipt_hash"]: VERIFIER.receipt_signature(item, self.review_key) for item in documents}
+        return contract, {"deploy": deploy, "predecessors": [validated, merge], "signatures": signatures}
 
     def verify(self, contract, bundle, paths=None):
-        return VERIFIER.verify(contract, bundle, self.candidate, paths or ["scripts/x.py", ".github/workflows/x.yml"], self.diff_hash)
+        evidence_hashes = {kind: "e" * 64 for kind in ("user-goal", "contract", "diff", "test", "review", "deploy")}
+        return VERIFIER.verify(contract, bundle, self.candidate, paths or ["scripts/x.py", ".github/workflows/x.yml"], self.diff_hash, self.review_key, evidence_hashes)
 
     def test_complete_release_chain_passes(self):
         contract, bundle = self.documents()
@@ -56,7 +60,8 @@ class ReleaseVerifierTests(unittest.TestCase):
 
     def test_mismatched_candidate_and_forbidden_path_fail(self):
         contract, bundle = self.documents()
-        errors = VERIFIER.verify(contract, bundle, "c" * 40, ["plotkeeper/service.py"], self.diff_hash)
+        errors = VERIFIER.verify(contract, bundle, "c" * 40, ["plotkeeper/service.py"], self.diff_hash, self.review_key,
+                                 {kind: "e" * 64 for kind in ("user-goal", "contract", "diff", "test", "review", "deploy")})
         self.assertIn("deploy-ready candidate mismatch", errors)
         self.assertTrue(any("outside contract" in error for error in errors))
 
@@ -101,6 +106,14 @@ class ReleaseVerifierTests(unittest.TestCase):
         self.assertIn("validated required obligations are not all MET", errors)
         self.assertIn("validated delegation declaration missing", errors)
         self.assertIn("merge-ready predecessor hash chain mismatch", errors)
+
+    def test_wrong_signature_and_nonexistent_evidence_fail(self):
+        contract, bundle = self.documents()
+        bundle["signatures"] = {key: "0" * 64 for key in bundle["signatures"]}
+        errors = VERIFIER.verify(contract, bundle, self.candidate, ["scripts/x.py"], self.diff_hash,
+                                 self.review_key, {})
+        self.assertTrue(any("review signature mismatch" in error for error in errors))
+        self.assertTrue(any("source evidence binding mismatch" in error for error in errors))
 
 
 if __name__ == "__main__":

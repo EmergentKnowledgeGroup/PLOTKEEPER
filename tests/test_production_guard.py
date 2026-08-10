@@ -1,4 +1,6 @@
 import importlib.util
+import hashlib
+import hmac
 import json
 import tempfile
 import unittest
@@ -35,14 +37,21 @@ class ProductionGuardTests(unittest.TestCase):
             contracts.mkdir(parents=True)
             reviews.mkdir(parents=True)
             (contracts / "active.json").write_text(json.dumps({"status": "ACTIVE", "contract_hash": "abc"}), encoding="utf-8")
+            key_path = cwd / "review.key"
+            key_path.write_text("test-review-key", encoding="utf-8")
             payload = self.payload(cwd, "gh repo edit owner/repo --description ready")
-            with mock.patch.object(GUARD, "git_head", return_value="f" * 40):
+            with mock.patch.object(GUARD, "git_head", return_value="f" * 40), mock.patch.dict("os.environ", {"PLOTKEEPER_REVIEW_KEY_FILE": str(key_path)}):
                 self.assertFalse(GUARD.evaluate(payload)[0])
-                (reviews / "deploy.json").write_text(json.dumps({
+                receipt = {
                     "phase": "DEPLOY_READY", "verdict": "PASS", "contract_hash": "abc",
                     "candidate_sha": "f" * 40,
-                    "reviewer": {"independent": True, "implemented_candidate": False}
-                }), encoding="utf-8")
+                    "reviewer": {"independent": True, "implemented_candidate": False, "delegated_candidate": False, "approved_candidate": False}
+                }
+                receipt["review_receipt_hash"] = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+                receipt_path = reviews / "deploy.json"
+                receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+                signature = hmac.new(b"test-review-key", receipt["review_receipt_hash"].encode(), hashlib.sha256).hexdigest()
+                receipt_path.with_suffix(".json.sig").write_text(signature, encoding="utf-8")
                 self.assertTrue(GUARD.evaluate(payload)[0])
 
 

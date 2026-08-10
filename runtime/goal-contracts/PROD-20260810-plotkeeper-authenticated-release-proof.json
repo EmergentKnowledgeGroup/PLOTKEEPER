@@ -1,0 +1,167 @@
+{
+  "id": "PROD-20260810-plotkeeper-authenticated-release-proof",
+  "status": "ACTIVE",
+  "contract_hash": "91115d18a0bb6dbbc996da9d1ee21fec83753f18c81cd0f0de2f4197110c8b0a",
+  "origin": "DIRECT",
+  "user_goal": "Eliminate the independently proven release-proof bypasses and continue until Plotkeeper is publicly usable.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c",
+    "original_request_hash": "632046aa77fdd18887280ff2fcf26ffca856608f74f741ef5b5ddc4e42a69917",
+    "verbatim_text": "approved and authorized.  You are hereby authorized and approved to perform any and all actions in regards to plotkeeper that allow you to continue until PK is on git, sharable and ready for public use",
+    "captured_at_utc": "2026-08-10T22:20:28Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "e495b00791d7ad6394773e4920368ab008372969",
+    "retrieved_at_utc": "2026-08-10T23:02:00Z",
+    "protection_evidence": "Independent VALIDATED FAIL receipt 24badb2416bb8c818c69fa758bfdeb1146bdf0c1910800d68cac0a413f2c7e83 preserves the exact false-green findings.",
+    "selection_reason": "Failed candidate retained as the immutable pre-correction baseline."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".github/workflows/release-verifier.yml",
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "scripts/verify_public_release.py",
+      "tests/test_release_verifier.py",
+      "tests/test_production_guard.py",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-authenticated-release-proof.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Plotkeeper local run ad06db522b8c4d81a6705c14c5a1dbb6 goal-contract binding",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER Actions variables and secrets",
+      "Codex installed plotkeeper-guard plugin and trusted hook fingerprint",
+      "Local Plotkeeper review-authentication secret"
+    ],
+    "semantic_changes": [
+      "Cryptographically authenticate every phase receipt with a non-repository review key required by both host guard and GitHub verifier.",
+      "Verify every source-evidence path and content hash against the exact candidate checkout.",
+      "Bind the workflow and Plotkeeper run to this active contract and exact candidate.",
+      "Configure the out-of-band receipt bundle and review key only after independent PASS receipts exist."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "README.md",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "pyproject.toml"
+    ],
+    "semantic_changes": [
+      "Do not change Plotkeeper product behavior, UI, packaging, licensing, attribution, or unrelated documentation.",
+      "Do not store the review key in Git, logs, receipts, tests, or public artifacts.",
+      "Do not push until a fresh independently authenticated DEPLOY_READY PASS chain matches the exact candidate."
+    ]
+  },
+  "invariants": [
+    "All existing repository tests remain green.",
+    "A complete self-hashed but unsigned or wrongly signed receipt chain fails.",
+    "A signed receipt with any nonexistent or hash-mismatched evidence path fails.",
+    "The workflow contract path equals this active contract path.",
+    "The public repository remains empty until the authenticated release chain passes."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "Host and server release gates accept only the exact independently signed phase chain with candidate-verifiable evidence.",
+      "forbidden_behavior": "Self-asserted independence, fabricated evidence, replayed receipts, skipped phases, or wrong signatures may not authorize release.",
+      "target_and_actor": "Codex PreToolUse guard and GitHub Actions verifier.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "The active workflow, Plotkeeper run, and out-of-band GitHub configuration all bind the same contract and candidate before push.",
+      "forbidden_behavior": "A stale contract, missing variable/secret, or older Plotkeeper run binding may not appear release-ready.",
+      "target_and_actor": "Release operator, Plotkeeper ledger, and GitHub repository configuration.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Receipt authenticity is enforced with a secret unavailable from the public repository.",
+      "required_environment": "Local guard and GitHub Actions verifier",
+      "command_or_read_only_check": "Run wrong-key, missing-key, tampered-signature, and replay fixtures.",
+      "expected_observation": "Every unauthenticated chain fails before a release command or successful workflow conclusion."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Evidence locators and hashes are independently resolved from the exact candidate.",
+      "required_environment": "Git checkout and adversarial verifier tests",
+      "command_or_read_only_check": "Test nonexistent paths, mismatched hashes, and candidate-bound valid paths.",
+      "expected_observation": "Fabricated evidence fails and exact candidate evidence passes."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Workflow, Plotkeeper run, GitHub variable, and GitHub secret are coherently configured.",
+      "required_environment": "Local runtime and authenticated GitHub repository",
+      "command_or_read_only_check": "Inspect contract bindings and configuration presence without exposing secret values.",
+      "expected_observation": "All surfaces name this contract and exact candidate; required variable and secret names exist."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier holding the review key only for receipt sealing"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Validated authenticated chain, exact evidence, coherent configuration, clean candidate, and empty authenticated target."
+    }
+  ],
+  "stop_conditions": [
+    "Any secret value appears in tracked files or command output.",
+    "Any forged or nonexistent evidence bundle passes.",
+    "Any binding differs across workflow, run, receipt, candidate, or GitHub configuration.",
+    "Independent DEPLOY_READY verdict is not PASS.",
+    "Public target changes unexpectedly before release."
+  ],
+  "known_discrepancies": [
+    "Candidate e495b007 has a stale workflow contract pointer and admits a fully fabricated structurally complete receipt chain; the GitHub receipt variable is absent and Plotkeeper run ad06db522b8c4d81a6705c14c5a1dbb6 is bound to an older contract."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "continue until PK is on git, sharable and ready for public use",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-release-proof-hardening.json",
+    "sha256": "260cd0d1ec80edb22ea491b5b61cf2073a9ef6b93e6bc9ccab766f2f1d1f6873",
+    "adverse_receipt_hash": "24badb2416bb8c818c69fa758bfdeb1146bdf0c1910800d68cac0a413f2c7e83"
+  }
+}

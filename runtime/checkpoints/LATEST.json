@@ -2,18 +2,19 @@
   "current_track": "PLOTKEEPER PUBLIC RELEASE WORK",
   "tracks": {
     "PLOTKEEPER PUBLIC RELEASE WORK": {
-      "step": "release-proof-hardening-post-green",
-      "note": "Recursive receipt-chain verification, adversarial predecessor fixture, protected-baseline rollback, and origin proof are complete; exact candidate commit and fresh independent release review are next.",
+      "step": "authenticated-release-proof-post-green",
+      "note": "After independent FAIL, added HMAC-authenticated phase receipts, exact candidate evidence resolution, active workflow/run binding, and adversarial wrong-key/nonexistent-evidence controls; candidate commit and staged independent review are next.",
       "branch": "main",
-      "head": "bf5b9978f166d8c612b164c5908dd8fe12135d2a",
+      "head": "e495b00791d7ad6394773e4920368ab008372969",
       "next_cmd": "py -3 -m unittest discover -s tests -v",
       "validations": [
-        "32 tests green",
+        "33 tests green",
         "compileall green",
         "git diff check green",
-        "sealed contract validates at 2ed17366a9136c11230b6b29f0f6005cb03f5889ccbffba508900715dcb3ad3c",
-        "public origin authenticated and still empty",
-        "verifier rejects incomplete predecessor fields and skipped phase links"
+        "authenticated contract validates at 91115d18a0bb6dbbc996da9d1ee21fec83753f18c81cd0f0de2f4197110c8b0a",
+        "Plotkeeper run ad06db522b8c4d81a6705c14c5a1dbb6 bound to active contract",
+        "ignored review key generated without disclosure",
+        "public origin remains empty"
       ]
     },
     "PLOTKEEPER FIRST CLASS REPO WORK": {

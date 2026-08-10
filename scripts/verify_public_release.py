@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import os
 import subprocess
@@ -15,6 +16,10 @@ def canonical_hash(document: dict, field: str) -> str:
     payload.pop(field, None)
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def receipt_signature(receipt: dict, review_key: str) -> str:
+    return hmac.new(review_key.encode(), str(receipt.get("review_receipt_hash", "")).encode(), hashlib.sha256).hexdigest()
 
 
 def git(*args: str) -> str:
@@ -35,11 +40,16 @@ def validate_receipt(
     candidate: str,
     diff_sha256: str,
     required_kinds: set[str],
+    review_key: str,
+    signature: str,
+    evidence_hashes: dict[str, str],
 ) -> list[str]:
     errors: list[str] = []
     label = phase.lower().replace("_", "-")
     if canonical_hash(receipt, "review_receipt_hash") != receipt.get("review_receipt_hash"):
         errors.append(f"{label} receipt hash mismatch")
+    if not review_key or not hmac.compare_digest(receipt_signature(receipt, review_key), signature):
+        errors.append(f"{label} review signature mismatch")
     if receipt.get("contract_hash") != contract.get("contract_hash"):
         errors.append(f"{label} contract mismatch")
     if receipt.get("baseline_sha") != contract.get("baseline", {}).get("sha"):
@@ -64,7 +74,9 @@ def validate_receipt(
         errors.append(f"{label} required source evidence is incomplete")
     for item in evidence:
         binding = item.get("binding") or {}
-        if (len(str(item.get("sha256", ""))) != 64 or
+        path = str(item.get("path", "")).replace("\\", "/")
+        if (not path or path.startswith("/") or ":" in path or ".." in Path(path).parts or
+                evidence_hashes.get(path) != item.get("sha256") or
                 binding.get("contract_hash") != contract.get("contract_hash") or
                 binding.get("baseline_sha") != contract.get("baseline", {}).get("sha") or
                 binding.get("candidate_sha") != candidate or
@@ -86,14 +98,17 @@ def validate_receipt(
     return errors
 
 
-def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str], diff_sha256: str) -> list[str]:
+def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str], diff_sha256: str,
+           review_key: str, evidence_hashes: dict[str, str]) -> list[str]:
     errors: list[str] = []
     receipt = bundle.get("deploy") or {}
     predecessors = bundle.get("predecessors") or []
+    signatures = bundle.get("signatures") or {}
     if canonical_hash(contract, "contract_hash") != contract.get("contract_hash"):
         errors.append("contract hash mismatch")
     errors.extend(validate_receipt(receipt, "DEPLOY_READY", contract, candidate, diff_sha256,
-                                   {"user-goal", "contract", "diff", "test", "review", "deploy"}))
+                                   {"user-goal", "contract", "diff", "test", "review", "deploy"}, review_key,
+                                   str(signatures.get(receipt.get("review_receipt_hash"), "")), evidence_hashes))
     predecessor_by_phase = {item.get("phase"): item for item in predecessors}
     if set(predecessor_by_phase) != {"VALIDATED", "MERGE_READY"}:
         errors.append("validated and merge-ready predecessors are required")
@@ -102,7 +117,8 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
         for phase in ("VALIDATED", "MERGE_READY"):
             item = predecessor_by_phase[phase]
             errors.extend(validate_receipt(item, phase, contract, candidate, diff_sha256,
-                                           {"user-goal", "contract", "diff", "test", "review"}))
+                                           {"user-goal", "contract", "diff", "test", "review"}, review_key,
+                                           str(signatures.get(item.get("review_receipt_hash"), "")), evidence_hashes))
             expected_hashes.append(item.get("review_receipt_hash"))
         validated_hash = predecessor_by_phase["VALIDATED"].get("review_receipt_hash")
         if predecessor_by_phase["MERGE_READY"].get("predecessor_receipt_hashes") != [validated_hash]:
@@ -121,8 +137,9 @@ def main() -> int:
     candidate = os.environ.get("GITHUB_SHA", "").lower()
     contract_path = Path(os.environ.get("PLOTKEEPER_CONTRACT", ""))
     receipt_text = os.environ.get("PLOTKEEPER_DEPLOY_RECEIPT", "")
-    if not candidate or not contract_path.is_file() or not receipt_text:
-        print("missing candidate, contract, or deploy receipt", file=sys.stderr)
+    review_key = os.environ.get("PLOTKEEPER_REVIEW_KEY", "")
+    if not candidate or not contract_path.is_file() or not receipt_text or not review_key:
+        print("missing candidate, contract, deploy receipt, or review key", file=sys.stderr)
         return 2
     try:
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
@@ -131,10 +148,17 @@ def main() -> int:
         changed = git("diff", "--name-only", f"{baseline}..{candidate}").splitlines()
         diff_bytes = subprocess.run(["git", "diff", "--name-status", f"{baseline}..{candidate}"], check=True, capture_output=True).stdout
         diff_sha256 = hashlib.sha256(diff_bytes).hexdigest()
+        evidence_paths = {str(item.get("path", "")).replace("\\", "/") for document in [bundle.get("deploy") or {}, *(bundle.get("predecessors") or [])] for item in (document.get("source_evidence") or [])}
+        evidence_hashes = {}
+        for path in evidence_paths:
+            if not path or path.startswith("/") or ":" in path or ".." in Path(path).parts:
+                continue
+            blob = subprocess.run(["git", "show", f"{candidate}:{path}"], check=True, capture_output=True).stdout
+            evidence_hashes[path] = hashlib.sha256(blob).hexdigest()
     except (json.JSONDecodeError, KeyError, OSError, subprocess.CalledProcessError) as exc:
         print(f"invalid verification input: {exc}", file=sys.stderr)
         return 2
-    errors = verify(contract, bundle, candidate, changed, diff_sha256)
+    errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 2

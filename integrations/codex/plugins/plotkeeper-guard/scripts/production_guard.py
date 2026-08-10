@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
+import os
 import re
 import subprocess
 import sys
@@ -49,6 +52,11 @@ def latest_active_contract(cwd: Path) -> dict | None:
 
 
 def matching_receipt(cwd: Path, contract_hash: str, candidate: str) -> bool:
+    key_path = Path(os.environ.get("PLOTKEEPER_REVIEW_KEY_FILE", str(cwd / "runtime" / "qa" / "plotkeeper-review.key")))
+    try:
+        review_key = key_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return False
     folders = (cwd / "runtime" / "goal-reviews", cwd / ".github" / "release-receipts")
     for folder in folders:
         if not folder.is_dir():
@@ -59,6 +67,15 @@ def matching_receipt(cwd: Path, contract_hash: str, candidate: str) -> bool:
             except (OSError, json.JSONDecodeError):
                 continue
             reviewer = receipt.get("reviewer") or {}
+            payload = dict(receipt)
+            payload.pop("review_receipt_hash", None)
+            encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+            expected_hash = hashlib.sha256(encoded).hexdigest()
+            expected_signature = hmac.new(review_key.encode(), str(receipt.get("review_receipt_hash", "")).encode(), hashlib.sha256).hexdigest()
+            try:
+                signature = path.with_suffix(path.suffix + ".sig").read_text(encoding="utf-8").strip()
+            except OSError:
+                continue
             if (
                 receipt.get("phase") == "DEPLOY_READY"
                 and receipt.get("verdict") == "PASS"
@@ -66,6 +83,10 @@ def matching_receipt(cwd: Path, contract_hash: str, candidate: str) -> bool:
                 and receipt.get("candidate_sha") == candidate
                 and reviewer.get("independent") is True
                 and reviewer.get("implemented_candidate") is False
+                and reviewer.get("delegated_candidate") is False
+                and reviewer.get("approved_candidate") is False
+                and receipt.get("review_receipt_hash") == expected_hash
+                and hmac.compare_digest(signature, expected_signature)
             ):
                 return True
     return False
