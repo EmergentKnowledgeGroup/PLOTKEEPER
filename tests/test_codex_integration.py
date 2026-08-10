@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).parents[1] / "integrations" / "codex" / "install.py"
@@ -51,6 +52,14 @@ class CodexIntegrationTests(unittest.TestCase):
         self.assertIn("codex plugin add msw@slopware-skills", rendered)
         self.assertIn("codex plugin add msw-hook@slopware-skills", rendered)
         self.assertIn("codex plugin add timebox@slopware-skills", rendered)
+
+    def test_plugin_install_executes_every_canonical_command(self):
+        with mock.patch.object(INSTALLER.subprocess, "run") as run:
+            INSTALLER.install_plugins()
+        self.assertEqual(
+            run.call_args_list,
+            [mock.call(command, check=True) for command in INSTALLER.SLOPWARE_COMMANDS],
+        )
 
 
 if __name__ == "__main__":

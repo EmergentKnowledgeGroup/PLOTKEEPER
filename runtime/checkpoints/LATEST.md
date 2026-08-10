@@ -11,7 +11,7 @@ Track: `PLOTKEEPER PUBLIC RELEASE WORK`
 - branch: main
 - head: b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a
 - next_cmd: `git diff --check && py -3 -m unittest discover -s tests -v`
-- validations: 21 unit/static/repository/integration tests green; installer hook merge is idempotent and preserves unrelated configuration; all three canonical Slopware packages asserted; full Apache-2.0 text and separate CC BY 4.0 notice present; git diff check green
+- validations: 22 unit/static/repository/integration tests green; installer hook merge is idempotent and preserves unrelated configuration; stubbed subprocess proof executes all three canonical Slopware package commands; exact lease-bound rollback documented; full Apache-2.0 text and separate CC BY 4.0 notice present; git diff check green
 
 ## PLOTKEEPER FIRST CLASS REPO WORK
 

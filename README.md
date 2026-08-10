@@ -97,6 +97,7 @@ See [Integration](docs/INTEGRATION.md) for the complete marker contract and
 - [Examples](examples/README.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Security](docs/SECURITY.md)
+- [Release and rollback](docs/RELEASE.md)
 
 ## Automatic Codex execution gate
 
