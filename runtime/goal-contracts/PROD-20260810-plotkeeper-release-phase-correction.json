@@ -1,0 +1,160 @@
+{
+  "id": "PROD-20260810-plotkeeper-release-phase-correction",
+  "status": "ACTIVE",
+  "contract_hash": "0a1b6815c99bc1552dd2a82331b48cf4ec7fcf023cc214de76f76fb20a24aac2",
+  "origin": "DIRECT",
+  "user_goal": "Publish the already reviewed PLOTKEEPER candidate to EmergentKnowledgeGroup/PLOTKEEPER, then independently attest the public result without requiring post-push evidence before the first push.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedb8-6380-71d3-9075-990dbe48f48a",
+    "original_request_hash": "04dd9c7e9464019a848b69db2ed9a9b2a7def45b169e44627e7e613d67ff18ce",
+    "verbatim_text": "authorized",
+    "captured_at_utc": "2026-08-10T22:15:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedb8-6380-71d3-9075-990dbe48f48a"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "0d41e0742a24a4e07a8f2611733de0f95247fc7e",
+    "retrieved_at_utc": "2026-08-10T22:15:00Z",
+    "protection_evidence": "Clean candidate with 22 passing tests and independent substantive review; publication was blocked only by the prior contract's circular phase model.",
+    "selection_reason": "This is the completed integration candidate explicitly authorized for a phase-split publication correction."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-release-phase-correction.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Git remote named origin",
+      "GitHub repository EmergentKnowledgeGroup/PLOTKEEPER",
+      "GitHub main branch",
+      "GitHub repository description and topics"
+    ],
+    "semantic_changes": [
+      "Record this append-only phase correction and checkpoint.",
+      "Configure origin and publish the exact independently reviewed candidate to the empty public repository.",
+      "Set accurate repository description and topics.",
+      "After publication, independently attest the public SHA, files, metadata, visibility, and Actions status before closeout."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "integrations/",
+      "README.md",
+      "docs/",
+      "tests/",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "pyproject.toml",
+      "runtime/plotkeeper.sqlite3",
+      "C:/Users/UltariumV3/.codex/"
+    ],
+    "semantic_changes": [
+      "Do not change the reviewed product or integration candidate.",
+      "Do not publish a SHA other than the corrected-contract candidate reviewed for DEPLOY_READY.",
+      "Do not auto-trust hooks, alter local Codex configuration, publish secrets, or weaken rollback controls.",
+      "Do not claim completion without post-push independent attestation."
+    ]
+  },
+  "invariants": [
+    "The reviewed Plotkeeper code, tests, license, attribution, installer, and hook behavior remain byte-for-byte unchanged from 0d41e0742a24a4e07a8f2611733de0f95247fc7e.",
+    "Only this contract and checkpoint metadata may change before release review.",
+    "The authenticated target remains the empty public EmergentKnowledgeGroup/PLOTKEEPER repository.",
+    "The pushed main SHA must equal the exact DEPLOY_READY candidate SHA.",
+    "A failed release is rolled back with the documented force-with-lease procedure.",
+    "Post-push evidence is collected only after push and is mandatory for ATTESTED and completion."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "The exact unchanged integration candidate plus this phase correction is authorized for an initial push to the authenticated empty repository.",
+      "forbidden_behavior": "No different SHA, dirty state, forbidden file change, or unexpected remote baseline may be pushed.",
+      "target_and_actor": "Primary release agent publishing local main to EmergentKnowledgeGroup/PLOTKEEPER.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2",
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The protected candidate remains unchanged except for the append-only contract and checkpoint metadata.",
+      "required_environment": "Clean local main checkout",
+      "command_or_read_only_check": "Compare 0d41e0742a24a4e07a8f2611733de0f95247fc7e to the release candidate and inspect every changed path.",
+      "expected_observation": "Only allowed contract and checkpoint paths differ; all 22 tests remain green."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The authenticated GitHub target is public, empty, and controlled by EmergentKnowledgeGroup immediately before push.",
+      "required_environment": "Authenticated GitHub API",
+      "command_or_read_only_check": "Query auth identity, repository visibility, refs, branches, and default branch.",
+      "expected_observation": "Authenticated owner is EmergentKnowledgeGroup and the public PLOTKEEPER repository has no pre-existing commit to absorb."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "A precise rollback path exists before publication.",
+      "required_environment": "Repository release documentation",
+      "command_or_read_only_check": "Inspect docs/RELEASE.md and validate its protected SHA and force-with-lease command.",
+      "expected_observation": "Rollback preserves audit history and lease-binds restoration to the protected baseline."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Exact candidate SHA, clean scope, authenticated empty target, passing tests, and rollback command."
+    }
+  ],
+  "stop_conditions": [
+    "Any reviewed product or integration file changes after 0d41e0742a24a4e07a8f2611733de0f95247fc7e.",
+    "The checkout becomes dirty or contains another worktree.",
+    "The GitHub target gains an unexpected ref or changes owner/visibility before push.",
+    "Independent DEPLOY_READY review is not PASS for the exact release candidate.",
+    "Push, metadata update, Actions, or public attestation fails or contradicts the candidate."
+  ],
+  "known_discrepancies": [
+    "The predecessor contract required post-push PR-6 and RL-2 evidence during pre-push validation, creating an impossible circular gate.",
+    "The user explicitly authorized an append-only phase split; this contract governs pre-push authorization while post-push evidence remains mandatory for an independent ATTESTED receipt and closeout."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "authorized",
+      "acceptance_case_ids": [
+        "AC-1"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-public-release.json",
+    "sha256": "372f15ed01a81c6d73e0913998ed023af58f7d34b7c956c00983b4754f6ac194"
+  }
+}

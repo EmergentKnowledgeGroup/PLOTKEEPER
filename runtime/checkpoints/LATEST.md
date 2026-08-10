@@ -6,12 +6,12 @@ Track: `PLOTKEEPER PUBLIC RELEASE WORK`
 
 ## PLOTKEEPER PUBLIC RELEASE WORK
 
-- step: post-green-tests
-- note: Slopware plugin integration, Plotkeeper adaptive Codex hooks, attribution, and Apache-2.0 licensing implemented; candidate is ready for exact-SHA independent review before publication.
+- step: release-phase-correction
+- note: User authorized append-only phase correction after the prior validator deadlocked on post-push proof; corrected contract is sealed and the unchanged product candidate is pending exact-SHA DEPLOY_READY review.
 - branch: main
-- head: b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a
+- head: 0d41e0742a24a4e07a8f2611733de0f95247fc7e
 - next_cmd: `git diff --check && py -3 -m unittest discover -s tests -v`
-- validations: 22 unit/static/repository/integration tests green; installer hook merge is idempotent and preserves unrelated configuration; stubbed subprocess proof executes all three canonical Slopware package commands; exact lease-bound rollback documented; full Apache-2.0 text and separate CC BY 4.0 notice present; git diff check green
+- validations: corrected contract validates with hash 0a1b6815c99bc1552dd2a82331b48cf4ec7fcf023cc214de76f76fb20a24aac2; user authority hash verified; predecessor file hash verified; product and integration files unchanged from 0d41e07; 22 tests previously green
 
 ## PLOTKEEPER FIRST CLASS REPO WORK
 
