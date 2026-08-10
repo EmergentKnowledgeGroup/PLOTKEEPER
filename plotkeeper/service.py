@@ -18,7 +18,7 @@ from .sessions import SessionScanner
 
 class PlotkeeperService:
     def __init__(self, *, ledger_path: str | os.PathLike[str] = "runtime/plotkeeper.sqlite3",
-                 sessions_root: str | os.PathLike[str] = r"C:\Users\UltariumV3\.codex\sessions",
+                 sessions_root: str | os.PathLike[str] = Path.home() / ".codex" / "sessions",
                  dashboard_url: str = "http://127.0.0.1:47831"):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
@@ -216,7 +216,7 @@ class PlotkeeperService:
 
     def serve(self, host: str = "127.0.0.1", port: int = 47831) -> ThreadingHTTPServer:
         service = self
-        web_root = Path(__file__).resolve().parent.parent / "web"
+        web_root = Path(__file__).resolve().parent / "web"
 
         class Handler(BaseHTTPRequestHandler):
             def _json(self, body: Any, status: int = 200) -> None:

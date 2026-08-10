@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 
 from .service import PlotkeeperService
 
@@ -10,7 +11,7 @@ from .service import PlotkeeperService
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="plotkeeper")
     parser.add_argument("--ledger", default=os.environ.get("PLOTKEEPER_LEDGER", "runtime/plotkeeper.sqlite3"))
-    parser.add_argument("--sessions", default=os.environ.get("PLOTKEEPER_SESSIONS", r"C:\Users\UltariumV3\.codex\sessions"))
+    parser.add_argument("--sessions", default=os.environ.get("PLOTKEEPER_SESSIONS", str(Path.home() / ".codex" / "sessions")))
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
     current = sub.add_parser("current")

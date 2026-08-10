@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WEB = ROOT / "web"
+WEB = ROOT / "plotkeeper" / "web"
 
 
 class PlotkeeperStaticSurfaceTests(unittest.TestCase):

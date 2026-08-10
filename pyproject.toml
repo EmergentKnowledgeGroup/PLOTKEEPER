@@ -6,7 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "plotkeeper"
 version = "0.1.0"
 description = "Read-only Codex Specswarm run ledger and review gate"
+readme = "README.md"
 requires-python = ">=3.11"
+
+[project.scripts]
+plotkeeper = "plotkeeper.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["plotkeeper*"]
+
+[tool.setuptools.package-data]
+plotkeeper = ["web/*.html", "web/*.css", "web/*.js"]

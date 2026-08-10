@@ -1,0 +1,13 @@
+{
+  "id": "PROD-YYYYMMDD-example",
+  "status": "ACTIVE",
+  "user_goal": "Replace this with the immutable user-authorized outcome.",
+  "contract_hash": "validator-generated-sha256",
+  "baseline": {
+    "sha": "protected-baseline-commit"
+  },
+  "invariants": [
+    "Codex session JSONL inputs remain read-only.",
+    "A run cannot close without an independent PASS receipt."
+  ]
+}

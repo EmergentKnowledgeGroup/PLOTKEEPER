@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.request import urlopen
 
 from plotkeeper.ledger import Ledger
 from plotkeeper.models import RunState
@@ -16,6 +17,23 @@ def line(timestamp, typ, payload):
 
 
 class BackendTests(unittest.TestCase):
+    def test_packaged_dashboard_is_served(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            server = service.serve("127.0.0.1", 0)
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                with urlopen(f"http://127.0.0.1:{server.server_port}/", timeout=2) as response:
+                    body = response.read().decode("utf-8")
+                self.assertEqual(response.status, 200)
+                self.assertIn("PLOTKEEPER", body)
+            finally:
+                server.shutdown()
+                server.server_close()
+                service.close_db()
+
     def test_parser_identifies_root_invocation_and_terminal_events(self):
         obs = parse_session("root.jsonl", [
             line("2026-08-07T00:00:00Z", "session_meta", {"id": "root-1", "cwd": "Z:\\demo"}),

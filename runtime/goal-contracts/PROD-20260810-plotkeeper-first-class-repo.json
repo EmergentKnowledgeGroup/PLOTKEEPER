@@ -1,0 +1,213 @@
+{
+  "id": "PROD-20260810-plotkeeper-first-class-repo",
+  "status": "ACTIVE",
+  "contract_hash": "3c8a700e3620a218d052ae4033d483401a9d0baaaacb434cd6d9a91fbe604e0f",
+  "origin": "DIRECT",
+  "user_goal": "Turn PLOTKEEPER into a first-class Git repository with examples, screenshots, usage and installation documentation, and easy implementation instructions.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fed78-fa7f-75b0-bd96-a9939b6d885d",
+    "original_request_hash": "c6061619b4ea097114ae14112e2912b9da3a5f6217eea220ff9b7160d367072e",
+    "verbatim_text": "Okay, so PLOTKEEPER - can we turn that into a first-class git repo with examples, screenshots, usage/installation docs and easy to implement instructions??",
+    "captured_at_utc": "2026-08-10T21:00:27Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fed78-fa7f-75b0-bd96-a9939b6d885d"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "208ece46587eeaa13eef6928e8e49ca0836bb0ea",
+    "retrieved_at_utc": "2026-08-10T21:00:27Z",
+    "protection_evidence": "Clean local main checkout with a single worktree; git status reported no changed files before task mutation.",
+    "selection_reason": "Current clean main HEAD predates all repository-productization changes in this task."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "README.md",
+      "pyproject.toml",
+      ".gitignore",
+      ".github/",
+      "docs/",
+      "examples/",
+      "plotkeeper/",
+      "scripts/",
+      "tests/",
+      "web/",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-first-class-repo.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Plotkeeper Python package",
+      "Local Plotkeeper dashboard",
+      "Repository documentation and example assets"
+    ],
+    "semantic_changes": [
+      "Make installation and startup portable outside the Z drive source checkout.",
+      "Add repository-facing documentation, examples, screenshots, and validation needed to prove the documented workflow.",
+      "Add packaging metadata and tests directly required for the documented install and usage paths."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      ".git/",
+      "runtime/plotkeeper.sqlite3",
+      "user Codex session JSONL files",
+      "Windows registry locations other than an explicit local installation smoke test"
+    ],
+    "semantic_changes": [
+      "Do not weaken Plotkeeper's read-only session observation or review-closeout gates.",
+      "Do not publish, push, merge, deploy, or create a remote repository without separate user authority.",
+      "Do not add a guessed software license or claim unsupported platform compatibility."
+    ]
+  },
+  "invariants": [
+    "Plotkeeper never writes to Codex session JSONL inputs.",
+    "A run closes only after the existing injected terminal PASS receipt requirements are met.",
+    "Existing runtime data remains preserved and uncommitted.",
+    "Documented commands must match executable repository behavior."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "A Windows user can install and start Plotkeeper from a fresh repository checkout using the documented commands.",
+      "forbidden_behavior": "Installation must not depend on the original Z drive path or modify Codex session files.",
+      "target_and_actor": "Windows user operating a fresh local clone with Python 3.11 or newer.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "A new adopter can understand what Plotkeeper does, run a self-contained example, and integrate it with SpecSwarm from repository documentation.",
+      "forbidden_behavior": "Documentation must not present unverified commands, hidden machine-specific prerequisites, or invented behavior.",
+      "target_and_actor": "Developer reading the repository without prior Plotkeeper context.",
+      "required_proof_ids": [
+        "PR-3",
+        "PR-4"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The repository includes current desktop and mobile screenshots that visibly demonstrate the dashboard.",
+      "forbidden_behavior": "Screenshots must not be mockups presented as live application evidence.",
+      "target_and_actor": "Repository visitor evaluating Plotkeeper before installation.",
+      "required_proof_ids": [
+        "PR-5"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The Python project installs into an isolated environment and exposes its documented command.",
+      "required_environment": "Fresh isolated Python environment on Windows",
+      "command_or_read_only_check": "Install from the repository and run the documented CLI help and health path.",
+      "expected_observation": "Installation succeeds without importing from the source checkout and the CLI starts successfully."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Existing backend, dashboard, and read-only gate behavior remains green.",
+      "required_environment": "Repository test environment",
+      "command_or_read_only_check": "Run the complete automated test suite plus static compilation checks.",
+      "expected_observation": "All tests and compilation checks pass with no tracked runtime database."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "The quickstart, usage, architecture, configuration, troubleshooting, and integration instructions are internally linked and command-accurate.",
+      "required_environment": "Repository checkout",
+      "command_or_read_only_check": "Audit every documented local path and command against repository files and smoke-test the quickstart.",
+      "expected_observation": "Links resolve and commands produce the documented result."
+    },
+    {
+      "id": "PR-4",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "At least one self-contained example exercises a real Plotkeeper workflow without private session data.",
+      "required_environment": "Temporary directory on the Z drive",
+      "command_or_read_only_check": "Execute the example and inspect its generated API or CLI result.",
+      "expected_observation": "The example completes deterministically and exposes a populated demonstration run."
+    },
+    {
+      "id": "PR-5",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Desktop and mobile screenshots are captured from a running Plotkeeper instance populated by the repository example.",
+      "required_environment": "Local browser against the running example service",
+      "command_or_read_only_check": "Capture and inspect desktop and mobile viewport screenshots.",
+      "expected_observation": "Both images render the live dashboard legibly and correspond to the documented example."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "MERGE_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "No publication or deployment is authorized; a separate user-authorized release contract is required."
+    }
+  ],
+  "stop_conditions": [
+    "The checkout becomes dirty from an unrelated actor or an unexpected path enters the diff.",
+    "A required documented workflow cannot be proven without changing a forbidden semantic surface.",
+    "The existing read-only or review-closeout invariants regress.",
+    "Publication, remote creation, push, merge, deployment, or licensing becomes necessary without explicit user authority."
+  ],
+  "known_discrepancies": [
+    "The repository has no configured Git remote.",
+    "The current README uses a machine-specific Z drive installation command.",
+    "The checkpoint references an older tested head than the current clean main HEAD.",
+    "No repository license is present; no license will be inferred."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "first-class git repo",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ]
+    },
+    {
+      "user_requirement": "examples",
+      "acceptance_case_ids": [
+        "AC-2"
+      ]
+    },
+    {
+      "user_requirement": "screenshots",
+      "acceptance_case_ids": [
+        "AC-3"
+      ]
+    },
+    {
+      "user_requirement": "usage and installation docs with easy implementation instructions",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

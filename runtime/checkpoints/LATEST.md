@@ -2,7 +2,16 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER GLOBAL WORK`
+Track: `PLOTKEEPER FIRST CLASS REPO WORK`
+
+## PLOTKEEPER FIRST CLASS REPO WORK
+
+- step: post-green-tests
+- note: Portable package layout, isolated installer path, seeded demo, repository documentation, CI, and live desktop/mobile screenshots implemented and verified; independent production-goal review remains.
+- branch: main
+- head: 208ece46587eeaa13eef6928e8e49ca0836bb0ea
+- next_cmd: `git diff --check && py -3 -m unittest discover -s tests -v`
+- validations: 18 unit/static/repository tests green; compileall green; PowerShell script syntax green; fresh isolated wheel install and console entry point green; installed-package demo API green; desktop 1440x1000 and mobile 390x844 live screenshots captured with zero console errors; contract validator green; git diff check green
 
 ## PLOTKEEPER GLOBAL WORK
 

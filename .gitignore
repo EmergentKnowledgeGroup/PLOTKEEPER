@@ -2,3 +2,9 @@ __pycache__/
 *.py[cod]
 runtime/plotkeeper.sqlite3*
 runtime/qa/
+runtime/goal-reviews/
+examples/.demo-runtime/
+.venv/
+build/
+dist/
+*.egg-info/
