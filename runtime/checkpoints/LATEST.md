@@ -6,12 +6,12 @@ Track: `PLOTKEEPER PUBLIC RELEASE WORK`
 
 ## PLOTKEEPER PUBLIC RELEASE WORK
 
-- step: enforcement-implemented
-- note: Managed PreToolUse production guard and GitHub server verifier implemented under the expanded public-readiness contract; plugin validates, is installed, and all 29 tests pass. Hook content trust and independent candidate review remain.
+- step: release-proof-hardening-post-green
+- note: Recursive receipt-chain verification, adversarial predecessor fixture, protected-baseline rollback, and origin proof are complete; exact candidate commit and fresh independent release review are next.
 - branch: main
-- head: 0d41e0742a24a4e07a8f2611733de0f95247fc7e
+- head: bf5b9978f166d8c612b164c5908dd8fe12135d2a
 - next_cmd: `py -3 -m unittest discover -s tests -v`
-- validations: public-readiness contract validates with hash 5739e40ea5c8ad891403a32c72cb2f622b2e5d48551bcd372613fd513791d52d; plotkeeper-guard plugin validator PASS; managed plugin installed and enabled; 29 tests green; server verifier rejects tampered receipt, mismatched SHA, and forbidden diff
+- validations: 32 tests green; compileall green; git diff check green; sealed contract validates at 2ed17366a9136c11230b6b29f0f6005cb03f5889ccbffba508900715dcb3ad3c; public origin authenticated and still empty; verifier rejects incomplete predecessor fields and skipped phase links
 
 ## PLOTKEEPER FIRST CLASS REPO WORK
 

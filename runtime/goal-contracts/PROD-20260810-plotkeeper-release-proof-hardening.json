@@ -1,0 +1,165 @@
+{
+  "id": "PROD-20260810-plotkeeper-release-proof-hardening",
+  "status": "ACTIVE",
+  "contract_hash": "2ed17366a9136c11230b6b29f0f6005cb03f5889ccbffba508900715dcb3ad3c",
+  "origin": "DIRECT",
+  "user_goal": "Correct the independently confirmed release-proof gaps and continue until Plotkeeper is public and ready for use.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c",
+    "original_request_hash": "632046aa77fdd18887280ff2fcf26ffca856608f74f741ef5b5ddc4e42a69917",
+    "verbatim_text": "approved and authorized.  You are hereby authorized and approved to perform any and all actions in regards to plotkeeper that allow you to continue until PK is on git, sharable and ready for public use",
+    "captured_at_utc": "2026-08-10T22:20:28Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "bf5b9978f166d8c612b164c5908dd8fe12135d2a",
+    "retrieved_at_utc": "2026-08-10T22:45:00Z",
+    "protection_evidence": "Clean candidate independently reviewed PARTIAL with exactly two proof defects and no product/runtime defect.",
+    "selection_reason": "Last candidate before correcting the server receipt-chain verifier and rollback baseline."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "scripts/verify_public_release.py",
+      "tests/test_release_verifier.py",
+      "docs/RELEASE.md",
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260810-plotkeeper-release-proof-hardening.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Git origin remote",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER",
+      "GitHub Actions PLOTKEEPER_DEPLOY_RECEIPT variable"
+    ],
+    "semantic_changes": [
+      "Require a complete candidate-bound phase receipt chain with authority, obligations, evidence bindings, delegation, diff hash, target digest, and independent reviewer flags.",
+      "Align rollback to the protected enforcement baseline using force-with-lease.",
+      "Configure origin and continue the reviewed release process."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "integrations/",
+      "README.md",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "pyproject.toml",
+      "C:/Users/UltariumV3/.codex/"
+    ],
+    "semantic_changes": [
+      "Do not change Plotkeeper runtime, hook implementation/trust, installer, attribution, licensing, or unrelated documentation.",
+      "Do not weaken any verifier check or manufacture phase evidence.",
+      "Do not push without a new independent DEPLOY_READY PASS for the exact corrected candidate."
+    ]
+  },
+  "invariants": [
+    "All 29 existing tests remain green.",
+    "A fabricated minimal receipt fails server verification.",
+    "Only a complete independently sealed VALIDATED to MERGE_READY to DEPLOY_READY chain for the exact candidate passes.",
+    "Rollback targets bf5b9978f166d8c612b164c5908dd8fe12135d2a or the reviewer-approved corrected baseline and uses force-with-lease.",
+    "The public target remains empty before authorized push."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "Server verification rejects incomplete, fabricated, replayed, or mismatched release evidence and accepts only the complete independent phase chain.",
+      "forbidden_behavior": "Headline-only receipts, missing authority, missing obligations, missing predecessors, or mismatched diff/target may not pass.",
+      "target_and_actor": "GitHub Actions release verifier.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "Rollback and remote configuration are exact and ready before release.",
+      "forbidden_behavior": "Rollback may not point to an obsolete baseline or use an unqualified force push.",
+      "target_and_actor": "Release operator and public origin.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Every required receipt and evidence field is enforced.",
+      "required_environment": "Local adversarial fixtures",
+      "command_or_read_only_check": "Test omissions and mutations across authority, obligations, predecessors, diff, delegation, reviewer flags, and target digest.",
+      "expected_observation": "Each omission or mutation fails and a complete exact chain passes."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The GitHub workflow supplies the sealed chain without tracked-receipt circularity.",
+      "required_environment": "Workflow and repository-variable contract",
+      "command_or_read_only_check": "Inspect variable bundle parsing and exact candidate binding.",
+      "expected_observation": "The immutable reviewer chain is supplied out of band and binds the pushed SHA."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Origin and rollback are correct before push.",
+      "required_environment": "Local Git and docs/RELEASE.md",
+      "command_or_read_only_check": "Inspect origin URL and lease-bound rollback baseline.",
+      "expected_observation": "Origin is EmergentKnowledgeGroup/PLOTKEEPER and rollback restores the sealed enforcement baseline without deleting history."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Full phase-chain verifier, adversarial tests, correct origin, correct rollback, clean exact candidate, and authenticated empty target."
+    }
+  ],
+  "stop_conditions": [
+    "Any forbidden file changes.",
+    "Any minimal or tampered receipt still passes.",
+    "Rollback or origin is inconsistent.",
+    "Independent DEPLOY_READY is not PASS.",
+    "Remote target changes unexpectedly."
+  ],
+  "known_discrepancies": [
+    "The bf5b997 verifier accepted a fabricated minimal receipt and docs/RELEASE.md named b36c6f3 instead of the enforcement baseline; independent review correctly prohibited release."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "continue until PK is on git, sharable and ready for public use",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-final-release-execution.json",
+    "sha256": "b4cbe8e842511edbb24685430a222406dbdca6d20b2a01e496b8374b74a8c44b"
+  }
+}

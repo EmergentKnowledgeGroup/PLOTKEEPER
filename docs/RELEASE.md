@@ -16,15 +16,15 @@ py -3 -m unittest discover -s tests -v
 
 ## Rollback
 
-The protected functional baseline for this release is
-`b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a`. If the new Codex integration or
+The protected enforcement baseline for this release is
+`bf5b9978f166d8c612b164c5908dd8fe12135d2a`. If the release-proof hardening or
 public release is defective, preserve the failed release commit for audit and
 restore the public branch to that baseline with a lease-bound update:
 
 ```powershell
 git fetch origin main
 git push --force-with-lease=refs/heads/main:<REMOTE_FAILED_SHA> origin `
-  b36c6f3d0ffed1f5e919e49668e79cf8fe2adb7a:refs/heads/main
+  bf5b9978f166d8c612b164c5908dd8fe12135d2a:refs/heads/main
 ```
 
 Replace `<REMOTE_FAILED_SHA>` with the SHA independently read from GitHub. Do
