@@ -19,15 +19,21 @@ The installer:
 3. installs the bundled Plotkeeper `adaptive-execution` skill;
 4. merges Plotkeeper's `UserPromptSubmit` and `Stop` hooks into
    `%USERPROFILE%\.codex\hooks.json` without removing unrelated hooks.
+5. installs the managed `plotkeeper-guard` plugin, whose `PreToolUse` hook
+   blocks push, merge, deployment, publication, and repository-metadata
+   commands until an independent `DEPLOY_READY PASS` receipt matches the
+   active contract and exact Git `HEAD`.
 
 It deliberately does **not** alter Codex hook trust. In Codex, run `/hooks`,
-inspect the three effective hooks, and trust them:
+inspect the four effective hooks, and trust them:
 
 - `SessionStart` — supplied by upstream `msw-hook`;
 - `UserPromptSubmit` — starts or routes the turn receipt;
-- `Stop` — refuses silent closeout while the receipt is missing or open.
+- `Stop` — refuses silent closeout while the receipt is missing or open;
+- `PreToolUse` — blocks unreviewed production release side effects.
 
-Codex binds trust to reviewed hook content. If a hook changes, review and trust
+Codex does not automatically trust plugin-bundled hooks. It binds trust to the
+reviewed hook content. If a hook changes, review and trust
 the new version again. That is a safety boundary, not an installation defect.
 
 To make the policy available in every repository, merge

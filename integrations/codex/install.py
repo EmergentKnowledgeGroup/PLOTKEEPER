@@ -57,6 +57,12 @@ def install_plugins() -> None:
         subprocess.run(command, check=True)
 
 
+def install_guard_plugin() -> None:
+    marketplace_root = Path(__file__).resolve().parent
+    subprocess.run(("codex", "plugin", "marketplace", "add", str(marketplace_root)), check=True)
+    subprocess.run(("codex", "plugin", "add", "plotkeeper-guard@plotkeeper"), check=True)
+
+
 def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
     source = Path(__file__).resolve().parent / "adaptive-execution"
     destination = codex_home / "skills" / "adaptive-execution"
@@ -72,6 +78,7 @@ def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
 
     if not skip_plugins:
         install_plugins()
+        install_guard_plugin()
     return hooks_path
 
 

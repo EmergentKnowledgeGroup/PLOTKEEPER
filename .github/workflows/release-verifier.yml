@@ -1,0 +1,28 @@
+name: Release verifier
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify contract, receipt, diff, and candidate
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260810-plotkeeper-public-readiness-enforcement.json
+          PLOTKEEPER_DEPLOY_RECEIPT: ${{ vars.PLOTKEEPER_DEPLOY_RECEIPT }}
+        run: python scripts/verify_public_release.py
+      - name: Run repository tests
+        run: python -m unittest discover -s tests -v

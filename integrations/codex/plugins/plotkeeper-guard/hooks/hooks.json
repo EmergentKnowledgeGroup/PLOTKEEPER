@@ -1,0 +1,18 @@
+{
+  "description": "Fail closed before production release commands unless contract and independent review evidence match the current candidate.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 \"${PLUGIN_ROOT}/scripts/production_guard.py\"",
+            "timeout": 15,
+            "statusMessage": "Validating production release authority"
+          }
+        ]
+      }
+    ]
+  }
+}

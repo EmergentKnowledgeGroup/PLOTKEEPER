@@ -2,17 +2,17 @@
   "current_track": "PLOTKEEPER PUBLIC RELEASE WORK",
   "tracks": {
     "PLOTKEEPER PUBLIC RELEASE WORK": {
-      "step": "release-phase-correction",
-      "note": "User authorized append-only phase correction after the prior validator deadlocked on post-push proof; corrected contract is sealed and the unchanged product candidate is pending exact-SHA DEPLOY_READY review.",
+      "step": "enforcement-implemented",
+      "note": "Managed PreToolUse production guard and GitHub server verifier implemented under the expanded public-readiness contract; plugin validates, is installed, and all 29 tests pass. Hook content trust and independent candidate review remain.",
       "branch": "main",
       "head": "0d41e0742a24a4e07a8f2611733de0f95247fc7e",
       "next_cmd": "py -3 -m unittest discover -s tests -v",
       "validations": [
-        "corrected contract validates with hash 0a1b6815c99bc1552dd2a82331b48cf4ec7fcf023cc214de76f76fb20a24aac2",
-        "user authority hash verified",
-        "predecessor file hash verified",
-        "product and integration files unchanged from 0d41e07",
-        "22 tests previously green"
+        "public-readiness contract validates with hash 5739e40ea5c8ad891403a32c72cb2f622b2e5d48551bcd372613fd513791d52d",
+        "plotkeeper-guard plugin validator PASS",
+        "managed plugin installed and enabled",
+        "29 tests green",
+        "server verifier rejects tampered receipt, mismatched SHA, and forbidden diff"
       ]
     },
     "PLOTKEEPER FIRST CLASS REPO WORK": {

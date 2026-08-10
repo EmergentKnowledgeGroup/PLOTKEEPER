@@ -1,0 +1,204 @@
+{
+  "id": "PROD-20260810-plotkeeper-public-readiness-enforcement",
+  "status": "ACTIVE",
+  "contract_hash": "5739e40ea5c8ad891403a32c72cb2f622b2e5d48551bcd372613fd513791d52d",
+  "origin": "DIRECT",
+  "user_goal": "Complete every Plotkeeper action needed to make the project public, shareable, and ready for use, including production hook enforcement, server verification, publication, and attestation.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c",
+    "original_request_hash": "632046aa77fdd18887280ff2fcf26ffca856608f74f741ef5b5ddc4e42a69917",
+    "verbatim_text": "approved and authorized.  You are hereby authorized and approved to perform any and all actions in regards to plotkeeper that allow you to continue until PK is on git, sharable and ready for public use",
+    "captured_at_utc": "2026-08-10T22:20:28Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fedc3-1b73-7993-818a-8cb054ee4e9c"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "f300cdc63933dedc90521f41b2f4b5457479ac4c",
+    "retrieved_at_utc": "2026-08-10T22:20:28Z",
+    "protection_evidence": "Clean single-worktree main candidate with 22 green tests and validated VALIDATED/MERGE_READY phase receipts.",
+    "selection_reason": "Latest reviewed Plotkeeper release candidate before the newly authorized enforcement expansion."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".github/",
+      "integrations/",
+      "scripts/",
+      "tests/",
+      "docs/",
+      "README.md",
+      "pyproject.toml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/",
+      "runtime/goal-reviews/",
+      "C:/Users/UltariumV3/.codex/hooks.json",
+      "C:/Users/UltariumV3/.codex/plugins/",
+      "C:/Users/UltariumV3/.agents/plugins/marketplace.json"
+    ],
+    "resources": [
+      "Local Codex managed plugin and hook installation",
+      "Local Git origin remote",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main branch",
+      "GitHub Actions and repository metadata"
+    ],
+    "semantic_changes": [
+      "Add and test a managed fail-closed production-contract guard plugin.",
+      "Add and test a GitHub Actions verifier for contracts, diffs, receipts, and public candidate identity.",
+      "Install and verify the managed hook without bypassing trust controls.",
+      "Publish the independently approved candidate and attest its public behavior and checks."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/web/",
+      "runtime/plotkeeper.sqlite3",
+      "Codex session JSONL files"
+    ],
+    "semantic_changes": [
+      "Do not change Plotkeeper runtime behavior or closeout semantics.",
+      "Do not publish secrets, private data, local ledgers, or review receipts.",
+      "Do not weaken existing tests, license, attribution, hook trust, or rollback controls.",
+      "Do not claim a hard lock or public readiness without independent host and GitHub evidence."
+    ]
+  },
+  "invariants": [
+    "Existing Plotkeeper behavior and all existing tests remain green.",
+    "Production guard fails closed only for production-affecting commands and provides a repair path.",
+    "Read-only and ordinary non-production work remains usable.",
+    "Server verification binds authority, allowed diff, candidate SHA, and required phase receipts.",
+    "Slopware attribution and licenses remain unchanged.",
+    "Remote main equals the independently reviewed candidate and public checks pass before completion."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "A managed Codex production guard blocks uncontracted or unreviewed production commands and permits correctly receipted commands.",
+      "forbidden_behavior": "The guard may not silently trust itself, block harmless read-only commands, or accept prose/local JSON without validation.",
+      "target_and_actor": "Codex agent attempting production-affecting actions.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "GitHub independently verifies the release contract, changed paths, phase receipts, and exact candidate SHA.",
+      "forbidden_behavior": "A self-authored local success claim or mismatched SHA may not pass.",
+      "target_and_actor": "GitHub Actions on the public main branch.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The exact reviewed repository is public, shareable, documented, and green at EmergentKnowledgeGroup/PLOTKEEPER.",
+      "forbidden_behavior": "No dirty, unexpected, failing, private, or unattested release may be called ready.",
+      "target_and_actor": "Public GitHub visitor and installing Codex user.",
+      "required_proof_ids": [
+        "PR-4"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Guard classification and fail-closed decisions are behaviorally tested.",
+      "required_environment": "Isolated Z-drive fixtures",
+      "command_or_read_only_check": "Run guard unit/integration tests for blocked, allowed, malformed, missing, and read-only cases.",
+      "expected_observation": "Every adversarial production bypass is stopped while safe reads pass."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The managed plugin validates and its effective hook is installed and trusted by Codex.",
+      "required_environment": "Local Codex plugin and hook surface",
+      "command_or_read_only_check": "Validate plugin, install through supported CLI, inspect effective hooks and persisted trust status.",
+      "expected_observation": "Production guard is enabled, inspectable, hash-bound, and trusted without a bypass flag."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Server verifier independently executes against the published candidate.",
+      "required_environment": "GitHub Actions",
+      "command_or_read_only_check": "Inspect workflow definition and successful Actions run logs bound to public main SHA.",
+      "expected_observation": "Server check validates contract, diff, receipts, tests, and SHA with no secret dependency."
+    },
+    {
+      "id": "PR-4",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Public repository state and documented installation match the reviewed candidate.",
+      "required_environment": "Public GitHub API and clean clone",
+      "command_or_read_only_check": "Verify visibility/default SHA/metadata/files/checks and execute tests from a clean Z-drive clone.",
+      "expected_observation": "Public main is exact, checks pass, required files render, and clean-clone tests and installation documentation succeed."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    },
+    {
+      "id": "RR-2",
+      "phase": "ATTESTED",
+      "required_role": "independent public release verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Trusted production guard, candidate-bound server verifier, exact SHA, clean scope, authenticated target, tests, and rollback."
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "Public default SHA, successful GitHub Actions verifier, clean-clone proof, files, metadata, and installation surface."
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected product/runtime diff, dirty state, secret, or remote content appears.",
+    "Guard or server verifier can be bypassed by a relevant counterfactual.",
+    "Trusted hook status cannot be proven without bypassing trust.",
+    "Independent phase review is not PASS.",
+    "Push, GitHub checks, clean-clone validation, or public attestation fails."
+  ],
+  "known_discrepancies": [
+    "No trusted production pre-action hook or server release verifier exists at baseline.",
+    "The first server verifier cannot validate until present on GitHub; bootstrap must remain explicitly evidenced and may not be called a pre-existing hard lock."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "perform any and all actions in regards to plotkeeper that allow you to continue until PK is on git, sharable and ready for public use",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260810-plotkeeper-release-phase-correction.json",
+    "sha256": "1905fc34a8ff6150ce1ec35f12ec8db5d4bbdb2ecba8453e9d8a1ca6d89f1031"
+  }
+}

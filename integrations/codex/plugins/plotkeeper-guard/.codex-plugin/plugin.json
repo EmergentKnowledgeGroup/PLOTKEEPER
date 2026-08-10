@@ -1,0 +1,18 @@
+{
+  "name": "plotkeeper-guard",
+  "version": "0.1.0",
+  "description": "Fail-closed production release guard for Plotkeeper-managed Codex work",
+  "author": {
+    "name": "Emergent Knowledge Group"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Plotkeeper Guard",
+    "shortDescription": "Block unreviewed release commands before side effects.",
+    "longDescription": "Plotkeeper Guard validates an active production goal contract and an independent candidate-bound DEPLOY_READY PASS receipt before Codex can run push, merge, deploy, or repository-metadata mutation commands.",
+    "developerName": "Emergent Knowledge Group",
+    "category": "Productivity",
+    "capabilities": ["hooks"],
+    "defaultPrompt": "Inspect Plotkeeper Guard status and explain any blocked release action."
+  }
+}

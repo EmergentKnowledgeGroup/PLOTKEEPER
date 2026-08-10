@@ -61,6 +61,15 @@ class CodexIntegrationTests(unittest.TestCase):
             [mock.call(command, check=True) for command in INSTALLER.SLOPWARE_COMMANDS],
         )
 
+    def test_guard_plugin_uses_repository_marketplace(self):
+        with mock.patch.object(INSTALLER.subprocess, "run") as run:
+            INSTALLER.install_guard_plugin()
+        marketplace_root = str(MODULE_PATH.parent.resolve())
+        self.assertEqual(run.call_args_list, [
+            mock.call(("codex", "plugin", "marketplace", "add", marketplace_root), check=True),
+            mock.call(("codex", "plugin", "add", "plotkeeper-guard@plotkeeper"), check=True),
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()
