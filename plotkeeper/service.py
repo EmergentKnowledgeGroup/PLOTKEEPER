@@ -122,13 +122,18 @@ class PlotkeeperService:
     def _session_ids(run) -> list[str]:
         return list(dict.fromkeys((run.root_session_id, *run.children)))
 
+    @staticmethod
+    def _is_subagent(metadata: dict[str, Any] | None) -> bool:
+        return bool(metadata and str(metadata.get("thread_source") or "").strip().lower() == "subagent")
+
     def _active_session_ids(self, run) -> list[str]:
         active: list[str] = []
         for session_id in self._session_ids(run):
             metadata = self.thread_catalog.metadata(session_id)
             # Nested native subagents are implementation details of their
             # owning task, not separate user-facing run surfaces.
-            if metadata is not None and not metadata.get("agent_path") and self.thread_catalog.is_active(session_id):
+            if (metadata is not None and not self._is_subagent(metadata) and
+                    not metadata.get("agent_path") and self.thread_catalog.is_active(session_id)):
                 active.append(session_id)
         return active
 
@@ -153,6 +158,9 @@ class PlotkeeperService:
         payload = run.to_dict(self._identity(run, bound_session_id))
         payload["bound_session_id"] = bound_session_id
         payload["dashboard_url"] = self._dashboard_url(run, bound_session_id)
+        catalog = self.thread_catalog.metadata(bound_session_id)
+        if catalog and catalog.get("thread_source"):
+            payload["thread_source"] = str(catalog["thread_source"])
         return payload
 
     def _interactive_runs(self) -> list[Any]:
@@ -177,6 +185,8 @@ class PlotkeeperService:
             if not by_run or all(match.run_id != run_id for match in matches):
                 return None, {"ok": False, "error": "locator_conflict"}
             metadata = self.thread_catalog.metadata(session_id)
+            if self._is_subagent(metadata):
+                return None, {"ok": False, "error": "run_subagent"}
             if metadata is not None and not self.thread_catalog.is_active(session_id):
                 return None, {"ok": False, "error": "run_inactive"}
             if metadata is None and self.thread_catalog.available and re.fullmatch(r"[0-9a-fA-F-]{20,}", session_id):
@@ -199,6 +209,8 @@ class PlotkeeperService:
             if not self.ledger.valid_root_session_id(matches[0].root_session_id):
                 return None, {"ok": False, "error": "run_identity_invalid"}
             metadata = self.thread_catalog.metadata(session_id)
+            if self._is_subagent(metadata):
+                return None, {"ok": False, "error": "run_subagent"}
             if metadata is None and self.thread_catalog.available and re.fullmatch(r"[0-9a-fA-F-]{20,}", session_id):
                 return None, {"ok": False, "error": "run_identity_unavailable"}
             if metadata is not None and not self.thread_catalog.is_active(session_id):
@@ -417,7 +429,7 @@ class PlotkeeperService:
                         run_id=query.get("run_id", [None])[0],
                         session_id=query.get("session_id", [None])[0],
                     )
-                    status = 200 if result.get("ok") else (404 if result.get("error") in {"run_not_found", "session_not_found", "cwd_not_found", "no_active_run", "run_closed", "run_inactive", "run_identity_invalid", "run_identity_unavailable"} else 409)
+                    status = 200 if result.get("ok") else (404 if result.get("error") in {"run_not_found", "session_not_found", "cwd_not_found", "no_active_run", "run_closed", "run_inactive", "run_identity_invalid", "run_identity_unavailable", "run_subagent"} else 409)
                     self._json(result, status)
                 elif parsed.path.startswith("/api/runs/"):
                     rid = parsed.path.rsplit("/", 1)[-1]

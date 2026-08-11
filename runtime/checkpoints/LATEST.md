@@ -7,11 +7,11 @@ Track: `PLOTKEEPER ACTIVE RUN SURFACE WORK`
 ## PLOTKEEPER ACTIVE RUN SURFACE WORK
 
 - step: post-green-tests
-- note: Active-run identity, child-session binding, categorical liveness, active-only grouped picker, full-width responsive UI, version 0.1.2, and final release binding are implemented; exact candidate commit and independent review remain.
+- note: Successor contract `PROD-20260811-plotkeeper-active-run-surface-subagent-fix` is implemented and verified; subagent threads are excluded even with null agent_path, with older-schema fallback preserved.
 - branch: main
 - head: ecc8a01f58732ac04de4995cfc10b7840b87377c
-- next_cmd: `py -3 -m unittest discover -s tests -q && git diff --check`
-- validations: final contract VALID at b56b3e4363c12003d606a573b906702ec999d5f83ea760592b7a71517486a251; 54 tests green; Node syntax and diff check green; copied-live-ledger candidate API reduced 256 stored rows to 5 provably active interactive runs without source-ledger mutation; exact run switching and invalid-locator fail-closed browser proof green; desktop selector spans available width; mobile 390x844 has no horizontal overflow or console errors; foreign MoonMarket contracts hash-preserved in origin project
+- next_cmd: `git diff --check`
+- validations: successor contract VALID at 5bf9dcefcbdfdf8ca9950a1bd721b946e1f4940bded9a282badd255e89bfaf0f; predecessor b56b3e4363c12003d606a573b906702ec999d5f83ea760592b7a71517486a251 preserved; 55 tests green; Node syntax and diff check green; subagent thread-source/null-agent regression and older-schema compatibility green; live read-only state confirms Task 21G is subagent with null agent_path
 
 ## PLOTKEEPER ACTIVE RUN SURFACE IMPLEMENTATION
 

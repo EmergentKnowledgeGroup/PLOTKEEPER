@@ -83,6 +83,7 @@ class ActiveRunSurfaceTests(unittest.TestCase):
             db.commit(); db.close()
             catalog = ThreadCatalog(state, folder)
             self.assertTrue(catalog.is_active("active"))
+            self.assertIsNone(catalog.metadata("active")["thread_source"])
             self.assertFalse(catalog.is_active("done"))
             self.assertFalse(catalog.is_active("aborted"))
             self.assertFalse(catalog.is_active("missing"))
@@ -138,6 +139,26 @@ class ActiveRunSurfaceTests(unittest.TestCase):
             run = service.ledger.enroll("root", str(folder), service.dashboard_url); service.ledger.attach_child(run.run_id, "worker")
             self.assertEqual(service._interactive_runs(), [])
             self.assertEqual(service.current(run_id=run.run_id)["error"], "run_inactive")
+            service.close_db()
+
+    def test_thread_source_subagent_is_excluded_even_when_agent_path_is_null(self):
+        with self._temp_root() as folder:
+            folder = Path(folder); sessions = folder / "sessions"; sessions.mkdir()
+            root_rollout = folder / "root.jsonl"; worker_rollout = folder / "worker.jsonl"
+            root_rollout.write_text(_line("1", "session_meta", {"id": "owner"}) + _line("2", "event_msg", {"type": "task_complete"}), encoding="utf-8")
+            worker_rollout.write_text(_line("1", "session_meta", {"id": "worker"}) + _line("2", "response_item", {"type": "reasoning"}), encoding="utf-8")
+            state = folder / "state.sqlite"; db = sqlite3.connect(state)
+            db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, name TEXT, first_user_message TEXT, preview TEXT, agent_path TEXT, cwd TEXT, rollout_path TEXT, thread_source TEXT)")
+            db.executemany("INSERT INTO threads VALUES (?,?,?,?,?,?,?,?,?)", [
+                ("owner", "Owner", None, None, None, None, str(folder), str(root_rollout), "user"),
+                ("worker", "Task 21G", None, None, None, None, str(folder), str(worker_rollout), "subagent"),
+            ])
+            db.commit(); db.close()
+            service = PlotkeeperService(ledger_path=folder / "ledger.sqlite", sessions_root=sessions, codex_state_path=state)
+            run = service.ledger.enroll("owner", str(folder), service.dashboard_url); service.ledger.attach_child(run.run_id, "worker")
+            self.assertEqual(service._interactive_runs(), [])
+            self.assertEqual(service.current(run_id=run.run_id, session_id="worker")["error"], "run_subagent")
+            self.assertEqual(service.thread_catalog.metadata("worker")["thread_source"], "subagent")
             service.close_db()
 
 

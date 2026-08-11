@@ -271,9 +271,22 @@ class ThreadCatalog:
         try:
             db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
             db.row_factory = sqlite3.Row
-            row = db.execute(
-                "SELECT id,title,name,first_user_message,preview,agent_path,cwd,rollout_path "
-                "FROM threads WHERE id=?", (session_id,)).fetchone()
+            # Codex's registry schema gained thread_source after older
+            # installations were already in use. Discover columns read-only
+            # and select the field only when it exists; older fixtures remain
+            # valid and receive a neutral None value.
+            columns = {str(item[1]) for item in db.execute("PRAGMA table_info(threads)")}
+            base = ("id", "title", "name", "first_user_message", "preview",
+                    "agent_path", "cwd", "rollout_path")
+            selected = [column for column in base if column in columns]
+            if "thread_source" in columns:
+                selected.append("thread_source")
+            if "id" not in selected:
+                row = None
+            else:
+                row = db.execute(
+                    f"SELECT {', '.join(selected)} FROM threads WHERE id=?", (session_id,)
+                ).fetchone()
             db.close()
         except (OSError, sqlite3.Error):
             row = None
@@ -281,6 +294,7 @@ class ThreadCatalog:
             result = None
         else:
             result = dict(row)
+            result.setdefault("thread_source", None)
             result["task_label"] = self._label(result)
             result["project_name"] = self._project_name(result.get("cwd"))
         self._metadata_cache[session_id] = result
