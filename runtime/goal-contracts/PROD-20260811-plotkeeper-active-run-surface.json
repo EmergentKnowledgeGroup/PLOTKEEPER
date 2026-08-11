@@ -1,0 +1,223 @@
+{
+  "id": "PROD-20260811-plotkeeper-active-run-surface",
+  "status": "ACTIVE",
+  "contract_hash": "4f5a54f69642f81ff853833d82594e0a7fdaece1ea0dc7b285acbd70ea9521be",
+  "origin": "DIRECT",
+  "user_goal": "Correct Plotkeeper so each Codex task opens its exact active run surface, historical runs are excluded from the picker, and active runs are grouped by originating project with real task names or IDs.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2fa-c79e-73a0-8883-3e2f3e07eedd",
+    "original_request_hash": "d3f712e49bbd1df543c11617aca3edcc20f601751a455e84697aaf47588d73b8",
+    "verbatim_text": "authorized #2 - then continue the remediation and correction of PK.  Do not alert other threads after you finish",
+    "captured_at_utc": "2026-08-11T22:41:23.4430255Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2fa-c79e-73a0-8883-3e2f3e07eedd"
+  },
+  "baseline": {
+    "protected_ref": "origin/main",
+    "sha": "ecc8a01f58732ac04de4995cfc10b7840b87377c",
+    "retrieved_at_utc": "2026-08-11T22:40:00Z",
+    "protection_evidence": "Local main and origin/main were identical at the signed Plotkeeper v0.1.1 CLOSED release before this task mutation.",
+    "selection_reason": "Exact protected public predecessor that contains the reported historical-run selector and ambiguous current-by-cwd behavior."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/cli.py",
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/web/app.js",
+      "plotkeeper/web/index.html",
+      "plotkeeper/web/styles.css",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "integrations/codex/bundled/skills/specswarm/scripts/plotkeeper_cli.py",
+      "scripts/",
+      "tests/",
+      "README.md",
+      "CHANGELOG.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      "pyproject.toml",
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Plotkeeper service at 127.0.0.1:47831 and installed Codex SpecSwarm integration",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main, release-verifier bundle, Actions, version tag, and release",
+      "Read-only Codex session metadata required to prove exact task-to-run resolution"
+    ],
+    "semantic_changes": [
+      "Resolve a dashboard launch by explicit run or stable current-session identity and fail closed instead of guessing by project cwd when ambiguous.",
+      "Return and render only non-closed runs in the interactive run inventory, grouped by normalized project and labeled with the real root task title plus session/run identity.",
+      "Make the run chooser span the available header width and preserve accessible desktop and mobile interaction.",
+      "Version, document, independently review, publish, install, restart, and attest the exact approved correction without notifying other Codex tasks."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "runtime/plotkeeper.sqlite3"
+    ],
+    "semantic_changes": [
+      "Do not delete, merge, close, re-key, rename, or mutate historical or active run records as part of this source repair.",
+      "Do not infer the current run from project name alone when multiple active runs share a cwd or project.",
+      "Do not expose closed historical runs in the interactive picker, auto-select an unrelated run, weaken review/release enforcement, expose secrets, or notify other Codex tasks."
+    ]
+  },
+  "invariants": [
+    "Existing ledger history remains byte-preserved; filtering is a read/display concern rather than destructive cleanup.",
+    "A run-specific dashboard URL always opens that exact active run or shows a truthful unavailable state; it never silently falls back to another run.",
+    "Distinct active tasks in one project remain distinct, while the selector groups them under one project heading.",
+    "Health, explicit HTTP error behavior, foreign-listener preservation, production-goal review, signed release verification, and rollback remain fail closed.",
+    "No other Codex task is messaged or awakened after remediation."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "Opening a dashboard URL bound to an active run or its root session renders that exact run.",
+      "forbidden_behavior": "The dashboard must not guess another run from cwd, latest timestamp, project label, or historical inventory.",
+      "target_and_actor": "A Codex task opening Plotkeeper in its own sidebar.",
+      "required_proof_ids": [
+        "PR-IDENTITY",
+        "PR-LIVE"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "The chooser contains only active runs, grouped by project, with distinct real task labels and session/run identity.",
+      "forbidden_behavior": "Closed history, hundreds of duplicate project-only labels, or an ungrouped narrow list may not appear.",
+      "target_and_actor": "A user inspecting the Plotkeeper run chooser on desktop or mobile.",
+      "required_proof_ids": [
+        "PR-API",
+        "PR-UI"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The exact reviewed candidate is public, installed, and serving the corrected behavior.",
+      "forbidden_behavior": "No stale source, install, release pointer, tag, process, or unsigned candidate may be reported as deployed.",
+      "target_and_actor": "Plotkeeper users and repository consumers.",
+      "required_proof_ids": [
+        "PR-REGRESSION",
+        "PR-RELEASE",
+        "PR-LIVE"
+      ]
+    }
+  ],
+  "known_discrepancies": [
+    "The live ledger contains 263 accumulated runs, including closed history; the current /api/runs endpoint returns all of them.",
+    "Run labels currently use only Path(cwd).name, producing indistinguishable project-name duplicates.",
+    "The dashboard currently auto-selects the first active-looking row and current --cwd selects the newest cwd match, neither of which proves task identity.",
+    "Three MoonMarket-owned contract files were hash-preserved and relocated from Plotkeeper into Z:/MoonMarket/runtime/goal-contracts under explicit user authority before this contract."
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-IDENTITY",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Explicit run and root-session locators select exactly one active run and ambiguity fails closed.",
+      "required_environment": "Synthetic multi-project and same-project ledger fixtures plus real read-only session metadata samples.",
+      "command_or_read_only_check": "Exercise run_id, session_id, missing, closed, and ambiguous cwd resolution through CLI/service and dashboard URL parsing.",
+      "expected_observation": "Only the exact active run resolves; invalid, closed, or ambiguous requests do not fall through to another run."
+    },
+    {
+      "id": "PR-API",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "The interactive run API excludes closed history and returns stable project and task identity fields.",
+      "required_environment": "Backend integration fixture and read-only live service inventory.",
+      "command_or_read_only_check": "Compare total ledger rows with interactive API rows and verify grouped label metadata for same-project active tasks.",
+      "expected_observation": "Every returned row is active and distinguishable; closed rows remain stored but absent from the picker payload."
+    },
+    {
+      "id": "PR-UI",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "The chooser spans the header, groups projects, shows task labels and identifiers, and works at desktop and mobile viewports.",
+      "required_environment": "Live browser against the candidate service with representative active runs.",
+      "command_or_read_only_check": "Inspect optgroups/options, exact selected run, control width, overflow, interaction, and console at desktop and mobile sizes.",
+      "expected_observation": "Project-separated options are readable across the available width with no overflow or relevant console errors."
+    },
+    {
+      "id": "PR-REGRESSION",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "The correction preserves all existing service, ledger, parser, startup, install, and release-verifier behavior.",
+      "required_environment": "Exact candidate checkout and isolated install fixtures.",
+      "command_or_read_only_check": "Run the full automated suite, diff-scope audit, compile/syntax checks, foreign-listener test, and clean-tree check.",
+      "expected_observation": "All tests pass and the diff contains only contract-authorized surfaces."
+    },
+    {
+      "id": "PR-RELEASE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Independent review and public release controls bind the same exact candidate and contract.",
+      "required_environment": "Signed production-goal-review receipts, guarded GitHub push, exact-SHA Actions, changelog/version/tag/release.",
+      "command_or_read_only_check": "Validate the contract and phase receipts, verify candidate/contract bundle, push guarded exact SHA, and confirm public workflows and release.",
+      "expected_observation": "All public and signed surfaces name the same candidate with no open review items."
+    },
+    {
+      "id": "PR-LIVE",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-3"
+      ],
+      "claim": "The installed live service serves the exact corrected active-run surface.",
+      "required_environment": "Installed integration and Plotkeeper-owned live process on 127.0.0.1:47831.",
+      "command_or_read_only_check": "Install/restart after DEPLOY_READY, verify health/version/marker/process ownership, and open a run-bound URL in the browser.",
+      "expected_observation": "The reviewed version owns the port and renders the requested active run with the corrected grouped picker."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "Independent production-goal-review verifier checks identity, API filtering, browser proof, actual diff, tests, release binding, and rollback."
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Signed exact-candidate VALIDATED, MERGE_READY, and DEPLOY_READY PASS chain plus guarded public verifier and rollback proof."
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "Exact public SHA/tag/release/Actions and installed live identity/UI behavior attestation."
+    }
+  ],
+  "stop_conditions": [
+    "Any source or live path can still select a different run than the explicit active run/session binding.",
+    "Closed history remains visible in the interactive picker or active same-project tasks remain indistinguishable.",
+    "Any historical ledger row is mutated, any forbidden/unrelated diff appears, or another Codex task is messaged or awakened.",
+    "Any required test, browser proof, independent review, release verifier, CI run, install, live attestation, or rollback proof fails."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "Only show the correct active run for the current task; group active runs by project with real thread names and do not expose 263 historical SpecSwarm runs.",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

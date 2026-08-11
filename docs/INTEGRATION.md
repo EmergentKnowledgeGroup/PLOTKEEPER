@@ -13,7 +13,11 @@ Start Plotkeeper before the task. A new root user message containing
 `$specswarm` or `run specswarm` enrolls the run. The first activation watermark
 intentionally excludes older session bytes.
 
-Before opening the panel, verify both `/health` and `/` on the dashboard. The
+Before opening the panel, resolve the exact active run. Prefer
+`current --session-id <Codex-root-session-id>` (or `current --run-id <RUN_ID>`)
+and use the returned `dashboard_url`; only use `current --cwd` when it returns
+exactly one active run. Plotkeeper fails closed for missing, closed, or
+ambiguous locators. Verify both `/health` and the run-bound dashboard URL. The
 root response must be HTTP 200 with a non-empty HTML body containing `<html`
 and the exact `data-testid="plotkeeper-app"` marker. Emit `PK:PANEL_OPENED` only after that validation (and a
 second check after the browser-open call); a successful browser tool call by

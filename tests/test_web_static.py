@@ -38,6 +38,7 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
         self.assertIn("payload?.events", self.js)
         self.assertIn("payload?.sessions", self.js)
         self.assertIn("payload?.contract", self.js)
+        self.assertIn("Select an active run…", self.js)
 
     def test_accessibility_and_mobile_contract(self):
         self.assertIn('aria-live="polite"', self.index)

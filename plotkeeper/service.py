@@ -5,6 +5,7 @@ import os
 import subprocess
 import threading
 import re
+from urllib.parse import quote
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -13,16 +14,20 @@ from urllib.parse import parse_qs, urlparse
 
 from .ledger import Ledger
 from .models import RunState, SessionObservation
-from .sessions import SessionScanner
+from .sessions import SessionScanner, ThreadCatalog
 
 
 class PlotkeeperService:
     def __init__(self, *, ledger_path: str | os.PathLike[str] = "runtime/plotkeeper.sqlite3",
                  sessions_root: str | os.PathLike[str] = Path.home() / ".codex" / "sessions",
-                 dashboard_url: str = "http://127.0.0.1:47831"):
+                 dashboard_url: str = "http://127.0.0.1:47831",
+                 codex_state_path: str | os.PathLike[str] | None = None,
+                 thread_catalog: ThreadCatalog | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
         self.scanner = SessionScanner(sessions_root, self.ledger.watermark, self.ledger.set_watermark)
+        self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root)
+        self._session_identity: dict[str, dict[str, Any]] = {}
         if self.ledger.get_meta("activation_at") is None:
             self.ledger.set_meta("activation_at", self._now())
             self.scanner.initialize()
@@ -38,6 +43,11 @@ class PlotkeeperService:
     def poll_once(self) -> list[dict[str, Any]]:
         events: list[dict[str, Any]] = []
         for obs in self.scanner.scan():
+            self._session_identity[obs.session_id] = {
+                "task_id": obs.task_id or obs.session_id,
+                "task_label": obs.task_label or obs.task_id or obs.session_id,
+                "project_name": self._project_name(obs.cwd),
+            }
             run = self.ledger.by_root(obs.session_id)
             # A root task can have multiple Codex session files (worktree or
             # message-id variants). Resolve those to the same ledger run before
@@ -49,8 +59,10 @@ class PlotkeeperService:
                     self.ledger.attach_child(run.run_id, obs.session_id)
                     events.append({"type": "root_variant_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if obs.invoked_specswarm and obs.is_root:
-                if run is None:
+                if run is None and self.ledger.valid_root_session_id(obs.session_id):
                     run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url, obs.canonical_root_id)
+                    if run is None:
+                        continue
                     events.append({"type": "run_enrolled", "run_id": run.run_id, "session_id": obs.session_id})
             if run is None and obs.attach_run_ids:
                 candidate = self.ledger.get(obs.attach_run_ids[-1])
@@ -90,15 +102,125 @@ class PlotkeeperService:
         self._append_events(events)
         return events
 
-    def current(self, cwd: str | None = None) -> dict[str, Any] | None:
-        runs = self.ledger.list_runs(active_only=True)
+    @staticmethod
+    def _project_name(cwd: str | None) -> str:
+        if not cwd:
+            return "Plotkeeper run"
+        value = str(cwd).replace("\\\\?\\", "")
+        if "\\" in value:
+            return value.rstrip("\\/").rsplit("\\", 1)[-1] or value
+        return Path(value).name or value
+
+    @staticmethod
+    def _same_cwd(left: str | None, right: str | None) -> bool:
+        if not left or not right:
+            return False
+        normalize = lambda value: os.path.normcase(os.path.normpath(str(value).replace("\\\\?\\", "")))
+        return normalize(left) == normalize(right)
+
+    @staticmethod
+    def _session_ids(run) -> list[str]:
+        return list(dict.fromkeys((run.root_session_id, *run.children)))
+
+    def _active_session_ids(self, run) -> list[str]:
+        active: list[str] = []
+        for session_id in self._session_ids(run):
+            metadata = self.thread_catalog.metadata(session_id)
+            # Nested native subagents are implementation details of their
+            # owning task, not separate user-facing run surfaces.
+            if metadata is not None and not metadata.get("agent_path") and self.thread_catalog.is_active(session_id):
+                active.append(session_id)
+        return active
+
+    def _identity(self, run, session_id: str | None = None) -> dict[str, Any]:
+        bound_session_id = session_id or next(iter(self._active_session_ids(run)), run.root_session_id)
+        identity = dict(self._session_identity.get(bound_session_id, {}))
+        catalog = self.thread_catalog.metadata(bound_session_id)
+        if catalog:
+            identity.update({key: catalog[key] for key in ("task_label", "project_name", "agent_path") if catalog.get(key)})
+            identity["task_id"] = catalog.get("id") or identity.get("task_id") or bound_session_id
+        identity.setdefault("task_id", bound_session_id)
+        identity.setdefault("task_label", bound_session_id)
+        identity.setdefault("project_name", self._project_name(run.cwd))
+        return identity
+
+    def _dashboard_url(self, run, session_id: str | None = None) -> str:
+        bound_session_id = session_id or next(iter(self._active_session_ids(run)), run.root_session_id)
+        return f"{run.dashboard_url.rstrip('/')}/?run_id={quote(run.run_id)}&session_id={quote(bound_session_id)}"
+
+    def _run_payload(self, run, session_id: str | None = None) -> dict[str, Any]:
+        bound_session_id = session_id or next(iter(self._active_session_ids(run)), run.root_session_id)
+        payload = run.to_dict(self._identity(run, bound_session_id))
+        payload["bound_session_id"] = bound_session_id
+        payload["dashboard_url"] = self._dashboard_url(run, bound_session_id)
+        return payload
+
+    def _interactive_runs(self) -> list[Any]:
+        runs: list[Any] = []
+        for run in self.ledger.list_runs(active_only=True):
+            # ``msg_`` roots are legacy message ids, not stable task/session
+            # locators. Keep the ledger row intact but never expose it here.
+            if not self.ledger.valid_root_session_id(run.root_session_id):
+                continue
+            if not self._active_session_ids(run):
+                continue
+            runs.append(run)
+        return runs
+
+    def resolve_active_run(self, *, run_id: str | None = None,
+                           session_id: str | None = None,
+                           cwd: str | None = None) -> tuple[Any | None, dict[str, Any] | None]:
+        """Resolve one active run, never falling through to a project guess."""
+        if run_id and session_id:
+            by_run = self.ledger.get(run_id)
+            matches = self.ledger.by_session(session_id, active_only=True)
+            if not by_run or all(match.run_id != run_id for match in matches):
+                return None, {"ok": False, "error": "locator_conflict"}
+            metadata = self.thread_catalog.metadata(session_id)
+            if metadata is not None and not self.thread_catalog.is_active(session_id):
+                return None, {"ok": False, "error": "run_inactive"}
+            if metadata is None and self.thread_catalog.available and re.fullmatch(r"[0-9a-fA-F-]{20,}", session_id):
+                return None, {"ok": False, "error": "run_identity_unavailable"}
+        if run_id:
+            run = self.ledger.get(run_id)
+            if not run:
+                return None, {"ok": False, "error": "run_not_found"}
+            if run.state.value == RunState.CLOSED.value:
+                return None, {"ok": False, "error": "run_closed"}
+            if not self.ledger.valid_root_session_id(run.root_session_id):
+                return None, {"ok": False, "error": "run_identity_invalid"}
+            if self.thread_catalog.available and not self._active_session_ids(run):
+                return None, {"ok": False, "error": "run_inactive"}
+            return run, None
+        if session_id:
+            matches = self.ledger.by_session(session_id, active_only=True)
+            if len(matches) != 1:
+                return None, {"ok": False, "error": "session_ambiguous" if len(matches) > 1 else "session_not_found"}
+            if not self.ledger.valid_root_session_id(matches[0].root_session_id):
+                return None, {"ok": False, "error": "run_identity_invalid"}
+            metadata = self.thread_catalog.metadata(session_id)
+            if metadata is None and self.thread_catalog.available and re.fullmatch(r"[0-9a-fA-F-]{20,}", session_id):
+                return None, {"ok": False, "error": "run_identity_unavailable"}
+            if metadata is not None and not self.thread_catalog.is_active(session_id):
+                return None, {"ok": False, "error": "run_inactive"}
+            return matches[0], None
+        runs = self._interactive_runs()
         if cwd:
-            normalized = os.path.normcase(os.path.abspath(cwd))
-            matching = [r for r in runs if r.cwd and os.path.normcase(os.path.abspath(r.cwd)) == normalized]
-            if matching:
-                runs = matching
-        run = runs[0] if runs else None
-        return run.to_dict() if run else None
+            matches = [run for run in runs if self._same_cwd(run.cwd, cwd)]
+            if len(matches) != 1:
+                return None, {"ok": False, "error": "cwd_ambiguous" if len(matches) > 1 else "cwd_not_found", "matches": [self._run_payload(run) for run in matches]}
+            return matches[0], None
+        if len(runs) != 1:
+            return None, {"ok": False, "error": "selection_required" if len(runs) > 1 else "no_active_run", "matches": [self._run_payload(run) for run in runs]}
+        return runs[0], None
+
+    def current(self, cwd: str | None = None, *, run_id: str | None = None,
+                session_id: str | None = None) -> dict[str, Any]:
+        run, error = self.resolve_active_run(run_id=run_id, session_id=session_id, cwd=cwd)
+        if error:
+            return error
+        payload = self._run_payload(run, session_id=session_id)
+        return {"ok": True, "run": payload, **payload}
 
     def inject_review(self, run_id: str, *, runner: Callable[[list[str]], Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -284,16 +406,35 @@ class PlotkeeperService:
                     content_type = "text/html; charset=utf-8" if target.suffix == ".html" else ("text/css; charset=utf-8" if target.suffix == ".css" else "text/javascript; charset=utf-8")
                     self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
                 elif parsed.path == "/api/runs":
-                    self._json([r.to_dict() for r in service.ledger.list_runs()])
+                    # Interactive inventory is intentionally active-only. The
+                    # ledger remains the source of historical detail, but
+                    # closed/legacy rows never enter the chooser.
+                    self._json([service._run_payload(r) for r in service._interactive_runs()])
+                elif parsed.path == "/api/current":
+                    query = parse_qs(parsed.query)
+                    result = service.current(
+                        cwd=query.get("cwd", [None])[0],
+                        run_id=query.get("run_id", [None])[0],
+                        session_id=query.get("session_id", [None])[0],
+                    )
+                    status = 200 if result.get("ok") else (404 if result.get("error") in {"run_not_found", "session_not_found", "cwd_not_found", "no_active_run", "run_closed", "run_inactive", "run_identity_invalid", "run_identity_unavailable"} else 409)
+                    self._json(result, status)
                 elif parsed.path.startswith("/api/runs/"):
                     rid = parsed.path.rsplit("/", 1)[-1]
                     run = service.ledger.get(rid)
-                    if run:
+                    if run and run.state != RunState.CLOSED:
                         reports = service.ledger.reports(rid)
-                        sessions = [{"session_id": run.root_session_id, "status": run.state.value, "task_id": None}]
-                        sessions.extend({"session_id": sid, "status": "observed", "task_id": None} for sid in run.children)
+                        root_identity = service._identity(run)
+                        sessions = [{"session_id": run.root_session_id, "status": run.state.value,
+                                     "task_id": root_identity.get("task_id"),
+                                     "agent_path": root_identity.get("agent_path"),
+                                     "task_label": root_identity.get("task_label")}]
+                        sessions.extend({"session_id": sid, "status": "observed", "task_id": sid,
+                                         "task_label": sid} for sid in run.children)
                         events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"], "evidence": json.loads(item["evidence"] or "[]")} for item in reports]
-                        self._json({"run": run.to_dict(), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
+                        self._json({"run": service._run_payload(run), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
+                    elif run and run.state == RunState.CLOSED:
+                        self._json({"error": "run_closed"}, 410)
                     else:
                         self._json({"error": "not_found"}, 404)
                 elif parsed.path == "/api/events":

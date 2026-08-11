@@ -97,8 +97,15 @@ class Ledger:
         with self._lock, self.db:
             self.db.execute("INSERT INTO watermarks(path,byte_offset) VALUES(?,?) ON CONFLICT(path) DO UPDATE SET byte_offset=excluded.byte_offset", (path, max(0, int(offset))))
 
+    @staticmethod
+    def valid_root_session_id(session_id: str | None) -> bool:
+        """Reject the historical ``msg_`` parser artifact at enrollment time."""
+        return bool(session_id and str(session_id).strip() and not str(session_id).startswith("msg_"))
+
     def enroll(self, root_session_id: str, cwd: str | None, dashboard_url: str,
-               canonical_root_id: str | None = None) -> Run:
+               canonical_root_id: str | None = None) -> Run | None:
+        if not self.valid_root_session_id(root_session_id):
+            return None
         root_key = canonical_root_id or f"session:{root_session_id}"
         with self._lock, self.db:
             row = self.db.execute("SELECT * FROM runs WHERE root_session_id=? OR root_key=?", (root_session_id, root_key)).fetchone()
@@ -117,6 +124,22 @@ class Ledger:
     def by_root(self, session_id: str) -> Run | None:
         row = self.db.execute("SELECT * FROM runs WHERE root_session_id=?", (session_id,)).fetchone()
         return self._row(row) if row else None
+
+    def by_session(self, session_id: str, *, active_only: bool = False) -> list[Run]:
+        """Return exact root/child matches without cwd or project inference."""
+        query = (
+            "SELECT r.* FROM runs r WHERE r.root_session_id=? "
+            "UNION ALL SELECT r.* FROM runs r JOIN children c ON c.run_id=r.run_id WHERE c.session_id=?"
+        )
+        params: tuple[Any, ...] = (session_id, session_id)
+        rows = list(self.db.execute(query, params))
+        runs_by_id: dict[str, Run] = {}
+        for row in rows:
+            runs_by_id.setdefault(row["run_id"], self._row(row))
+        runs = list(runs_by_id.values())
+        if active_only:
+            runs = [run for run in runs if run.state != RunState.CLOSED]
+        return runs
 
     def by_canonical_root(self, canonical_root_id: str) -> Run | None:
         row = self.db.execute("SELECT * FROM runs WHERE root_key=?", (canonical_root_id,)).fetchone()

@@ -91,17 +91,24 @@ reviewers:
    marker. If any check fails,
    stop and report `PLOTKEEPER_UNAVAILABLE`; do not open the panel or emit its
    receipt.
-3. Use the CodexApp `open_in_codex` tool with a browser target of
-   `http://127.0.0.1:47831/` and placement `right`. This is mandatory, not an
-   optional preview. Re-check the same valid HTML response after the tool
-   returns; an open tool call alone is not proof of a visible panel.
+3. Resolve the exact run before opening the panel. Prefer the current
+   `CODEX_SESSION_ID`/`CODEX_THREAD_ID` when available:
+   `py -3 "$codexHome\skills\specswarm\scripts\plotkeeper_cli.py" current --session-id <id>`;
+   otherwise use an explicit `--run-id` from locked artifacts. The command
+   must return one active run and a `dashboard_url` containing its locator.
+   Use the CodexApp `open_in_codex` tool with that run-bound URL and placement
+   `right`; a bare root URL is permitted only when no local identity exists and
+   the command reports exactly one active run. Re-check the same valid HTML
+   response after the tool returns; an open tool call alone is not proof of a
+   visible panel.
 4. Only after the valid HTML check succeeds, emit the exact commentary marker
    `PK:PANEL_OPENED cwd=<absolute-project-path>` so the watcher can record the
    visible-surface receipt.
 5. Wait for enrollment, then run
    `$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }`, then
-   `py -3 "$codexHome\skills\specswarm\scripts\plotkeeper_cli.py" current --cwd "$PWD"`. Write the returned
-   `run_id` as `Plotkeeper-Run-ID` into the locked spec, checklist,
+   `py -3 "$codexHome\skills\specswarm\scripts\plotkeeper_cli.py" current --cwd "$PWD"` only when no
+   session identity is available. Write the returned `run_id` as
+   `Plotkeeper-Run-ID` into the locked spec, checklist,
    blockerboard, checkpoint, and final report. Never mutate the sealed
    production goal contract; pass its path to Plotkeeper instead.
 

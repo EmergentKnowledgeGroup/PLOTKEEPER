@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -55,6 +56,26 @@ def _canonical_id(payload: dict[str, Any]) -> str | None:
     return None
 
 
+def _task_id(payload: dict[str, Any], *, allow_session_id: bool = False) -> str | None:
+    """Return a stable Codex task/thread identity when one is exposed."""
+    for key in ("root_task_id", "rootTaskId", "task_id", "taskId", "thread_id", "threadId",
+                "conversation_id", "conversationId", "session_id", "sessionId"):
+        value = payload.get(key)
+        if value and isinstance(value, (str, int)):
+            return str(value)
+    if allow_session_id and payload.get("id"):
+        return str(payload["id"])
+    return None
+
+
+def _task_label(payload: dict[str, Any]) -> str | None:
+    for key in ("title", "name", "task_title", "taskTitle", "thread_title", "threadTitle", "label"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return " ".join(value.split())
+    return None
+
+
 def _is_user_specswarm(obj: dict[str, Any]) -> bool:
     p = _payload(obj)
     if p.get("role") != "user":
@@ -80,6 +101,8 @@ class _Parsed:
     parent: str | None
     root: bool
     canonical_root_id: str | None = None
+    task_id: str | None = None
+    task_label: str | None = None
     invoked: bool = False
     complete: bool = False
     idle: bool = False
@@ -119,15 +142,20 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
             cwd = mcwd
         if mcanonical:
             canonical_root_id = mcanonical
+        task_id = _task_id(_payload(obj), allow_session_id=obj.get("type") == "session_meta") or (parsed.task_id if parsed else None)
+        task_label = _task_label(_payload(obj)) or (parsed.task_label if parsed else None)
         if not sid:
             continue
         if parsed is None:
             parsed = _Parsed(sid, path, cwd, parent, not bool(parent), canonical_root_id=canonical_root_id,
+                             task_id=task_id, task_label=task_label,
                              claims=[], reports=[], evidence=[], review_results=[], attach_run_ids=[])
         parsed.cwd = cwd
         parsed.parent = parent
         parsed.root = not bool(parent)
         parsed.canonical_root_id = canonical_root_id or parsed.canonical_root_id
+        parsed.task_id = task_id or parsed.task_id
+        parsed.task_label = task_label or parsed.task_label
         parsed.invoked = parsed.invoked or _is_user_specswarm(obj)
         complete, idle = _event_flags(obj)
         parsed.complete = parsed.complete or complete
@@ -151,6 +179,8 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
     return SessionObservation(
         session_id=parsed.session_id, path=parsed.path, cwd=parsed.cwd,
         canonical_root_id=parsed.canonical_root_id or f"session:{parsed.session_id}",
+        task_id=parsed.task_id,
+        task_label=parsed.task_label,
         parent_session_id=parsed.parent, is_root=parsed.root,
         invoked_specswarm=parsed.invoked, root_complete=parsed.complete,
         root_idle=parsed.idle, goal_complete_requested=parsed.goal_complete,
@@ -209,3 +239,137 @@ class SessionScanner:
             except (OSError, UnicodeError):
                 continue
         return found
+
+
+class ThreadCatalog:
+    """Read-only bridge to Codex's local thread registry.
+
+    The catalog is advisory: Plotkeeper never writes this database. A missing
+    or unreadable transcript is treated as unavailable liveness, while an
+    explicitly bound Plotkeeper run can still be inspected from its own ledger.
+    """
+
+    TERMINAL_TYPES = {"task_complete", "turn_complete", "turn_aborted"}
+
+    def __init__(self, path: str | os.PathLike[str] | None = None,
+                 sessions_root: str | os.PathLike[str] | None = None):
+        self.path = Path(path) if path is not None else Path.home() / ".codex" / "state_5.sqlite"
+        self.sessions_root = Path(sessions_root) if sessions_root is not None else Path.home() / ".codex" / "sessions"
+        self._metadata_cache: dict[str, dict[str, Any] | None] = {}
+        self._active_cache: dict[str, tuple[int, bool]] = {}
+
+    @property
+    def available(self) -> bool:
+        return self.path.is_file()
+
+    def metadata(self, session_id: str) -> dict[str, Any] | None:
+        if session_id in self._metadata_cache:
+            return self._metadata_cache[session_id]
+        if not self.available:
+            self._metadata_cache[session_id] = None
+            return None
+        try:
+            db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
+            db.row_factory = sqlite3.Row
+            row = db.execute(
+                "SELECT id,title,name,first_user_message,preview,agent_path,cwd,rollout_path "
+                "FROM threads WHERE id=?", (session_id,)).fetchone()
+            db.close()
+        except (OSError, sqlite3.Error):
+            row = None
+        if row is None:
+            result = None
+        else:
+            result = dict(row)
+            result["task_label"] = self._label(result)
+            result["project_name"] = self._project_name(result.get("cwd"))
+        self._metadata_cache[session_id] = result
+        return result
+
+    @staticmethod
+    def _project_name(cwd: str | None) -> str:
+        if not cwd:
+            return "Plotkeeper run"
+        value = str(cwd).replace("\\\\?\\", "")
+        name = Path(value).name
+        if "\\" in value:
+            name = value.rstrip("\\/").rsplit("\\", 1)[-1]
+        return name or value
+
+    @staticmethod
+    def _label(row: dict[str, Any]) -> str:
+        for key in ("title", "name", "first_user_message", "preview"):
+            value = row.get(key)
+            if isinstance(value, str) and value.strip():
+                collapsed = " ".join(value.split())
+                if collapsed.startswith("<codex_delegation>"):
+                    # Delegation payloads are instructions, not user-facing
+                    # task names. Prefer the stable task ID over inventing a
+                    # title from arbitrary prompt text.
+                    return f"Task {row.get('id')}"
+                return collapsed
+        return str(row.get("id") or "Unknown task")
+
+    def _rollout_path(self, session_id: str, metadata: dict[str, Any] | None) -> Path | None:
+        raw = metadata.get("rollout_path") if metadata else None
+        if raw:
+            value = str(raw).replace("\\\\?\\", "")
+            path = Path(value)
+            if path.is_file():
+                return path
+        if self.sessions_root.is_dir():
+            matches = sorted(self.sessions_root.rglob(f"*{session_id}.jsonl"))
+            if matches:
+                return matches[-1]
+        return None
+
+    def is_active(self, session_id: str) -> bool:
+        """Return True only when no terminal event follows the latest turn."""
+        metadata = self.metadata(session_id)
+        path = self._rollout_path(session_id, metadata)
+        if path is None:
+            return False
+        try:
+            stamp = path.stat().st_mtime_ns
+        except OSError:
+            return False
+        cached = self._active_cache.get(session_id)
+        if cached and cached[0] == stamp:
+            return cached[1]
+        try:
+            handle = path.open("rb")
+        except OSError:
+            return False
+        saw_event = False
+        terminal_seen = False
+        after_terminal = False
+        with handle:
+            for raw in handle:
+                if not raw.strip():
+                    continue
+                saw_event = True
+                # Avoid decoding Codex's very large instruction payloads. Only
+                # event_msg records can establish the terminal state.
+                if b'"type":"event_msg"' not in raw and b'"type": "event_msg"' not in raw:
+                    if terminal_seen and (b'"role":"user"' in raw or b'"role": "user"' in raw or
+                                          b'"type":"reasoning"' in raw or b'"type": "reasoning"' in raw or
+                                          b'"type":"function_call"' in raw or b'"type": "function_call"' in raw or
+                                          b'"type":"custom_tool_call"' in raw or b'"type": "custom_tool_call"' in raw):
+                        after_terminal = True
+                    continue
+                try:
+                    obj = json.loads(raw.decode("utf-8", "ignore"))
+                except (TypeError, ValueError, UnicodeError):
+                    if terminal_seen:
+                        after_terminal = True
+                    continue
+                payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
+                event_type = payload.get("type") or obj.get("payload_type")
+                if event_type in self.TERMINAL_TYPES:
+                    terminal_seen = True
+                    after_terminal = False
+                elif terminal_seen and event_type not in {"token_count"}:
+                    after_terminal = True
+        active = saw_event and (not terminal_seen or after_terminal)
+        self._active_cache[session_id] = (stamp, active)
+        return active

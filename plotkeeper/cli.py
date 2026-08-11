@@ -16,6 +16,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status")
     current = sub.add_parser("current")
     current.add_argument("--cwd", default=None)
+    current.add_argument("--run-id", default=None)
+    current.add_argument("--session-id", default=None)
     report = sub.add_parser("report")
     report.add_argument("--run-id", required=True)
     report.add_argument("--kind", required=True)
@@ -41,7 +43,11 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([r.to_dict() for r in service.ledger.list_runs()], sort_keys=True))
     elif args.command == "current":
         service.poll_once()
-        print(json.dumps(service.current(args.cwd), sort_keys=True))
+        result = service.current(args.cwd, run_id=args.run_id, session_id=args.session_id)
+        print(json.dumps(result, sort_keys=True))
+        if not result.get("ok"):
+            service.close_db()
+            return 2
     elif args.command == "report":
         print(json.dumps(service.report(args.run_id, args.kind, args.text, evidence=args.evidence), sort_keys=True))
     elif args.command == "sync-plan":
@@ -59,6 +65,7 @@ def main(argv: list[str] | None = None) -> int:
             pass
         finally:
             server.server_close()
+    return 0
     return 0
 
 

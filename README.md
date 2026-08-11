@@ -26,6 +26,8 @@ session truth:
 - attaches child sessions and explicitly marked independent sessions;
 - displays the active production goal, invariant set, task board, reports, and
   evidence links;
+- opens the exact active run by run/session locator, and groups the active
+  picker by project with real task labels and IDs;
 - injects the required closeout review after the root requests completion;
 - closes only on `verdict=PASS open_items=0` from that injected review.
 

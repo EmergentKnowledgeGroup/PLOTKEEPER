@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,9 +21,17 @@ def main() -> int:
     if not script.is_file():
         print(f"PLOTKEEPER_UNAVAILABLE: missing {script}", file=sys.stderr)
         return 2
+    args = list(sys.argv[1:])
+    # Codex exposes the current task identity through one of these environment
+    # variables on installed surfaces. Bind ``current`` to it when available;
+    # callers may still pass an explicit --run-id/--session-id, which wins.
+    if args and args[0] == "current" and "--run-id" not in args and "--session-id" not in args:
+        session_id = os.environ.get("CODEX_SESSION_ID") or os.environ.get("CODEX_THREAD_ID")
+        if session_id:
+            args[1:1] = ["--session-id", session_id]
     return subprocess.run([
         "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-        "-File", str(script), *sys.argv[1:],
+        "-File", str(script), *args,
     ], check=False).returncode
 
 

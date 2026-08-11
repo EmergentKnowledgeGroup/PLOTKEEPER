@@ -2,7 +2,25 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER PANEL RELIABILITY WORK`
+Track: `PLOTKEEPER ACTIVE RUN SURFACE WORK`
+
+## PLOTKEEPER ACTIVE RUN SURFACE WORK
+
+- step: post-green-tests
+- note: Active-run identity, child-session binding, categorical liveness, active-only grouped picker, full-width responsive UI, version 0.1.2, and final release binding are implemented; exact candidate commit and independent review remain.
+- branch: main
+- head: ecc8a01f58732ac04de4995cfc10b7840b87377c
+- next_cmd: `py -3 -m unittest discover -s tests -q && git diff --check`
+- validations: final contract VALID at b56b3e4363c12003d606a573b906702ec999d5f83ea760592b7a71517486a251; 54 tests green; Node syntax and diff check green; copied-live-ledger candidate API reduced 256 stored rows to 5 provably active interactive runs without source-ledger mutation; exact run switching and invalid-locator fail-closed browser proof green; desktop selector spans available width; mobile 390x844 has no horizontal overflow or console errors; foreign MoonMarket contracts hash-preserved in origin project
+
+## PLOTKEEPER ACTIVE RUN SURFACE IMPLEMENTATION
+
+- step: post-green-tests
+- note: Exact run/session resolution, read-only Codex identity/liveness catalog, active-only grouped picker, run-bound dashboard URL, and SpecSwarm bridge are implemented; delegated implementation remains uncommitted for parent integration.
+- branch: main
+- head: ecc8a01f58732ac04de4995cfc10b7840b87377c
+- next_cmd: `py -3 -m unittest discover -s tests -v`
+- validations: focused active-run/backend/web tests green (24 total); full suite 51 green (final run after UI state reset); Node app.js syntax green; git diff --check green
 
 ## PLOTKEEPER PANEL RELIABILITY WORK
 
