@@ -1,0 +1,4 @@
+interface:
+  display_name: "Production Goal Contract"
+  short_description: "Bind production work to a hard goal contract."
+  default_prompt: "Use $production-goal-contract to bind this production task before any edits."

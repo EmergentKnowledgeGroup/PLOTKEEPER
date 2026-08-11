@@ -1,5 +1,9 @@
 PLOTKEEPER
 Copyright 2026 Emergent Knowledge Group
 
-This product includes an optional integration with separately distributed
-Slopware Skills. See THIRD_PARTY_NOTICES.md for attribution and license terms.
+SpecSwarm, Production Goal Contract, Production Goal Review, adaptive execution,
+and the Plotkeeper guard are Emergent Knowledge Group components distributed
+under Apache-2.0.
+
+This product also bundles Slopware Skills material under CC BY 4.0. See
+THIRD_PARTY_NOTICES.md for attribution and license terms.

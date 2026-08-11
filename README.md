@@ -108,8 +108,11 @@ need to invoke MSW or invent a duration on every task:
 .\integrations\codex\install.ps1
 ```
 
-It installs the upstream Slopware `msw`, `msw-hook`, and `timebox` packages,
-then adds Plotkeeper's adaptive `UserPromptSubmit` and `Stop` hooks. The first
+It installs the bundled EKG-owned `specswarm`, `production-goal-contract`,
+`production-goal-review`, and `adaptive-execution` skills, plus vendored copies
+of Slopware's `msw`, `msw-hook`, and `timebox` packages. No required skill code
+is downloaded from another marketplace. It then adds Plotkeeper's adaptive
+`UserPromptSubmit` and `Stop` hooks. The first
 unfamiliar task runs as an untimed calibration; later comparable work reuses
 measured timing evidence. The stop hook loops an agent back when its execution
 receipt is missing or incomplete.
@@ -131,6 +134,6 @@ or authority to bypass the production goal contract.
 
 ## License
 
-Plotkeeper-owned code and documentation are licensed under the
-[Apache License 2.0](LICENSE). Separately distributed Slopware packages retain
-their upstream CC BY 4.0 license.
+Plotkeeper, SpecSwarm, and the bundled EKG governance skills are licensed under
+the [Apache License 2.0](LICENSE). Vendored Slopware packages retain their
+upstream CC BY 4.0 license and attribution.

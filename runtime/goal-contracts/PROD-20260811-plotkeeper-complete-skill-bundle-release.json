@@ -1,0 +1,188 @@
+{
+  "id": "PROD-20260811-plotkeeper-complete-skill-bundle-release",
+  "status": "ACTIVE",
+  "contract_hash": "d9c2948650c8360f9328b2fb6f03ac3b95b9c6d2e34032ae0a56f2af0fa1d402",
+  "origin": "DIRECT",
+  "user_goal": "Make Plotkeeper self-contained by including SpecSwarm and every required skill dependency, with EKG attribution for SpecSwarm, and publish the verified correction through the existing fail-closed release path.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fee7a-550a-7713-9896-2326f2bc6272",
+    "original_request_hash": "e1a82a5d08e6510222f6d8755c2cfafb77f2fd5bc54ed6d7598e514a1deef714",
+    "verbatim_text": "well duh lol cant work really without it\n\nSpecswarm is my own personal skill so just attribute it to EKG since its ours LOL\n\nmake sure ALL DEPENDANCIES are included - not just referenced",
+    "captured_at_utc": "2026-08-11T00:15:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019fee7a-550a-7713-9896-2326f2bc6272"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "a0d23403f9b3d0cab13e8f3ea0a695bc17826018",
+    "retrieved_at_utc": "2026-08-11T00:15:00Z",
+    "protection_evidence": "Public main, local main, and origin/main were identical and clean; both public Actions workflows passed.",
+    "selection_reason": "Current public release before bundling the complete dependency closure."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "integrations/codex/",
+      "tests/test_codex_integration.py",
+      "tests/test_repository_docs.py",
+      "README.md",
+      "docs/INTEGRATION.md",
+      "docs/USAGE.md",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-complete-skill-bundle.json",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-complete-skill-bundle-release.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main, repository variables, repository secrets, and Actions",
+      "Local isolated Codex installation roots under Z:/Plotkeeper/runtime/qa",
+      "Installed Plotkeeper Codex integration for post-review verification"
+    ],
+    "semantic_changes": [
+      "Bundle and install the complete EKG-owned SpecSwarm, production-goal-contract, production-goal-review, adaptive-execution, and Plotkeeper guard components.",
+      "Bundle the complete upstream MSW, MSW Hook, and Timebox packages under their original CC BY 4.0 attribution.",
+      "Preserve unrelated local configuration and adaptive timing history while installing entirely from repository-local skill code.",
+      "Point the existing release verifier at this exact append-only contract so publication verifies the correction rather than the previous release."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "web/",
+      "pyproject.toml",
+      "LICENSE"
+    ],
+    "semantic_changes": [
+      "Do not change Plotkeeper runtime behavior, dashboard behavior, package metadata, public license, or weaken release verification.",
+      "Do not remove existing hooks, guard enforcement, tests, or third-party attribution.",
+      "Do not include caches, bytecode, secrets, personal datasets, machine-specific receipts, or calibration history."
+    ]
+  },
+  "invariants": [
+    "A clean isolated installation succeeds using only files in this repository and the installed Codex, Python, Git, and model platform.",
+    "Every skill-code dependency is distributed completely; platform capabilities are explicitly identified rather than misrepresented as vendored code.",
+    "MSW, Timebox, and MSW Hook retain Slopware Engineer attribution and CC BY 4.0 terms.",
+    "Adaptive history and unrelated hooks remain preserved.",
+    "The exact candidate is independently reviewed and the public release verifier and test workflows pass."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "The repository installer supplies SpecSwarm and its complete transitive skill-code dependency closure without downloading skill code.",
+      "forbidden_behavior": "A required skill may not be merely mentioned, assumed, or fetched from another marketplace.",
+      "target_and_actor": "A new Plotkeeper user installing from a clean isolated Codex home.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "Ownership and licensing identify SpecSwarm and EKG governance as EKG-owned and preserve Slopware attribution for upstream packages.",
+      "forbidden_behavior": "Plotkeeper may not claim Slopware material or describe vendored dependencies as separately fetched.",
+      "target_and_actor": "Repository users and redistributors.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The public release verifier validates this exact contract, candidate, evidence, and deployment receipt.",
+      "forbidden_behavior": "Publication may not reuse the preceding release contract or receipt.",
+      "target_and_actor": "The GitHub main release workflow.",
+      "required_proof_ids": [
+        "PR-4"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "The transitive skill dependency inventory is complete.",
+      "required_environment": "Repository, canonical skill sources, and bundled manifest",
+      "command_or_read_only_check": "Compare every referenced skill, script, hook, reference, and package file to the manifest and installed output.",
+      "expected_observation": "No required skill artifact is absent or marketplace-only."
+    },
+    {
+      "id": "PR-2",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "A clean offline-style isolated install contains and validates every bundled dependency.",
+      "required_environment": "Fresh Z-drive Codex home with plugin network operations disabled",
+      "command_or_read_only_check": "Install locally, compare hashes, invoke the portable bridge, validate hooks, and run all tests.",
+      "expected_observation": "All bundled skills and hooks are present and functional without a skill download."
+    },
+    {
+      "id": "PR-3",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Notices and docs accurately identify EKG and Slopware ownership and license boundaries.",
+      "required_environment": "Tracked repository documentation and vendored licenses",
+      "command_or_read_only_check": "Review NOTICE, THIRD_PARTY_NOTICES, README, integration docs, dependency manifest, and copied package license.",
+      "expected_observation": "Every bundled component has an accurate owner and license statement."
+    },
+    {
+      "id": "PR-4",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "The fail-closed public release path is bound to the exact correction.",
+      "required_environment": "Exact clean candidate, signed phase receipts, GitHub configuration, and public Actions",
+      "command_or_read_only_check": "Run independent production review, exact verifier positive and adversarial checks, guarded push, and public reconciliation.",
+      "expected_observation": "Guard authorizes only the signed candidate and both public workflows pass."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Clean exact candidate, dependency manifest, isolated install, full tests, attribution audit, rollback, signed receipts, and public target reconciliation."
+    }
+  ],
+  "stop_conditions": [
+    "Any required skill-code dependency remains external-only or uninstalled.",
+    "Any upstream file lacks attribution or license coverage.",
+    "Any install, manifest comparison, hook merge, bridge invocation, test, verifier, or public workflow fails.",
+    "Any forbidden path, secret, cache, history, or unexplained diff enters Git.",
+    "Independent DEPLOY_READY verdict is not PASS."
+  ],
+  "known_discrepancies": [
+    "The public baseline fetched Slopware packages and omitted SpecSwarm and EKG governance skills.",
+    "The release workflow was pinned to the previous production contract and must point to this amendment for exact-candidate verification."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "make sure ALL DEPENDANCIES are included - not just referenced",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260811-plotkeeper-complete-skill-bundle.json",
+    "sha256": "43d2b4b696afd67782709a2a2bfd76a79337e6fb7bcca32439c5e35fc9104ea9"
+  }
+}

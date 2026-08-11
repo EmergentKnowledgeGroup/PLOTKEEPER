@@ -34,6 +34,14 @@ class RepositoryDocumentationTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertNotIn("Z:\\Plotkeeper\\scripts\\install.ps1", readme)
 
+    def test_complete_codex_bundle_is_documented_truthfully(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        integration = (ROOT / "integrations" / "codex" / "README.md").read_text(encoding="utf-8")
+        for name in ("specswarm", "production-goal-contract", "production-goal-review", "msw", "timebox"):
+            self.assertIn(name, (readme + integration).lower())
+        self.assertNotIn("adds the `transcendr/slopware-skills` marketplace", integration)
+        self.assertTrue((ROOT / "integrations" / "codex" / "bundled" / "dependencies.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

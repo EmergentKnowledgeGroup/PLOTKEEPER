@@ -1,0 +1,37 @@
+{
+  "id": "PROD-20260807-fixture",
+  "status": "ACTIVE",
+  "contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb",
+  "origin": "DIRECT",
+  "user_goal": "Repair only the documented production defect without unrelated behavior changes.",
+  "authority": {
+    "original_request_ref": "fixture://user-message/1",
+    "original_request_hash": "e6ccc4b9a3399817bd0b9578c2880ec40c115f276ec81112f048ba694cb84d36",
+    "verbatim_text": "Repair only the documented production defect without unrelated behavior changes.",
+    "captured_at_utc": "2026-08-07T00:00:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "SIGNED_CHANGE_REQUEST",
+    "immutable_locator": "fixture://authority/immutable/1"
+  },
+  "baseline": {
+    "protected_ref": "origin/main",
+    "sha": "fa22e75bd516b71eb864245b0c7295734d9919d7",
+    "retrieved_at_utc": "2026-08-07T00:00:00Z",
+    "protection_evidence": "fixture protected-branch receipt",
+    "selection_reason": "Predates the candidate and task mutation."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {"paths": ["scripts/seo/generate_articles.py", "tests/test_seo_factory.py"], "resources": ["example-service"], "semantic_changes": ["Repair the stated failure only."]},
+  "forbidden": {"paths": ["app/routes/"], "semantic_changes": ["No route, permission, data, or deployment behavior changes."]},
+  "invariants": ["Existing route contracts remain compatible."],
+  "acceptance_cases": [{"id": "AC-1", "promised_behavior": "The documented failure no longer occurs.", "forbidden_behavior": "No unrelated route changes occur.", "target_and_actor": "Production user through the documented route.", "required_proof_ids": ["PR-1"]}],
+  "known_discrepancies": ["None observed at contract creation."],
+  "proof_requirements": [{"id": "PR-1", "acceptance_case_ids": ["AC-1"], "claim": "Focused behavior proof exists before release.", "required_environment": "local integration", "command_or_read_only_check": "fixture check", "expected_observation": "documented failure is absent"}],
+  "review_requirements": [{"id": "RR-1", "phase": "MERGE_READY", "required_role": "independent reviewer"}],
+  "release_requirements": [{"id": "RL-1", "phase": "DEPLOY_READY", "required_receipt": "release attestation"}],
+  "stop_conditions": ["Unexpected protected-surface diff.", "Missing proof."],
+  "delegation": {"contract_id_required_in_child_prompts": true, "allowed_surfaces_must_be_explicit": true},
+  "locked_artifacts": {},
+  "requirement_trace": [],
+  "previous_contract": null
+}

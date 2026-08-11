@@ -1,0 +1,4 @@
+interface:
+  display_name: "MSW Kernel"
+  short_description: "Minimum Sufficient Work for agent tasks"
+  default_prompt: "Use $msw to apply the MSW Kernel to this task and stop when the contract is proven."

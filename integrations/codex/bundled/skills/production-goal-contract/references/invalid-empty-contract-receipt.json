@@ -1,0 +1,17 @@
+{
+  "id": "PROD-invalid",
+  "status": "ACTIVE",
+  "contract_hash": "",
+  "user_goal": "",
+  "authority": {},
+  "baseline": {},
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {},
+  "forbidden": {},
+  "invariants": [],
+  "acceptance_cases": [],
+  "proof_requirements": [],
+  "review_requirements": [],
+  "release_requirements": [],
+  "stop_conditions": []
+}

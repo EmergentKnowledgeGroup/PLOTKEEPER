@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "components": [
+    {"name": "specswarm", "version": "EKG-2026-08-11", "owner": "Emergent Knowledge Group", "license": "Apache-2.0", "source": "skills/specswarm", "install": "skills/specswarm"},
+    {"name": "production-goal-contract", "version": "EKG-2026-08-11", "owner": "Emergent Knowledge Group", "license": "Apache-2.0", "source": "skills/production-goal-contract", "install": "skills/production-goal-contract"},
+    {"name": "production-goal-review", "version": "EKG-2026-08-11", "owner": "Emergent Knowledge Group", "license": "Apache-2.0", "source": "skills/production-goal-review", "install": "skills/production-goal-review"},
+    {"name": "adaptive-execution", "version": "EKG-2026-08-11", "owner": "Emergent Knowledge Group", "license": "Apache-2.0", "source": "../adaptive-execution", "install": "skills/adaptive-execution"},
+    {"name": "msw", "version": "0.1.1", "owner": "Slopware Engineer (@aienginerd)", "license": "CC-BY-4.0", "source": "upstream/slopware/msw", "install": "skills/msw"},
+    {"name": "msw-hook", "version": "0.1.0", "owner": "Slopware Engineer (@aienginerd)", "license": "CC-BY-4.0", "source": "upstream/slopware/msw-hook", "install": "hooks/SessionStart"},
+    {"name": "timebox", "version": "0.1.0", "owner": "Slopware Engineer (@aienginerd)", "license": "CC-BY-4.0", "source": "upstream/slopware/timebox", "install": "skills/timebox"},
+    {"name": "plotkeeper-guard", "version": "0.1.0", "owner": "Emergent Knowledge Group", "license": "Apache-2.0", "source": "../plugins/plotkeeper-guard", "install": "plugin/plotkeeper-guard"}
+  ],
+  "platform_requirements": ["OpenAI Codex with hooks, native subagents, and CodexApp tools", "Python 3.11 or newer", "Git", "GPT-5.6 Sol access for SpecSwarm review lanes"]
+}

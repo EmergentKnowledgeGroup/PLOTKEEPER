@@ -1,0 +1,4 @@
+interface:
+  display_name: "Production Goal Review"
+  short_description: "Verify completed production work against its contract."
+  default_prompt: "Use $production-goal-review to audit this completed production goal before closeout."

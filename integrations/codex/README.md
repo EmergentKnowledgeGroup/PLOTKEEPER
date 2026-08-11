@@ -1,8 +1,7 @@
 # Codex integration
 
-This integration makes evidence-calibrated execution automatic. It combines
-three upstream Slopware packages with Plotkeeper's adaptive routing skill and
-two lifecycle hooks.
+This integration makes the complete Plotkeeper workflow locally installable.
+All required skill code is carried in this repository.
 
 ## Install
 
@@ -14,11 +13,13 @@ From the repository root, run:
 
 The installer:
 
-1. adds the `transcendr/slopware-skills` marketplace;
-2. installs `msw`, `msw-hook`, and `timebox` from that marketplace;
-3. installs the bundled Plotkeeper `adaptive-execution` skill;
-4. merges Plotkeeper's `UserPromptSubmit` and `Stop` hooks into
+1. installs the EKG-owned `specswarm`, `production-goal-contract`,
+   `production-goal-review`, and `adaptive-execution` skills;
+2. installs the vendored Slopware `msw` and `timebox` skills;
+3. merges the vendored MSW `SessionStart` hook and Plotkeeper's
+   `UserPromptSubmit` and `Stop` hooks into
    `%USERPROFILE%\.codex\hooks.json` without removing unrelated hooks.
+4. writes a portable Plotkeeper location record used by SpecSwarm;
 5. installs the managed `plotkeeper-guard` plugin, whose `PreToolUse` hook
    blocks push, merge, deployment, publication, and repository-metadata
    commands until an independent `DEPLOY_READY PASS` receipt matches the
@@ -49,10 +50,15 @@ reduces the acceptance criteria selected by MSW.
 
 ## Ownership and trust
 
-The Slopware packages are installed from their original marketplace and retain
-their CC BY 4.0 license. Plotkeeper does not vendor or relicense them. The
-adaptive skill and its hooks are Plotkeeper-owned Apache-2.0 material. See
+SpecSwarm and the production governance skills are EKG-owned Apache-2.0
+material. The bundled Slopware packages retain their original CC BY 4.0
+license and attribution; they are not relicensed as Plotkeeper code. See
 [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md).
+
+The exact bundled component inventory and platform requirements are recorded in
+[`bundled/dependencies.json`](bundled/dependencies.json). Codex, Python, Git,
+native subagent/tool support, and Sol model access are platform requirements;
+they are not redistributable skill dependencies.
 
 Official hook behavior and trust details are documented in the
 [Codex hooks guide](https://learn.chatgpt.com/docs/hooks).

@@ -1,4 +1,4 @@
-"""Install Plotkeeper's Codex integration without modifying hook trust state."""
+"""Install Plotkeeper's complete Codex skill bundle without network fetches."""
 
 from __future__ import annotations
 
@@ -9,11 +9,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
-SLOPWARE_COMMANDS = (
-    ("codex", "plugin", "marketplace", "add", "transcendr/slopware-skills"),
-    ("codex", "plugin", "add", "msw@slopware-skills"),
-    ("codex", "plugin", "add", "msw-hook@slopware-skills"),
-    ("codex", "plugin", "add", "timebox@slopware-skills"),
+BUNDLED_SKILLS = (
+    ("adaptive-execution", "adaptive-execution"),
+    ("bundled/skills/specswarm", "specswarm"),
+    ("bundled/skills/production-goal-contract", "production-goal-contract"),
+    ("bundled/skills/production-goal-review", "production-goal-review"),
+    ("bundled/upstream/slopware/msw/skills/msw", "msw"),
+    ("bundled/upstream/slopware/timebox/skills/timebox", "timebox"),
 )
 
 
@@ -49,12 +51,34 @@ def merge_hooks(document: dict, codex_home: Path) -> dict:
         )
         if not already_present:
             current.extend(entries)
+    upstream_path = Path(__file__).resolve().parent / "bundled" / "upstream" / "slopware" / "msw-hook" / "hooks" / "hooks.json"
+    upstream = json.loads(upstream_path.read_text(encoding="utf-8"))["hooks"]
+    for event, entries in upstream.items():
+        current = hooks.setdefault(event, [])
+        existing_commands = {
+            hook.get("command") for group in current if isinstance(group, dict)
+            for hook in group.get("hooks", []) if isinstance(hook, dict)
+        }
+        for group in entries:
+            commands = {hook.get("command") for hook in group.get("hooks", []) if isinstance(hook, dict)}
+            if not commands.issubset(existing_commands):
+                current.append(group)
+                existing_commands.update(commands)
     return document
 
 
-def install_plugins() -> None:
-    for command in SLOPWARE_COMMANDS:
-        subprocess.run(command, check=True)
+def install_bundled_skills(codex_home: Path) -> None:
+    integration_root = Path(__file__).resolve().parent
+    skills_root = codex_home / "skills"
+    skills_root.mkdir(parents=True, exist_ok=True)
+    for relative_source, name in BUNDLED_SKILLS:
+        source = integration_root / relative_source
+        if not (source / "SKILL.md").is_file():
+            raise FileNotFoundError(f"incomplete bundled skill: {source}")
+        destination = skills_root / name
+        # Overlay distributed files and preserve local runtime data such as
+        # adaptive-execution calibration history.
+        shutil.copytree(source, destination, dirs_exist_ok=True)
 
 
 def install_guard_plugin() -> None:
@@ -64,12 +88,12 @@ def install_guard_plugin() -> None:
 
 
 def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
-    source = Path(__file__).resolve().parent / "adaptive-execution"
-    destination = codex_home / "skills" / "adaptive-execution"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    # Overlay only the distributed files. In particular, preserve the local
-    # data/adaptive_execution.sqlite3 calibration history across upgrades.
-    shutil.copytree(source, destination, dirs_exist_ok=True)
+    install_bundled_skills(codex_home)
+
+    config_path = codex_home / "plotkeeper.json"
+    config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
+    config["repo_root"] = str(Path(__file__).resolve().parents[2])
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
     hooks_path = codex_home / "hooks.json"
     document = json.loads(hooks_path.read_text(encoding="utf-8")) if hooks_path.exists() else {}
@@ -77,7 +101,6 @@ def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
     hooks_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
 
     if not skip_plugins:
-        install_plugins()
         install_guard_plugin()
     return hooks_path
 
@@ -85,7 +108,7 @@ def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--codex-home", type=Path, default=Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")))
-    parser.add_argument("--skip-plugins", action="store_true", help="Install only Plotkeeper-owned files and hooks")
+    parser.add_argument("--skip-plugins", action="store_true", help="Skip only the managed guard plugin; bundled skills and hooks are always installed")
     args = parser.parse_args()
     hooks_path = install(args.codex_home.resolve(), skip_plugins=args.skip_plugins)
     print(f"Installed Plotkeeper Codex integration. Review and trust hooks with /hooks: {hooks_path}")

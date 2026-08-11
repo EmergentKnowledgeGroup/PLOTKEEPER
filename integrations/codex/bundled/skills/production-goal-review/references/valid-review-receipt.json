@@ -1,0 +1,25 @@
+{
+  "review_receipt_hash": "77ed67746be435d2d5b0a84ae0d01a1579dd1ed9963c732ea4e8d327a741c341",
+  "contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb",
+  "phase": "VALIDATED",
+  "baseline_sha": "fa22e75bd516b71eb864245b0c7295734d9919d7",
+  "candidate_sha": "4a0effd14d3e6de7aca34d4b67b8a0d997e0a51b",
+  "actual_diff_sha256": "b81354f791497665bce2b29e68dbdf7ee2c419088badbf29d0200ca54097fa79",
+  "target": {"environment": "local integration", "artifact_digest": "not-applicable", "traffic_or_execution_path": "documented integration route"},
+  "reviewer": {"identity": "fixture-independent-reviewer", "review_run_id": "fixture-run-1", "independent": true, "implemented_candidate": false, "delegated_candidate": false, "approved_candidate": false},
+  "source_evidence": [
+    {"path": "C:\\Users\\UltariumV3\\.codex\\skills\\production-goal-contract\\references\\valid-contract-receipt.json", "sha256": "57ed088d1aeef7ba7f23286eb987b4b5ce82fb16061eeba30af56c065d4841b2", "kind": "user-goal", "binding": {"contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb", "baseline_sha": "fa22e75bd516b71eb864245b0c7295734d9919d7", "candidate_sha": "4a0effd14d3e6de7aca34d4b67b8a0d997e0a51b", "target_fingerprint": "733dd3302b4bcb397eb04b316e0b65a6947419513c41ce0beb48a5bff428c01f"}},
+    {"path": "C:\\Users\\UltariumV3\\.codex\\skills\\production-goal-contract\\references\\contract-receipt.md", "sha256": "f529f09850e26f77e0c734d36d501aeedd9fc41b10f88fd06bfd6714cbdee24c", "kind": "contract", "binding": {"contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb", "baseline_sha": "fa22e75bd516b71eb864245b0c7295734d9919d7", "candidate_sha": "4a0effd14d3e6de7aca34d4b67b8a0d997e0a51b", "target_fingerprint": "733dd3302b4bcb397eb04b316e0b65a6947419513c41ce0beb48a5bff428c01f"}},
+    {"path": "C:\\Users\\UltariumV3\\.codex\\skills\\production-goal-review\\references\\review-receipt.md", "sha256": "7c6a552f450f9cd85d51ba34c5bece387cd41bafd23d4db6d63ecca7c950f868", "kind": "diff", "binding": {"contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb", "baseline_sha": "fa22e75bd516b71eb864245b0c7295734d9919d7", "candidate_sha": "4a0effd14d3e6de7aca34d4b67b8a0d997e0a51b", "target_fingerprint": "733dd3302b4bcb397eb04b316e0b65a6947419513c41ce0beb48a5bff428c01f"}},
+    {"path": "C:\\Users\\UltariumV3\\.codex\\skills\\production-goal-contract\\scripts\\validate_contract_receipt.py", "sha256": "706ee9aab0d18efe5fbdaf0b57fa917af27b82d4e952dd46c155344597fd8c8e", "kind": "test", "binding": {"contract_hash": "ecb2d01da972a098c6fd499541b3a01d80f0d51ca705cb9387f64ff5bf8624eb", "baseline_sha": "fa22e75bd516b71eb864245b0c7295734d9919d7", "candidate_sha": "4a0effd14d3e6de7aca34d4b67b8a0d997e0a51b", "target_fingerprint": "733dd3302b4bcb397eb04b316e0b65a6947419513c41ce0beb48a5bff428c01f"}}
+  ],
+  "obligation_results": [
+    {"kind": "acceptance", "id": "AC-1", "status": "MET", "source_sha256": "b81354f791497665bce2b29e68dbdf7ee2c419088badbf29d0200ca54097fa79", "observation": "Fixture candidate changes only contract-allowed paths."},
+    {"kind": "proof", "id": "PR-1", "status": "MET", "source_sha256": "b81354f791497665bce2b29e68dbdf7ee2c419088badbf29d0200ca54097fa79", "observation": "Fixture proof is bound to the exact candidate diff."}
+  ],
+  "delegation": {"declaration": "NO_CHILDREN", "children": []},
+  "predecessor_receipt_hashes": [],
+  "verdict": "PASS",
+  "created_at_utc": "2026-08-07T00:00:00Z",
+  "findings": []
+}

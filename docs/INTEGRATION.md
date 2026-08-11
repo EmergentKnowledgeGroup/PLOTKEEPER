@@ -3,6 +3,10 @@
 Plotkeeper observes session output; integration is a small marker protocol, not
 a direct write into Codex session storage.
 
+The repository's Codex installer includes SpecSwarm and its EKG governance
+skills. Install them once with `integrations\codex\install.ps1`; no separate
+SpecSwarm installation or Slopware marketplace fetch is required.
+
 ## 1. Enroll the root
 
 Start Plotkeeper before the task. A new root user message containing

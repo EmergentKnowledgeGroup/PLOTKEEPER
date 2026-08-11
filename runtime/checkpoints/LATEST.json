@@ -1,6 +1,22 @@
 {
-  "current_track": "PLOTKEEPER PUBLIC RELEASE WORK",
+  "current_track": "PLOTKEEPER COMPLETE BUNDLE WORK",
   "tracks": {
+    "PLOTKEEPER COMPLETE BUNDLE WORK": {
+      "step": "post-green-tests",
+      "note": "SpecSwarm and its complete skill-code dependency closure are vendored and installed locally; EKG and Slopware ownership boundaries are documented; the release verifier is bound to the append-only correction contract; exact-candidate independent review and publication remain.",
+      "branch": "main",
+      "head": "a0d23403f9b3d0cab13e8f3ea0a695bc17826018",
+      "next_cmd": "git diff --check && py -3 -m unittest discover -s tests -v",
+      "validations": [
+        "43 tests green",
+        "both bundled governance validators execute",
+        "append-only release contract validates at d9c2948650c8360f9328b2fb6f03ac3b95b9c6d2e34032ae0a56f2af0fa1d402",
+        "isolated bundled-only install and portable Plotkeeper bridge green",
+        "no bundled bytecode or cache",
+        "upstream Slopware package manifests exact",
+        "git diff check green"
+      ]
+    },
     "PLOTKEEPER PUBLIC RELEASE WORK": {
       "step": "authenticated-release-proof-post-green",
       "note": "After independent FAIL, added HMAC-authenticated phase receipts, exact candidate evidence resolution, active workflow/run binding, and adversarial wrong-key/nonexistent-evidence controls; candidate commit and staged independent review are next.",
