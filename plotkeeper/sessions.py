@@ -32,12 +32,27 @@ def _payload(obj: dict[str, Any]) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
-def _meta(obj: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
+def _meta(obj: dict[str, Any]) -> tuple[str | None, str | None, str | None, str | None]:
     p = _payload(obj)
-    sid = p.get("id") or p.get("session_id") or obj.get("session_id")
+    # ``payload.id`` on ordinary message records is a message id, not a new
+    # session id. Only session metadata may establish/replace the session id.
+    sid = (p.get("id") if obj.get("type") == "session_meta" else None) or p.get("session_id") or obj.get("session_id")
     parent = (p.get("parent_session_id") or p.get("parent_id") or
               p.get("parent_thread_id") or p.get("parentThreadId"))
-    return str(sid) if sid else None, str(parent) if parent else None, p.get("cwd")
+    # Codex may materialize one root task as multiple session files (for
+    # example, after a worktree handoff). Prefer a task/thread identity and
+    # then a message identity over the per-file session id.
+    canonical = _canonical_id(p)
+    return (str(sid) if sid else None, str(parent) if parent else None,
+            str(p.get("cwd")) if p.get("cwd") else None, canonical)
+
+
+def _canonical_id(payload: dict[str, Any]) -> str | None:
+    for key in ("root_task_id", "rootTaskId", "task_id", "taskId", "conversation_id", "conversationId", "thread_id", "threadId"):
+        value = payload.get(key)
+        if value:
+            return f"task:{value}"
+    return None
 
 
 def _is_user_specswarm(obj: dict[str, Any]) -> bool:
@@ -64,6 +79,7 @@ class _Parsed:
     cwd: str | None
     parent: str | None
     root: bool
+    canonical_root_id: str | None = None
     invoked: bool = False
     complete: bool = False
     idle: bool = False
@@ -87,26 +103,31 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
     sid = str((metadata or {}).get("session_id") or (metadata or {}).get("id") or "")
     parent = (metadata or {}).get("parent_session_id") or (metadata or {}).get("parent_id")
     cwd = (metadata or {}).get("cwd")
+    canonical_root_id = _canonical_id(metadata or {})
     parsed: _Parsed | None = None
     for raw in data:
         try:
             obj = json.loads(raw)
         except (ValueError, TypeError):
             continue
-        msid, mparent, mcwd = _meta(obj)
+        msid, mparent, mcwd, mcanonical = _meta(obj)
         if msid:
             sid = msid
         if mparent:
             parent = mparent
         if mcwd:
             cwd = mcwd
+        if mcanonical:
+            canonical_root_id = mcanonical
         if not sid:
             continue
         if parsed is None:
-            parsed = _Parsed(sid, path, cwd, parent, not bool(parent), claims=[], reports=[], evidence=[], review_results=[], attach_run_ids=[])
+            parsed = _Parsed(sid, path, cwd, parent, not bool(parent), canonical_root_id=canonical_root_id,
+                             claims=[], reports=[], evidence=[], review_results=[], attach_run_ids=[])
         parsed.cwd = cwd
         parsed.parent = parent
         parsed.root = not bool(parent)
+        parsed.canonical_root_id = canonical_root_id or parsed.canonical_root_id
         parsed.invoked = parsed.invoked or _is_user_specswarm(obj)
         complete, idle = _event_flags(obj)
         parsed.complete = parsed.complete or complete
@@ -129,6 +150,7 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
         return None
     return SessionObservation(
         session_id=parsed.session_id, path=parsed.path, cwd=parsed.cwd,
+        canonical_root_id=parsed.canonical_root_id or f"session:{parsed.session_id}",
         parent_session_id=parsed.parent, is_root=parsed.root,
         invoked_specswarm=parsed.invoked, root_complete=parsed.complete,
         root_idle=parsed.idle, goal_complete_requested=parsed.goal_complete,

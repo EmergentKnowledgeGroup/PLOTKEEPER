@@ -1,6 +1,14 @@
 {
-  "current_track": "PLOTKEEPER COMPLETE BUNDLE WORK",
+  "current_track": "PLOTKEEPER PANEL RELIABILITY WORK",
   "tracks": {
+    "PLOTKEEPER PANEL RELIABILITY WORK": {
+      "step": "post-green-tests",
+      "note": "Panel reliability package integrated: non-empty handler errors, fail-closed owned-listener replacement, HTML-gated panel receipts, message/session identity repair, stable canonical-task reuse, and version 0.1.1 docs/changelog; exact-candidate review and release remain.",
+      "branch": "main",
+      "head": "5c33658",
+      "next_cmd": "git diff --check && py -3 -m unittest discover -s tests -v",
+      "validations": ["full suite 48 green", "PowerShell parser green", "alternate-port start.ps1 served valid dashboard HTML and health then stopped cleanly", "git diff check green", "live port 47831 restart deferred until exact-candidate review"]
+    },
     "PLOTKEEPER COMPLETE BUNDLE WORK": {
       "step": "post-green-tests",
       "note": "SpecSwarm and its complete skill-code dependency closure are vendored and installed locally; the first independent review found a stale rollback SHA, now corrected under a narrow final amendment; exact-candidate rereview and publication remain.",

@@ -1,5 +1,13 @@
 # Release and rollback
 
+## Panel reliability patch
+
+This release is `0.1.1`. Before declaring the local dashboard ready, verify
+that `/health` is healthy and `/` returns HTTP 200 with a non-empty HTML body
+containing `<html` and the exact `data-testid="plotkeeper-app"` marker. The installer/startup scripts replace a
+listener only when its process is Plotkeeper-owned; a foreign process on the
+configured port is a hard stop.
+
 ## First public release
 
 The first public release target is `EmergentKnowledgeGroup/PLOTKEEPER`, with

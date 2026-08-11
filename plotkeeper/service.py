@@ -39,9 +39,18 @@ class PlotkeeperService:
         events: list[dict[str, Any]] = []
         for obs in self.scanner.scan():
             run = self.ledger.by_root(obs.session_id)
+            # A root task can have multiple Codex session files (worktree or
+            # message-id variants). Resolve those to the same ledger run before
+            # considering enrollment, then retain the variant as a child so
+            # its reports/history remain visible.
+            if run is None and obs.canonical_root_id:
+                run = self.ledger.by_canonical_root(obs.canonical_root_id)
+                if run and run.root_session_id != obs.session_id and run.state != RunState.CLOSED:
+                    self.ledger.attach_child(run.run_id, obs.session_id)
+                    events.append({"type": "root_variant_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if obs.invoked_specswarm and obs.is_root:
                 if run is None:
-                    run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url)
+                    run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url, obs.canonical_root_id)
                     events.append({"type": "run_enrolled", "run_id": run.run_id, "session_id": obs.session_id})
             if run is None and obs.attach_run_ids:
                 candidate = self.ledger.get(obs.attach_run_ids[-1])
@@ -228,6 +237,23 @@ class PlotkeeperService:
                 self.end_headers()
                 self.wfile.write(raw)
 
+            def _error(self, status: int, detail: str) -> None:
+                """Always terminate failures with a non-empty HTTP response.
+
+                Static-file and query parsing failures used to escape the
+                handler and leave clients with an empty socket, which made a
+                stale dashboard indistinguishable from a dead listener.
+                """
+                raw = (f"Plotkeeper error {status}: {detail}\n").encode("utf-8", "replace")
+                try:
+                    self.send_response(status)
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+
             def _body(self) -> dict[str, Any]:
                 n = int(self.headers.get("Content-Length", "0"))
                 try:
@@ -236,6 +262,14 @@ class PlotkeeperService:
                     return {}
 
             def do_GET(self) -> None:
+                try:
+                    self._do_GET()
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+                except Exception as exc:
+                    self._error(HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+
+            def _do_GET(self) -> None:
                 parsed = urlparse(self.path)
                 if parsed.path == "/health":
                     self._json({"ok": True, "service": "plotkeeper"})
@@ -243,6 +277,9 @@ class PlotkeeperService:
                     self.send_response(HTTPStatus.NO_CONTENT); self.end_headers()
                 elif parsed.path in {"/", "/dashboard", "/web/styles.css", "/web/app.js"}:
                     target = web_root / ("index.html" if parsed.path in {"/", "/dashboard"} else parsed.path.rsplit("/", 1)[-1])
+                    if not target.is_file():
+                        self._error(HTTPStatus.NOT_FOUND, "dashboard asset is unavailable")
+                        return
                     raw = target.read_bytes()
                     content_type = "text/html; charset=utf-8" if target.suffix == ".html" else ("text/css; charset=utf-8" if target.suffix == ".css" else "text/javascript; charset=utf-8")
                     self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
@@ -268,6 +305,14 @@ class PlotkeeperService:
                     self._json({"error": "not_found"}, 404)
 
             def do_POST(self) -> None:
+                try:
+                    self._do_POST()
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+                except Exception as exc:
+                    self._error(HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+
+            def _do_POST(self) -> None:
                 parsed = urlparse(self.path)
                 body = self._body()
                 if parsed.path == "/api/poll":

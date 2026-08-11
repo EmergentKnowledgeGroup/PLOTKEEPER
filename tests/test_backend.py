@@ -34,6 +34,21 @@ class BackendTests(unittest.TestCase):
                 server.server_close()
                 service.close_db()
 
+    def test_handler_errors_return_non_empty_response_instead_of_empty_socket(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            server = service.serve("127.0.0.1", 0)
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True); thread.start()
+            try:
+                with self.assertRaises(Exception) as caught:
+                    urlopen(f"http://127.0.0.1:{server.server_port}/api/events?since=not-a-number", timeout=2)
+                response = caught.exception
+                self.assertEqual(getattr(response, "status", None), 500)
+                self.assertIn("Plotkeeper error", response.read().decode())
+            finally:
+                server.shutdown(); server.server_close(); service.close_db()
+
     def test_parser_identifies_root_invocation_and_terminal_events(self):
         obs = parse_session("root.jsonl", [
             line("2026-08-07T00:00:00Z", "session_meta", {"id": "root-1", "cwd": "Z:\\demo"}),
@@ -94,6 +109,14 @@ class BackendTests(unittest.TestCase):
         ])
         self.assertEqual(obs.session_id, "child-1")
         self.assertEqual(obs.parent_session_id, "root-1")
+
+    def test_message_id_does_not_overwrite_session_or_canonical_identity(self):
+        obs = parse_session("root.jsonl", [
+            line("1", "session_meta", {"id": "session-1", "cwd": "Z:\\demo"}),
+            line("2", "message", {"id": "message-1", "role": "user", "content": "$specswarm"}),
+        ])
+        self.assertEqual(obs.session_id, "session-1")
+        self.assertEqual(obs.canonical_root_id, "session:session-1")
 
     def test_sync_plan_extracts_checkbox_tasks(self):
         with tempfile.TemporaryDirectory() as td:
@@ -164,6 +187,25 @@ class BackendTests(unittest.TestCase):
             self.assertIn("child-1", run.children)
             self.assertEqual(service.ledger.reports(run.run_id)[0]["kind"], "claim")
             self.assertTrue(any(e["type"] == "child_attached" for e in events))
+            service.close_db()
+
+    def test_canonical_root_task_deduplicates_worktree_variants_and_preserves_history(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "sessions"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
+            first = root / "root-a.jsonl"
+            first.write_text(line("1", "session_meta", {"id": "session-a", "task_id": "task-42", "cwd": td}) +
+                             line("2", "message", {"role": "user", "content": "$specswarm"}), encoding="utf-8")
+            self.assertEqual([event["type"] for event in service.poll_once()], ["run_enrolled"])
+            run = service.ledger.list_runs()[0]
+            variant = root / "root-b.jsonl"
+            variant.write_text(line("3", "session_meta", {"id": "session-b", "task_id": "task-42", "cwd": str(Path(td) / "worktree")}) +
+                               line("4", "message", {"role": "assistant", "content": "claim: variant history"}), encoding="utf-8")
+            events = service.poll_once()
+            self.assertEqual(len(service.ledger.list_runs()), 1)
+            self.assertIn("session-b", service.ledger.get(run.run_id).children)
+            self.assertTrue(any(event["type"] == "root_variant_attached" for event in events))
+            self.assertTrue(any(item["text"] == "variant history" for item in service.ledger.reports(run.run_id)))
             service.close_db()
 
 

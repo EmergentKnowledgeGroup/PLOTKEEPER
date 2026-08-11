@@ -42,6 +42,23 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertNotIn("adds the `transcendr/slopware-skills` marketplace", integration)
         self.assertTrue((ROOT / "integrations" / "codex" / "bundled" / "dependencies.json").is_file())
 
+    def test_startup_scripts_gate_on_owned_listener_and_valid_html(self):
+        install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")
+        start = (ROOT / "scripts" / "start.ps1").read_text(encoding="utf-8")
+        for source in (install, start):
+            self.assertIn("Get-NetTCPConnection", source)
+            self.assertIn("Get-CimInstance Win32_Process", source)
+            self.assertIn("non-Plotkeeper listener", source)
+            self.assertIn("<html", source)
+            self.assertIn("plotkeeper-app", source)
+
+    def test_panel_receipt_instructions_require_html_proof(self):
+        skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("non-empty body", skill)
+        self.assertIn('data-testid="plotkeeper-app"', skill)
+        self.assertIn("Only after the valid HTML check succeeds", skill)
+        self.assertIn("PK:PANEL_OPENED", skill)
+
 
 if __name__ == "__main__":
     unittest.main()

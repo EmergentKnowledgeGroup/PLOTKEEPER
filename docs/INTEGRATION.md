@@ -13,6 +13,12 @@ Start Plotkeeper before the task. A new root user message containing
 `$specswarm` or `run specswarm` enrolls the run. The first activation watermark
 intentionally excludes older session bytes.
 
+Before opening the panel, verify both `/health` and `/` on the dashboard. The
+root response must be HTTP 200 with a non-empty HTML body containing `<html`
+and the exact `data-testid="plotkeeper-app"` marker. Emit `PK:PANEL_OPENED` only after that validation (and a
+second check after the browser-open call); a successful browser tool call by
+itself is not a visible-surface receipt.
+
 ## 2. Attach work
 
 Normal Codex child sessions attach through their recorded parent session ID.

@@ -86,13 +86,19 @@ reviewers:
 
 1. Verify `http://127.0.0.1:47831/health` returns healthy. If it does not, stop
    and report `PLOTKEEPER_UNAVAILABLE`; do not continue an untracked SpecSwarm.
-2. Use the CodexApp `open_in_codex` tool with a browser target of
+2. Fetch `http://127.0.0.1:47831/` and require HTTP 200, a non-empty body, an
+   `<html` element, and the exact `data-testid="plotkeeper-app"` dashboard
+   marker. If any check fails,
+   stop and report `PLOTKEEPER_UNAVAILABLE`; do not open the panel or emit its
+   receipt.
+3. Use the CodexApp `open_in_codex` tool with a browser target of
    `http://127.0.0.1:47831/` and placement `right`. This is mandatory, not an
-   optional preview.
-3. After the panel opens, emit the exact commentary marker
+   optional preview. Re-check the same valid HTML response after the tool
+   returns; an open tool call alone is not proof of a visible panel.
+4. Only after the valid HTML check succeeds, emit the exact commentary marker
    `PK:PANEL_OPENED cwd=<absolute-project-path>` so the watcher can record the
    visible-surface receipt.
-4. Wait for enrollment, then run
+5. Wait for enrollment, then run
    `$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }`, then
    `py -3 "$codexHome\skills\specswarm\scripts\plotkeeper_cli.py" current --cwd "$PWD"`. Write the returned
    `run_id` as `Plotkeeper-Run-ID` into the locked spec, checklist,

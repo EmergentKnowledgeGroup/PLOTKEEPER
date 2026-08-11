@@ -19,6 +19,9 @@ class SessionObservation:
     session_id: str
     path: str
     cwd: str | None = None
+    # Stable task/message identity shared by Codex session/worktree variants.
+    # Falls back to ``session_id`` when the source carries no canonical id.
+    canonical_root_id: str | None = None
     parent_session_id: str | None = None
     is_root: bool = False
     invoked_specswarm: bool = False

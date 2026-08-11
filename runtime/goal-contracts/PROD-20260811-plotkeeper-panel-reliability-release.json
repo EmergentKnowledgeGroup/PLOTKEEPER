@@ -1,0 +1,214 @@
+{
+  "id": "PROD-20260811-plotkeeper-panel-reliability-release",
+  "status": "ACTIVE",
+  "contract_hash": "c024eaab808bfcf569d2a81c39a72aa351fd937fc10a9b9f27ef28e92dfdb99f",
+  "origin": "DIRECT",
+  "user_goal": "Make Plotkeeper reliably open the live dashboard for attached Codex tasks, prevent duplicate canonical runs, test and publish the repair with a changelog and release, then notify every currently attached Codex task to update and continue.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2b3-4523-7a91-b8b0-89b74d57c15f",
+    "original_request_hash": "86bb998ceaa119a41971b4be4c44b26ed164470d178b19f9c0bcdd176584d73f",
+    "verbatim_text": "is it updated and tested good and clean across the board? If so, update the repo, add a changelog and release, and then let me know what current threads are utilizing it by sessionID and then send each one a specific \"UPDATE PLOTKEEPER AND CONTINUE YOUR TURN\" message (with instrucitons on how to do so",
+    "captured_at_utc": "2026-08-11T21:08:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2b3-4523-7a91-b8b0-89b74d57c15f"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "5c33658fe08ff73d661ca40c9e3c96194748a9f2",
+    "retrieved_at_utc": "2026-08-11T21:08:00Z",
+    "protection_evidence": "Local main, origin/main, and public main are identical at the attested complete-bundle release.",
+    "selection_reason": "Current public Plotkeeper release before the panel reliability correction."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/",
+      "scripts/",
+      "integrations/codex/",
+      "tests/",
+      "README.md",
+      "CHANGELOG.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      "pyproject.toml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-panel-reliability-release.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Plotkeeper service on 127.0.0.1:47831",
+      "Installed Codex skills, hooks, and Plotkeeper plugin",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main, variables, secret names, Actions, tags, and Releases",
+      "Currently attached Codex tasks identified from the Plotkeeper ledger and Codex task registry"
+    ],
+    "semantic_changes": [
+      "Serve dashboard assets from a path valid in source and installed layouts and return explicit HTTP errors instead of empty sockets.",
+      "Make installation or startup replace a stale Plotkeeper process and prove the dashboard root, not only health.",
+      "Reuse one canonical active run per root Codex task and prevent message-event pseudo-roots from creating duplicate runs.",
+      "Make panel-open success contingent on a valid dashboard response.",
+      "Document, version, publish, and notify attached tasks with exact update-and-continue instructions."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      ".github/workflows/"
+    ],
+    "semantic_changes": [
+      "Do not alter goal-contract, review, guard, release-verifier, attribution, license, or evidence-integrity semantics.",
+      "Do not close, delete, merge, or reassign existing Plotkeeper runs automatically.",
+      "Do not message tasks that cannot be reconciled to a currently existing Codex task.",
+      "Do not expose secrets, personal datasets, review receipts, calibration history, or unrelated project content."
+    ]
+  },
+  "invariants": [
+    "The dashboard root returns valid HTML while health remains green in source, installed, and restarted-service execution paths.",
+    "A root Codex task maps to one canonical active Plotkeeper run; children attach without duplicate roots.",
+    "Panel-open claims are verified and fail closed.",
+    "Existing ledger history is preserved and no active task loses its contract or run identity.",
+    "The exact candidate passes independent review, public CI, and live post-release attestation before task notification."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "Opening Plotkeeper from an attached Codex task displays the current dashboard and its canonical run.",
+      "forbidden_behavior": "A health-only success, empty HTTP response, stale process, missing asset, or unverified panel marker may be reported as opened.",
+      "target_and_actor": "A Codex user opening the right-side Plotkeeper panel.",
+      "required_proof_ids": [
+        "PR-HTTP",
+        "PR-INSTALL",
+        "PR-PANEL"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "Repeated events and child activity reuse the canonical active run for the root task.",
+      "forbidden_behavior": "Message IDs, repeated activation, or worktree variants may create competing root runs for one task.",
+      "target_and_actor": "Plotkeeper session scanner and ledger processing live Codex tasks.",
+      "required_proof_ids": [
+        "PR-RUNS"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The repaired candidate is versioned, documented, independently reviewed, published, and communicated to every currently attached live Codex task.",
+      "forbidden_behavior": "No stale candidate, failed CI, missing release note, unverifiable task, or generic message may be represented as complete.",
+      "target_and_actor": "Repository users and current Plotkeeper-enabled Codex tasks.",
+      "required_proof_ids": [
+        "PR-RELEASE",
+        "PR-MESSAGE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-HTTP",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "HTTP dashboard handling is explicit and reliable.",
+      "required_environment": "Source and installed Plotkeeper servers",
+      "command_or_read_only_check": "Exercise /health, /, static assets, missing assets, and handler exceptions.",
+      "expected_observation": "Valid responses with no empty socket."
+    },
+    {
+      "id": "PR-INSTALL",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Install/start replaces stale code and waits for the dashboard.",
+      "required_environment": "Fresh isolated install and live local service",
+      "command_or_read_only_check": "Install, restart, compare code/assets, and fetch dashboard HTML.",
+      "expected_observation": "The current candidate owns the listener and serves current HTML."
+    },
+    {
+      "id": "PR-PANEL",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Panel success is tied to usable dashboard content.",
+      "required_environment": "Codex integration and panel dispatch contract",
+      "command_or_read_only_check": "Test success and failure paths and inspect the emitted marker.",
+      "expected_observation": "Success only follows verified dashboard availability."
+    },
+    {
+      "id": "PR-RUNS",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Canonical run attachment is idempotent and history-preserving.",
+      "required_environment": "Synthetic scanner fixtures plus a read-only reconciliation of the live ledger",
+      "command_or_read_only_check": "Replay root, message, child, repeated, and worktree events.",
+      "expected_observation": "One canonical root run with children attached and no destructive ledger mutation."
+    },
+    {
+      "id": "PR-RELEASE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "The exact candidate is clean, reviewed, documented, released, and publicly green.",
+      "required_environment": "Git candidate, independent review, GitHub main/tag/release/Actions",
+      "command_or_read_only_check": "Run all tests, clean install/live verification, signed review chain, guarded push, release creation, and attestation.",
+      "expected_observation": "Exact public SHA and release tag pass all gates."
+    },
+    {
+      "id": "PR-MESSAGE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Every currently attached live Codex task receives specific update and continuation instructions.",
+      "required_environment": "Plotkeeper ledger and Codex task registry after release",
+      "command_or_read_only_check": "Reconcile session IDs to tasks, send one tailored message per task, and record delivery receipts.",
+      "expected_observation": "Every reconciled current task has one successful delivery; unreconciled historical rows are reported, not messaged."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Exact candidate, dashboard/install/run/panel tests, clean diff, changelog/version/tag plan, rollback, signed review chain, and target reconciliation."
+    }
+  ],
+  "stop_conditions": [
+    "Any empty dashboard response remains.",
+    "Duplicate canonical runs remain reproducible.",
+    "Install or restart risks killing an unrelated listener.",
+    "Any test, independent review, guard, CI, release, or live attestation fails.",
+    "A task cannot be reconciled safely for messaging.",
+    "Any forbidden, unrelated, secret, cache, history, or unexplained diff appears."
+  ],
+  "known_discrepancies": [
+    "The live listener began before the productized dashboard move and serves health while closing dashboard requests without a response.",
+    "The live ledger contains multiple OPEN runs for the same project/root-task families, including message-ID pseudo-roots.",
+    "No GitHub Release currently exists."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "update the repo, add a changelog and release, identify current threads by sessionID, and send each update instructions",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260811-plotkeeper-complete-skill-bundle-final.json",
+    "sha256": "8047ce7622f733381b2e7d7f2c5cc2f31468b8c9eafc19b3aca7e837b8ab63d9"
+  }
+}

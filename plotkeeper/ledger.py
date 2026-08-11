@@ -38,6 +38,7 @@ class Ledger:
                 CREATE TABLE IF NOT EXISTS runs (
                     run_id TEXT PRIMARY KEY,
                     root_session_id TEXT NOT NULL UNIQUE,
+                    root_key TEXT,
                     state TEXT NOT NULL,
                     cwd TEXT,
                     dashboard_url TEXT NOT NULL,
@@ -74,6 +75,11 @@ class Ledger:
                     FOREIGN KEY(run_id) REFERENCES runs(run_id)
                 );
             """)
+            columns = {row[1] for row in self.db.execute("PRAGMA table_info(runs)")}
+            if "root_key" not in columns:
+                self.db.execute("ALTER TABLE runs ADD COLUMN root_key TEXT")
+            self.db.execute("UPDATE runs SET root_key=root_session_id WHERE root_key IS NULL OR root_key='' ")
+            self.db.execute("CREATE UNIQUE INDEX IF NOT EXISTS runs_root_key_unique ON runs(root_key)")
 
     def get_meta(self, key: str) -> str | None:
         row = self.db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
@@ -91,14 +97,17 @@ class Ledger:
         with self._lock, self.db:
             self.db.execute("INSERT INTO watermarks(path,byte_offset) VALUES(?,?) ON CONFLICT(path) DO UPDATE SET byte_offset=excluded.byte_offset", (path, max(0, int(offset))))
 
-    def enroll(self, root_session_id: str, cwd: str | None, dashboard_url: str) -> Run:
+    def enroll(self, root_session_id: str, cwd: str | None, dashboard_url: str,
+               canonical_root_id: str | None = None) -> Run:
+        root_key = canonical_root_id or f"session:{root_session_id}"
         with self._lock, self.db:
-            row = self.db.execute("SELECT * FROM runs WHERE root_session_id=?", (root_session_id,)).fetchone()
+            row = self.db.execute("SELECT * FROM runs WHERE root_session_id=? OR root_key=?", (root_session_id, root_key)).fetchone()
             if row:
                 return self._row(row)
             stamp = now_iso()
             run_id = uuid.uuid4().hex
-            self.db.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?)", (run_id, root_session_id, RunState.OPEN.value, cwd, dashboard_url, stamp, stamp, None, None, None))
+            self.db.execute("INSERT INTO runs(run_id,root_session_id,root_key,state,cwd,dashboard_url,created_at,updated_at,review_injected_at,review_receipt,closed_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                            (run_id, root_session_id, root_key, RunState.OPEN.value, cwd, dashboard_url, stamp, stamp, None, None, None))
             return self.get(run_id)  # type: ignore[return-value]
 
     def get(self, run_id: str) -> Run | None:
@@ -107,6 +116,10 @@ class Ledger:
 
     def by_root(self, session_id: str) -> Run | None:
         row = self.db.execute("SELECT * FROM runs WHERE root_session_id=?", (session_id,)).fetchone()
+        return self._row(row) if row else None
+
+    def by_canonical_root(self, canonical_root_id: str) -> Run | None:
+        row = self.db.execute("SELECT * FROM runs WHERE root_key=?", (canonical_root_id,)).fetchone()
         return self._row(row) if row else None
 
     def list_runs(self, active_only: bool = False) -> list[Run]:
