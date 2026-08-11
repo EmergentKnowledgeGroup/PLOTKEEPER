@@ -18,25 +18,25 @@ Pre-push checks:
 
 ```powershell
 git status --short --branch
-git diff a0d23403f9b3d0cab13e8f3ea0a695bc17826018..HEAD --check
+git diff 5c33658fe08ff73d661ca40c9e3c96194748a9f2..HEAD --check
 py -3 -m unittest discover -s tests -v
 ```
 
 ## Rollback
 
 The protected enforcement baseline for this release is
-`a0d23403f9b3d0cab13e8f3ea0a695bc17826018`. If the dependency-bundle release is
+`5c33658fe08ff73d661ca40c9e3c96194748a9f2`. If the panel-reliability release is
 defective, preserve the failed release commit for audit and
 restore the public branch to that baseline with a lease-bound update:
 
 ```powershell
 git fetch origin main
 git push --force-with-lease=refs/heads/main:<REMOTE_FAILED_SHA> origin `
-  a0d23403f9b3d0cab13e8f3ea0a695bc17826018:refs/heads/main
+  5c33658fe08ff73d661ca40c9e3c96194748a9f2:refs/heads/main
 ```
 
 Replace `<REMOTE_FAILED_SHA>` with the SHA independently read from GitHub. Do
 not use an unqualified force push. Then verify that GitHub's default branch
 resolves to the baseline and record a new live attestation. This rollback
-removes only the dependency-bundle correction from the public branch; it does
-not delete the hardened public release, repository, or audit history.
+removes only the panel-reliability patch from the public branch; it does not
+delete the hardened dependency-bundle release, repository, or audit history.

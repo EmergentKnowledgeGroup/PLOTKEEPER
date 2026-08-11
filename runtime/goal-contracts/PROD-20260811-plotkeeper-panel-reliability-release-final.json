@@ -1,0 +1,212 @@
+{
+  "id": "PROD-20260811-plotkeeper-panel-reliability-release-final",
+  "status": "ACTIVE",
+  "contract_hash": "f75702ff81b346c9da895eccb51b943861a63e221d598d0cb9c3a3b2e2e10b62",
+  "origin": "DIRECT",
+  "user_goal": "Publish the tested Plotkeeper panel-reliability repair with its changelog and release, bind public verification and rollback to this release, then update every currently attached Codex task and tell it to continue.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2b3-4523-7a91-b8b0-89b74d57c15f",
+    "original_request_hash": "86bb998ceaa119a41971b4be4c44b26ed164470d178b19f9c0bcdd176584d73f",
+    "verbatim_text": "is it updated and tested good and clean across the board? If so, update the repo, add a changelog and release, and then let me know what current threads are utilizing it by sessionID and then send each one a specific \"UPDATE PLOTKEEPER AND CONTINUE YOUR TURN\" message (with instrucitons on how to do so",
+    "captured_at_utc": "2026-08-11T21:08:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2b3-4523-7a91-b8b0-89b74d57c15f"
+  },
+  "baseline": {
+    "protected_ref": "refs/heads/main",
+    "sha": "5c33658fe08ff73d661ca40c9e3c96194748a9f2",
+    "retrieved_at_utc": "2026-08-11T21:08:00Z",
+    "protection_evidence": "Local main, origin/main, and public main were identical at the attested complete-bundle release.",
+    "selection_reason": "This is the protected public predecessor and exact rollback target for panel reliability 0.1.1."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/",
+      "scripts/",
+      "integrations/codex/",
+      "tests/",
+      "README.md",
+      "CHANGELOG.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      "pyproject.toml",
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-panel-reliability-release.json",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-panel-reliability-release-final.json",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "Local Plotkeeper service on 127.0.0.1:47831 and installed Codex integration",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main, variables, secret names, Actions, v0.1.1 tag, and Release",
+      "Currently attached Codex tasks reconciled from the live Plotkeeper ledger and Codex task registry"
+    ],
+    "semantic_changes": [
+      "Serve dashboard requests explicitly, replace only stale Plotkeeper-owned listeners, and verify exact dashboard HTML before panel success.",
+      "Keep stable session/task identity and prevent message IDs from creating duplicate canonical roots while preserving history.",
+      "Bind the public verifier to this final contract and bind rollback/pre-push comparison to protected predecessor 5c33658fe08ff73d661ca40c9e3c96194748a9f2.",
+      "Version, document, publish, attest, and notify every safely reconciled current task with exact update-and-continue instructions."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      ".github/workflows/tests.yml"
+    ],
+    "semantic_changes": [
+      "Do not weaken goal-contract, review, guard, verifier, licensing, attribution, or evidence-integrity behavior.",
+      "Do not close, delete, merge, or reassign existing Plotkeeper runs automatically.",
+      "Do not message unreconciled historical rows or non-Codex chats.",
+      "Do not expose secrets, personal datasets, review receipts, calibration history, or unrelated project content."
+    ]
+  },
+  "invariants": [
+    "Dashboard HTML and health are valid in source, installed, restarted, and public candidate paths.",
+    "Each root Codex task has one canonical active run and children retain their history.",
+    "Foreign listeners are never stopped and panel success fails closed.",
+    "Rollback restores 5c33658 with force-with-lease and preserves the prior hardened public release.",
+    "Only the exact independently reviewed candidate is pushed, tagged, released, attested, installed, and communicated."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "An attached Codex task opens valid current Plotkeeper HTML for its canonical run.",
+      "forbidden_behavior": "Health-only, empty responses, stale code, generic HTML, foreign-listener replacement, or unverified panel claims may not pass.",
+      "target_and_actor": "A Codex user opening the Plotkeeper sidebar.",
+      "required_proof_ids": [
+        "PR-HTTP",
+        "PR-INSTALL",
+        "PR-PANEL"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "Repeated events and children reuse the stable canonical run without losing history.",
+      "forbidden_behavior": "Ordinary message IDs or session variants may not create competing root runs or collapse distinct tasks.",
+      "target_and_actor": "The Plotkeeper scanner and ledger observing live Codex sessions.",
+      "required_proof_ids": [
+        "PR-RUNS"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The exact 0.1.1 candidate is documented, reviewed, safely releasable, public, installed, and communicated to every reconciled current task.",
+      "forbidden_behavior": "No stale contract, rollback, candidate, CI, release note, install, task mapping, or generic message may pass.",
+      "target_and_actor": "Repository users and current Plotkeeper-enabled Codex tasks.",
+      "required_proof_ids": [
+        "PR-RELEASE",
+        "PR-MESSAGE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-HTTP",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Dashboard and error HTTP paths are non-empty and explicit.",
+      "required_environment": "Source and installed servers",
+      "command_or_read_only_check": "Exercise health, root, static, missing, and exception paths.",
+      "expected_observation": "Valid current HTML or explicit non-empty HTTP errors; never an empty socket."
+    },
+    {
+      "id": "PR-INSTALL",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Startup and install replace only stale Plotkeeper and wait for exact dashboard content.",
+      "required_environment": "Alternate ports, foreign listener fixture, then live 47831 after DEPLOY_READY",
+      "command_or_read_only_check": "Test valid start, foreign preservation, exact process ownership, install, restart, and live HTML.",
+      "expected_observation": "Foreign process preserved; reviewed Plotkeeper owns 47831 and serves exact marker."
+    },
+    {
+      "id": "PR-PANEL",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "PK:PANEL_OPENED is gated by usable dashboard content.",
+      "required_environment": "Bundled and installed SpecSwarm",
+      "command_or_read_only_check": "Compare skill bytes and inspect success/failure requirements.",
+      "expected_observation": "Marker follows exact HTML verification before and after panel dispatch."
+    },
+    {
+      "id": "PR-RUNS",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Canonical enrollment is idempotent, distinct-task safe, and history-preserving.",
+      "required_environment": "Synthetic fixtures, real session metadata samples, and read-only live ledger",
+      "command_or_read_only_check": "Replay root/message/child/repeated/worktree cases and audit migration.",
+      "expected_observation": "No new pseudo-root duplicates and no destructive live migration."
+    },
+    {
+      "id": "PR-RELEASE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "The exact candidate and release are clean, reviewed, current, reversible, and publicly green.",
+      "required_environment": "Git candidate, signed review, guard, GitHub main/tag/release/Actions, live install",
+      "command_or_read_only_check": "Full tests, adversarial review, exact bundle, guarded push, v0.1.1 release, workflows, install/restart, and attestation.",
+      "expected_observation": "All surfaces bind the same SHA and contract; rollback preserves 5c33658."
+    },
+    {
+      "id": "PR-MESSAGE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Every currently attached live Codex task receives one tailored update-and-continue instruction.",
+      "required_environment": "Post-release live ledger and Codex task registry",
+      "command_or_read_only_check": "Reconcile current Codex session IDs, send one message per task, and retain delivery receipts.",
+      "expected_observation": "Every reconciled task receives the exact update directive plus safe install/verify/continue instructions."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal-review verifier"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Exact candidate, tests, functional start/install guards, parser/migration proof, changelog/version, current rollback/verifier, signed review chain, and target reconciliation."
+    }
+  ],
+  "stop_conditions": [
+    "Any empty dashboard response, foreign listener termination, or duplicate canonical enrollment remains reproducible.",
+    "Any test, independent review, verifier, guard, push, tag, release, CI, install, live attestation, or task delivery fails.",
+    "Any forbidden, unrelated, secret, cache, history, or unexplained diff appears.",
+    "A supposed current task cannot be reconciled between the ledger and Codex registry."
+  ],
+  "known_discrepancies": [
+    "The initial candidate contract forbade the release-verifier pointer update and retained an obsolete rollback target; this final amendment permits only those required release bindings.",
+    "The live listener is still the stale August 7 process pending exact-candidate DEPLOY_READY review.",
+    "The historical ledger retains old duplicate rows by design; the patch prevents new pseudo-root duplicates without deleting history."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "update the repo, add a changelog and release, identify current threads by sessionID, and send each update instructions",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260811-plotkeeper-panel-reliability-release.json",
+    "sha256": "a808b8c7ead22195d551a81bfe485173e3323fadf9848fc7c8fd105422b5aacd"
+  }
+}

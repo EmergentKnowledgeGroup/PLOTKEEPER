@@ -3,7 +3,7 @@
   "tracks": {
     "PLOTKEEPER PANEL RELIABILITY WORK": {
       "step": "post-green-tests",
-      "note": "Panel reliability package integrated: non-empty handler errors, fail-closed owned-listener replacement, HTML-gated panel receipts, message/session identity repair, stable canonical-task reuse, and version 0.1.1 docs/changelog; exact-candidate review and release remain.",
+      "note": "Panel reliability package integrated and final release amendment binds verifier/rollback to the protected predecessor; exact-candidate rereview and release remain.",
       "branch": "main",
       "head": "5c33658",
       "next_cmd": "git diff --check && py -3 -m unittest discover -s tests -v",
