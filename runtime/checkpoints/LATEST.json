@@ -3,14 +3,14 @@
   "tracks": {
     "PLOTKEEPER ACTIVE RUN SURFACE WORK": {
       "step": "post-green-tests",
-      "note": "Successor contract PROD-20260811-plotkeeper-active-run-surface-subagent-fix is implemented and verified; subagent threads are excluded even with null agent_path, with older-schema fallback preserved.",
+      "note": "Successor contract PROD-20260811-plotkeeper-active-run-surface-verifier-phase-fix is implemented and verified; subagent exclusion remains green and DEPLOY_READY no longer fabricates ATTESTED-only obligations.",
       "branch": "main",
-      "head": "ecc8a01f58732ac04de4995cfc10b7840b87377c",
+      "head": "c498d369c6b5c29b5af28ec8f4189b0e029c67e8",
       "next_cmd": "git diff --check",
       "validations": [
-        "successor contract VALID at 5bf9dcefcbdfdf8ca9950a1bd721b946e1f4940bded9a282badd255e89bfaf0f",
-        "predecessor b56b3e4363c12003d606a573b906702ec999d5f83ea760592b7a71517486a251 preserved",
-        "55 tests green; Node syntax and diff check green; subagent thread-source/null-agent regression and older-schema compatibility green; live read-only state confirms Task 21G is subagent with null agent_path"
+        "successor contract VALID at 82d41e46d2b6de525421ece81916e98ae6e9b283f5d4da939ad6bf26ee7964a7",
+        "predecessor 5bf9dcefcbdfdf8ca9950a1bd721b946e1f4940bded9a282badd255e89bfaf0f preserved",
+        "56 tests green including DEPLOY_READY versus ATTESTED phase regression; Node syntax and diff check green; copied-live inventory remains four non-subagent active runs"
       ]
     },
     "PLOTKEEPER ACTIVE RUN SURFACE IMPLEMENTATION": {

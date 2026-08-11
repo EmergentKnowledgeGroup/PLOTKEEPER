@@ -99,11 +99,24 @@ def validate_receipt(
                 binding.get("target_fingerprint") != expected_target_fingerprint):
             errors.append(f"{label} source evidence binding mismatch")
             break
+    phase_rank = {
+        "VALIDATED": 0,
+        "MERGE_READY": 1,
+        "DEPLOY_READY": 2,
+        "ATTESTED": 3,
+        "CLOSED": 4,
+    }
     all_required = {
         "acceptance": {x["id"] for x in contract.get("acceptance_cases", [])},
         "proof": {x["id"] for x in contract.get("proof_requirements", [])},
-        "review": {x["id"] for x in contract.get("review_requirements", [])},
-        "release": {x["id"] for x in contract.get("release_requirements", [])},
+        "review": {
+            x["id"] for x in contract.get("review_requirements", [])
+            if phase_rank.get(str(x.get("phase") or "DEPLOY_READY"), 2) <= phase_rank[phase]
+        },
+        "release": {
+            x["id"] for x in contract.get("release_requirements", [])
+            if phase_rank.get(str(x.get("phase") or "DEPLOY_READY"), 2) <= phase_rank[phase]
+        },
     }
     if phase in {"VALIDATED", "MERGE_READY"}:
         required = {
