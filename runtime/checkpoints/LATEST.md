@@ -7,11 +7,11 @@ Track: `PLOTKEEPER COMPLETE BUNDLE WORK`
 ## PLOTKEEPER COMPLETE BUNDLE WORK
 
 - step: post-green-tests
-- note: SpecSwarm and its complete skill-code dependency closure are vendored and installed locally; EKG and Slopware ownership boundaries are documented; the release verifier is bound to the append-only correction contract; exact-candidate independent review and publication remain.
+- note: SpecSwarm and its complete skill-code dependency closure are vendored and installed locally; the first independent review found a stale rollback SHA, now corrected under a narrow final amendment; exact-candidate rereview and publication remain.
 - branch: main
-- head: a0d23403f9b3d0cab13e8f3ea0a695bc17826018
+- head: eb5ac3f49c8641b952aabf133c53bff6c1344bd6
 - next_cmd: `git diff --check && py -3 -m unittest discover -s tests -v`
-- validations: 43 tests green; both bundled governance validators execute; append-only release contract validates at d9c2948650c8360f9328b2fb6f03ac3b95b9c6d2e34032ae0a56f2af0fa1d402; isolated bundled-only install and portable Plotkeeper bridge green; no bundled bytecode/cache; upstream Slopware package manifests exact; git diff check green
+- validations: 43 tests green; final contract validates at e6d2d0965c8ca6c0ff848285846f785d75b2a86e57f99294e7019d8ddd71c6c5; isolated bundled-only install and portable Plotkeeper bridge green; no bundled bytecode/cache; upstream Slopware package manifests exact; rollback target corrected to protected public baseline a0d2340; git diff check green
 
 ## PLOTKEEPER PUBLIC RELEASE WORK
 
