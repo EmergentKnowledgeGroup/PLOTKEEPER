@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import os
 import sqlite3
+import subprocess
+import sys
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -9,6 +13,13 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from .models import Run, RunState
+
+
+REVIEW_VALIDATOR_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "integrations" / "codex" / "bundled" / "skills"
+    / "production-goal-review" / "scripts" / "validate_review_receipt.py"
+)
 
 
 def now_iso() -> str:
@@ -330,7 +341,7 @@ class Ledger:
 
         Kept as a compatibility-shaped method for callers that still import
         it, but deliberately cannot advance a run.  Only ``finalize_review``
-        after service-owned canonical validation may persist a receipt.
+        with its ledger-owned canonical validation may persist a receipt.
         """
         return False
 
@@ -345,25 +356,68 @@ class Ledger:
         title = str(task["title"] or "").casefold()
         return "independent" in title and ("review" in title or "receipt" in title)
 
-    def finalize_review(self, run_id: str, receipt: dict[str, Any], *,
+    def finalize_review(self, run_id: str, receipt_locator: str, *,
                         failure_hook: Callable[[str], None] | None = None) -> bool:
-        """Atomically persist a validated receipt and close its run.
+        """Validate and atomically close a run from an exact receipt locator.
 
-        Receipt validation is deliberately owned by :class:`PlotkeeperService`;
-        this narrow ledger primitive only accepts the already validated JSON
-        and performs the final-task transition plus run close in one SQLite
-        transaction.  ``failure_hook`` is test-only fault injection at named
-        transaction boundaries and is never consulted by production callers.
+        The locator is the only receipt authority accepted here.  Direct
+        callers cannot provide a prevalidated dictionary: this boundary reads
+        the run-bound contract and repository, invokes the bundled canonical
+        validator, then performs validation, final-task transition, receipt
+        persistence, and closure in one SQLite transaction. ``failure_hook``
+        is a narrow test seam; production uses the bundled subprocess
+        invocation and no failure hook.
         """
-        if not isinstance(receipt, dict) or str(receipt.get("verdict", "")).upper() != "PASS":
+        if not isinstance(receipt_locator, (str, Path)) or not str(receipt_locator).strip():
             return False
         with self._lock:
             try:
                 self.db.execute("BEGIN IMMEDIATE")
                 row = self.db.execute(
-                    "SELECT state,review_receipt FROM runs WHERE run_id=?", (run_id,)
+                    "SELECT state,review_receipt,cwd FROM runs WHERE run_id=?", (run_id,)
                 ).fetchone()
                 if not row or row[0] != RunState.REVIEW_PENDING.value or row[1] is not None:
+                    self.db.rollback()
+                    return False
+                contract_row = self.db.execute(
+                    "SELECT path FROM goal_contracts WHERE run_id=?", (run_id,)
+                ).fetchone()
+                contract_path = Path(str(contract_row[0])) if contract_row and contract_row[0] else None
+                repo_root = Path(str(row[2])) if row[2] else None
+                if not contract_path or not contract_path.is_file() or not repo_root or not repo_root.is_dir():
+                    self.db.rollback()
+                    return False
+                receipt_path = Path(str(receipt_locator).strip())
+                if not receipt_path.is_absolute():
+                    receipt_path = repo_root / receipt_path
+                receipt_path = receipt_path.resolve(strict=True)
+                receipt_bytes = receipt_path.read_bytes()
+                receipt = json.loads(receipt_bytes.decode("utf-8"))
+                if not isinstance(receipt, dict) or str(receipt.get("verdict", "")).upper() != "PASS" or receipt.get("phase") != "VALIDATED":
+                    self.db.rollback()
+                    return False
+                canonical_validator = REVIEW_VALIDATOR_PATH
+                if not canonical_validator.is_file():
+                    self.db.rollback()
+                    return False
+                args = [
+                    sys.executable, str(canonical_validator), str(contract_path),
+                    str(receipt_path), "--repo-root", str(repo_root),
+                    "--receipt-dir", str(receipt_path.parent),
+                ]
+                validator_env = os.environ.copy()
+                validator_env["PYTHONDONTWRITEBYTECODE"] = "1"
+                result = subprocess.run(args, capture_output=True, text=True,
+                                        check=False, cwd=str(repo_root), env=validator_env)
+                if getattr(result, "returncode", 1) != 0:
+                    self.db.rollback()
+                    return False
+                # The validator reads the receipt independently.  Refuse to
+                # persist a snapshot if the locator changed while validation
+                # was running; otherwise a valid result could be paired with
+                # different metadata at commit time.
+                verified_bytes = receipt_path.read_bytes()
+                if hashlib.sha256(verified_bytes).digest() != hashlib.sha256(receipt_bytes).digest():
                     self.db.rollback()
                     return False
                 tasks = list(self.db.execute(
@@ -397,6 +451,9 @@ class Ledger:
                     failure_hook("run_closed")
                 self.db.commit()
                 return True
+            except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError):
+                self.db.rollback()
+                return False
             except Exception:
                 self.db.rollback()
                 return False

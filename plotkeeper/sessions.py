@@ -20,7 +20,7 @@ GOAL_COMPLETE_RE = re.compile(r"(?:PK:GOAL_COMPLETE_REQUEST|\bgoal\s+(?:is\s+)?c
 # observable; the service rejects PASS envelopes that omit it.
 REVIEW_RESULT_RE = re.compile(
     r"PK:REVIEW_RESULT\s+run_id=(\S+)\s+verdict=(PASS|PARTIAL|FAIL|BLOCKED)\s+"
-    r"open_items=(\d+)(?:\s+(?:receipt_locator|receipt_path|receipt)=(\S+))?",
+    r"open_items=(\d+)(?:\s+receipt_locator=(\S+))?",
     re.IGNORECASE,
 )
 ATTACH_RE = re.compile(r"Plotkeeper-Run-ID\s*:\s*([A-Za-z0-9_-]+)", re.IGNORECASE)

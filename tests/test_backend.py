@@ -31,8 +31,19 @@ class BackendTests(unittest.TestCase):
                 {"task_id": "T001", "title": "implementation", "status": "completed"},
                 {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
             ])
-            receipt = {"verdict": "PASS", "phase": "VALIDATED", "review_receipt_hash": "h"}
-            self.assertTrue(ledger.finalize_review(first.run_id, receipt))
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text("{}", encoding="utf-8")
+            ledger.set_goal_contract(first.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "h"})
+            receipt_path = Path(td) / "receipt.json"
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
+            self.assertFalse(ledger.finalize_review(first.run_id, {"verdict": "PASS"}))
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=0)) as validator:
+                self.assertTrue(ledger.finalize_review(first.run_id, str(receipt_path)))
+            command = validator.call_args.args[0]
+            self.assertIn("validate_review_receipt.py", command[1])
+            self.assertTrue(Path(command[2]).samefile(contract_path))
+            self.assertTrue(Path(command[3]).samefile(receipt_path))
+            self.assertIn("--repo-root", command)
             before = ledger.get(first.run_id)
             self.assertEqual(before.state, RunState.CLOSED)
             successor = ledger.enroll("root-followup", td, "http://pk", "task-1")
@@ -177,7 +188,7 @@ class BackendTests(unittest.TestCase):
             receipt = {"verdict": "PASS", "phase": "VALIDATED", "review_receipt_hash": "receipt-hash"}
             receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
             self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0})["ok"])
-            with mock.patch("plotkeeper.service.subprocess.run", return_value=mock.Mock(returncode=0)):
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=0)):
                 self.assertTrue(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0, "receipt_locator": str(receipt_path)})["ok"])
             self.assertFalse(service.close(run.run_id)["ok"])
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.CLOSED)
@@ -199,9 +210,69 @@ class BackendTests(unittest.TestCase):
                 {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
             ])
             ledger.mark_review_pending(run.run_id)
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text("{}", encoding="utf-8")
+            ledger.set_goal_contract(run.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "h"})
+            receipt_path = Path(td) / "receipt.json"
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
             def fail(_point):
-                raise RuntimeError("injected")
-            self.assertFalse(ledger.finalize_review(run.run_id, {"verdict": "PASS"}, failure_hook=fail))
+                if _point == "run_closed":
+                    raise RuntimeError("injected")
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=0)):
+                self.assertFalse(ledger.finalize_review(run.run_id, str(receipt_path), failure_hook=fail))
+            self.assertEqual(ledger.get(run.run_id).state, RunState.REVIEW_PENDING)
+            self.assertIsNone(ledger.get(run.run_id).review_receipt)
+            self.assertEqual(ledger.tasks(run.run_id)[1]["status"], "pending")
+            ledger.close_db()
+
+    def test_direct_ledger_validator_failure_rolls_back_before_task_transition(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger = Ledger(Path(td) / "ledger.sqlite")
+            run = ledger.enroll("root-1", td, "http://pk")
+            assert run is not None
+            ledger.replace_tasks(run.run_id, [
+                {"task_id": "T001", "title": "implementation", "status": "completed"},
+                {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
+            ])
+            ledger.mark_review_pending(run.run_id)
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text("{}", encoding="utf-8")
+            ledger.set_goal_contract(run.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "h"})
+            receipt_path = Path(td) / "receipt.json"
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
+            self.assertFalse(ledger.finalize_review(run.run_id, ""))
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "CLOSED"}), encoding="utf-8")
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=0)):
+                self.assertFalse(ledger.finalize_review(run.run_id, str(receipt_path)))
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=2)):
+                self.assertFalse(ledger.finalize_review(run.run_id, str(receipt_path)))
+            current = ledger.get(run.run_id)
+            self.assertEqual(current.state, RunState.REVIEW_PENDING)
+            self.assertIsNone(current.review_receipt)
+            self.assertEqual(ledger.tasks(run.run_id)[1]["status"], "pending")
+            ledger.close_db()
+
+    def test_direct_ledger_rejects_receipt_mutation_during_validator(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger = Ledger(Path(td) / "ledger.sqlite")
+            run = ledger.enroll("root-1", td, "http://pk")
+            assert run is not None
+            ledger.replace_tasks(run.run_id, [
+                {"task_id": "T001", "title": "implementation", "status": "completed"},
+                {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
+            ])
+            ledger.mark_review_pending(run.run_id)
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text("{}", encoding="utf-8")
+            ledger.set_goal_contract(run.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "h"})
+            receipt_path = Path(td) / "receipt.json"
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
+            def mutate(*_args, **_kwargs):
+                receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED", "tampered": True}), encoding="utf-8")
+                return mock.Mock(returncode=0)
+            with mock.patch("plotkeeper.ledger.subprocess.run", side_effect=mutate):
+                self.assertFalse(ledger.finalize_review(run.run_id, str(receipt_path)))
             self.assertEqual(ledger.get(run.run_id).state, RunState.REVIEW_PENDING)
             self.assertIsNone(ledger.get(run.run_id).review_receipt)
             self.assertEqual(ledger.tasks(run.run_id)[1]["status"], "pending")
@@ -217,7 +288,13 @@ class BackendTests(unittest.TestCase):
                 {"task_id": "T002", "title": "another pending task", "status": "pending"},
             ])
             ledger.mark_review_pending(run.run_id)
-            self.assertFalse(ledger.finalize_review(run.run_id, {"verdict": "PASS"}))
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text("{}", encoding="utf-8")
+            ledger.set_goal_contract(run.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "h"})
+            receipt_path = Path(td) / "receipt.json"
+            receipt_path.write_text(json.dumps({"verdict": "PASS", "phase": "VALIDATED"}), encoding="utf-8")
+            with mock.patch("plotkeeper.ledger.subprocess.run", return_value=mock.Mock(returncode=0)):
+                self.assertFalse(ledger.finalize_review(run.run_id, str(receipt_path)))
             self.assertEqual(ledger.get(run.run_id).state, RunState.REVIEW_PENDING)
             self.assertIsNone(ledger.get(run.run_id).review_receipt)
             ledger.close_db()

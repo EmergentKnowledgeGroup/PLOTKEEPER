@@ -4,14 +4,23 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER STARSHAPE ATOMIC GATE INDEPENDENT REVIEW
+
+- step: phase-start-independent-review
+- note: Fresh reviewer-only VALIDATED-phase audit of committed candidate 909f23f against sealed repair contract c18e225b8bfb9d00cc5ef28eadb8f44347c682dc0a3ec77d7d8b2692f2ffa791; no implementation, Git mutation, live service mutation, or real run mutation is authorized.
+- branch: main
+- head: 909f23f44ef2ee391d54b30c9a3920e8267b90bb
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: one clean main worktree at phase start; protected baseline 3dc3488cbfaa55df13e6abebf4b1ca395c319916; exact candidate 909f23f44ef2ee391d54b30c9a3920e8267b90bb; adversarial fixtures must use disposable ledgers only; Starshape inspection is read-only
+
 ## STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW
 
-- step: post-green-tests
-- note: The fresh adversarial Starshape closeout review found a real stale-receipt/premature-Q-008 defect. The run is restored to REVIEW_PENDING 56/57, and a contract-bound Plotkeeper receipt revalidation plus atomic close gate is implemented and test-green; independent repair review is next.
+- step: post-green-tests-amendment
+- note: Independent review correctly failed candidate 909f23f for a direct Ledger.finalize_review bypass. The validator is now mandatory inside that ledger boundary, alternate validator injection is removed, receipt mutation is rejected, and the expanded Plotkeeper suite is green; fresh review of the amended commit is next.
 - branch: main
 - head: 3dc3488cbfaa55df13e6abebf4b1ca395c319916
-- next_cmd: `Commit the bounded repair candidate, run a fresh independent production-goal-review against PROD-20260812-plotkeeper-starshape-closeout-revalidation, and only after PASS restart the local service.`
-- validations: adaptive execution turn 019ff764-ebac-72a3-a6c7-1e4b56a9b051 opened on calibration route; Plotkeeper repository has one main worktree and a clean tracked/untracked status at phase start; Starshape candidate head is 22958b32cd84d21ddcfdc0e30590e5d85436a5ce with unrelated dirty state preserved and no extra worktrees; fresh adverse receipt edd89d902175dd62c572d080be202297a320b243716338ae36be6c684c2e7e86 is validator-green FAIL with one shared missing closeout control; Plotkeeper full unittest suite 66 passed with py_compile and diff-check clean; repair contract c18e225b8bfb9d00cc5ef28eadb8f44347c682dc0a3ec77d7d8b2692f2ffa791 validates ACTIVE; Starshape restored pre-close proof is 150 pytest passed, successor LF E2E PASS, frontend lint PASS, frontend production build PASS
+- next_cmd: `Commit the direct-ledger bypass amendment, run a fresh independent production-goal-review against PROD-20260812-plotkeeper-starshape-closeout-revalidation, and only after PASS restart the local service.`
+- validations: adaptive execution turn 019ff764-ebac-72a3-a6c7-1e4b56a9b051 opened on calibration route; Plotkeeper repository has one main worktree and a clean tracked/untracked status at phase start; Starshape candidate head is 22958b32cd84d21ddcfdc0e30590e5d85436a5ce with unrelated dirty state preserved and no extra worktrees; fresh adverse receipt edd89d902175dd62c572d080be202297a320b243716338ae36be6c684c2e7e86 is validator-green FAIL with one shared missing closeout control; Plotkeeper repair contract c18e225b8bfb9d00cc5ef28eadb8f44347c682dc0a3ec77d7d8b2692f2ffa791 validates ACTIVE; Starshape restored pre-close proof is 150 pytest passed, successor LF E2E PASS, frontend lint PASS, frontend production build PASS; candidate 909f23f independent receipt is validator-green FAIL with sealed hash 152e1f0b5ba387a2e0f79d763ed7a206da12ba0b3d2f1f1d3f2848732cbefa1f and file SHA256 0c57ff1245d0c315f8eac6887f70cf93b8536ada811f940531a819c057bf8fc2; amended gate full unittest suite is 68 passed and direct dictionary closure plus validator injection are rejected
 
 ## PLOTKEEPER LINKED SUCCESSOR RELEASE
 

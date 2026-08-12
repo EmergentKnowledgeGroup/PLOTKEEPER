@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 import threading
 import re
 from urllib.parse import quote
@@ -16,13 +15,6 @@ from urllib.parse import parse_qs, urlparse
 from .ledger import Ledger
 from .models import RunState, SessionObservation
 from .sessions import SessionScanner, ThreadCatalog
-
-
-REVIEW_VALIDATOR_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "integrations" / "codex" / "bundled" / "skills"
-    / "production-goal-review" / "scripts" / "validate_review_receipt.py"
-)
 
 
 class PlotkeeperService:
@@ -361,68 +353,15 @@ class PlotkeeperService:
         # never get converted into a closeout receipt.
         if verdict != "PASS" or open_items != 0:
             return {"ok": False, "error": "review_not_pass"}
-        locator = receipt.get("receipt_locator") or receipt.get("receipt_path") or receipt.get("receipt")
+        locator = receipt.get("receipt_locator")
         if not isinstance(locator, str) or not locator.strip():
             return {"ok": False, "error": "receipt_locator_required"}
-        validated, error = self._validate_review_receipt(run, locator)
-        if error:
-            return {"ok": False, "error": error}
-        assert validated is not None
-        ok = self.ledger.finalize_review(run_id, validated)
+        ok = self.ledger.finalize_review(run_id, locator)
         return {
             "ok": ok,
-            "error": None if ok else "atomic_close_failed",
+            "error": None if ok else "validator_or_atomic_close_failed",
             "run": self.ledger.get(run_id).to_dict() if self.ledger.get(run_id) else None,
         }
-
-    def _validate_review_receipt(self, run, locator: str) -> tuple[dict[str, Any] | None, str | None]:
-        """Validate the reviewer JSON independently of its marker envelope."""
-        contract_row = self.ledger.goal_contract(run.run_id)
-        if not contract_row:
-            return None, "contract_missing"
-        contract_path = Path(str(contract_row.get("path", "")))
-        if not contract_path.is_file():
-            return None, "contract_unreadable"
-        if not run.cwd:
-            return None, "repository_missing"
-        repo_root = Path(str(run.cwd))
-        if not repo_root.is_dir():
-            return None, "repository_unreadable"
-        raw_locator = locator.strip()
-        receipt_path = Path(raw_locator)
-        if not receipt_path.is_absolute():
-            receipt_path = repo_root / receipt_path
-        try:
-            receipt_path = receipt_path.resolve(strict=True)
-            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, json.JSONDecodeError):
-            return None, "receipt_unreadable"
-        if not isinstance(receipt, dict):
-            return None, "receipt_invalid"
-        if str(receipt.get("verdict", "")).upper() != "PASS":
-            return None, "receipt_not_pass"
-        if receipt.get("phase") != "VALIDATED":
-            return None, "receipt_phase_invalid"
-        if not REVIEW_VALIDATOR_PATH.is_file():
-            return None, "validator_unavailable"
-        args = [
-            sys.executable, str(REVIEW_VALIDATOR_PATH), str(contract_path),
-            str(receipt_path), "--repo-root", str(repo_root),
-            "--receipt-dir", str(receipt_path.parent),
-        ]
-        try:
-            validator_env = os.environ.copy()
-            validator_env["PYTHONDONTWRITEBYTECODE"] = "1"
-            # The canonical validator resolves raw source-evidence paths from
-            # its process cwd.  Run it from the bound repository so relative
-            # evidence locators cannot silently resolve against Plotkeeper.
-            result = subprocess.run(args, capture_output=True, text=True,
-                                    check=False, cwd=str(repo_root), env=validator_env)
-        except (OSError, subprocess.SubprocessError):
-            return None, "validator_failed"
-        if getattr(result, "returncode", 1) != 0:
-            return None, "validator_failed"
-        return receipt, None
 
     def close(self, run_id: str) -> dict[str, Any]:
         ok = self.ledger.close(run_id)
