@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3 - 2026-08-11
+
+- Restart an existing Plotkeeper-owned listener after every package upgrade so
+  the live process cannot keep serving stale imported modules.
+- Reject foreign listeners even when they return Plotkeeper-shaped healthy HTML.
+- Keep installer build temporaries inside the project runtime and remove them
+  after installation.
+
 ## 0.1.2 - 2026-08-11
 
 - Bind dashboard and CLI lookup to an exact run or Codex root/session identity;

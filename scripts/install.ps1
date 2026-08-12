@@ -7,12 +7,25 @@ if (-not (Test-Path (Join-Path $venv "Scripts\python.exe"))) {
     & $Python -m venv $venv
 }
 $venvPython = Join-Path $venv "Scripts\python.exe"
-& $venvPython -m pip install --disable-pip-version-check --upgrade $Root
+$installTemp = Join-Path $Root "runtime\tmp\install"
+New-Item -ItemType Directory -Force -Path $installTemp | Out-Null
+$priorTemp = $env:TEMP
+$priorTmp = $env:TMP
+try {
+    $env:TEMP = $installTemp
+    $env:TMP = $installTemp
+    & $venvPython -m pip install --disable-pip-version-check --upgrade $Root
+} finally {
+    $env:TEMP = $priorTemp
+    $env:TMP = $priorTmp
+    if (Test-Path -LiteralPath $installTemp) {
+        Remove-Item -LiteralPath $installTemp -Recurse -Force
+    }
+}
 $start = Join-Path $PSScriptRoot "start.ps1"
 $run = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port $Port"
 New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
 New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
-$healthy = $false
 function Test-Dashboard {
     try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/" -TimeoutSec 2
@@ -35,7 +48,7 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId) {
     return $commandLine -match '(?i)(plotkeeper\.cli|plotkeeper[\\/]scripts[\\/]start\.ps1)'
 }
 $listener = Get-ListenerPid
-if ($listener -and -not (Test-Dashboard)) {
+if ($listener) {
     if (-not (Test-PlotkeeperOwner $listener)) {
         throw "Port $Port is occupied by a non-Plotkeeper listener; refusing to stop it."
     }
@@ -46,13 +59,11 @@ if ($listener -and -not (Test-Dashboard)) {
     }
     if (Get-ListenerPid) { throw "Stale Plotkeeper listener on port $Port did not stop." }
 }
-$healthy = Test-Dashboard
-if (-not $healthy) {
-    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $start, "-Python", $venvPython, "-Port", "$Port")
-    for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
-        Start-Sleep -Milliseconds 250
-        $healthy = Test-Dashboard
-    }
+$healthy = $false
+Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $start, "-Python", $venvPython, "-Port", "$Port")
+for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
+    Start-Sleep -Milliseconds 250
+    $healthy = Test-Dashboard
 }
 if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
 Write-Output "Plotkeeper installed, running, and registered for user startup."

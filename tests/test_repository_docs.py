@@ -51,6 +51,10 @@ class RepositoryDocumentationTests(unittest.TestCase):
             self.assertIn("non-Plotkeeper listener", source)
             self.assertIn("<html", source)
             self.assertIn("plotkeeper-app", source)
+        self.assertIn("if ($listener) {", install)
+        self.assertNotIn("$listener -and -not (Test-Dashboard)", install)
+        self.assertIn("Stop-Process -Id $listener", install)
+        self.assertIn("runtime\\tmp\\install", install)
 
     def test_panel_receipt_instructions_require_html_proof(self):
         skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")

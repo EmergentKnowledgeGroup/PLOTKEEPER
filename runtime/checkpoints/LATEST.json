@@ -3,14 +3,14 @@
   "tracks": {
     "PLOTKEEPER ACTIVE RUN SURFACE WORK": {
       "step": "post-green-tests",
-      "note": "Successor contract PROD-20260811-plotkeeper-active-run-surface-phase-sequencing-fix is implemented and verified; all obligation classes now honor lifecycle phases without predeployment live-proof circularity.",
+      "note": "Successor contract PROD-20260811-plotkeeper-active-run-installer-restart-fix is implemented and verified; upgrades now replace owned listeners and reject foreign listeners before reporting live readiness.",
       "branch": "main",
-      "head": "4bfa592788cec1fd0d76c0e9378882568664f9cb",
+      "head": "e8589d558dee4e41c4f3af50aa2f48818f2af624",
       "next_cmd": "git diff --check",
       "validations": [
-        "successor contract VALID at 3064525e6de091b477e452605f7c067f5c98ac8c18ff95a0c8e2c6ae070ef76e",
-        "predecessor 82d41e46d2b6de525421ece81916e98ae6e9b283f5d4da939ad6bf26ee7964a7 preserved",
-        "59 tests green including phase-aware server/bundled validators and invalid-phase rejection; Node syntax, cache hygiene, and diff check green; copied-live inventory remains four non-subagent active runs"
+        "successor contract VALID at 99cd45ea027cf78771822861765fe66b4d2871e3b74f19120aefb1f141702ed9",
+        "protected public predecessor e8589d558dee4e41c4f3af50aa2f48818f2af624",
+        "59 tests green; version 0.1.3 synchronized; installer restart/foreign-listener/temp-root assertions, Node syntax, cache hygiene, and diff check green; live manually restarted API returns four non-subagent active runs"
       ]
     },
     "PLOTKEEPER ACTIVE RUN SURFACE IMPLEMENTATION": {
