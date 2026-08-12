@@ -1,0 +1,195 @@
+{
+  "id": "PROD-20260812-plotkeeper-starshape-closeout-revalidation",
+  "status": "ACTIVE",
+  "contract_hash": "c18e225b8bfb9d00cc5ef28eadb8f44347c682dc0a3ec77d7d8b2692f2ffa791",
+  "origin": "DIRECT",
+  "user_goal": "Resolve the independently confirmed Starshape LF closeout defect and complete the exact Plotkeeper production review gate without weakening the original contract.",
+  "authority": {
+    "original_request_ref": "codex-task:019ff5a7-6774-7b82-a978-e5c14e33b4dd/user-request/plotkeeper-closeout-20260812",
+    "original_request_hash": "9d9760ef5e6ad9e94c05abf694f5564de90f20b1a81b23fffa9ac68eea250508",
+    "verbatim_text": "Plotkeeper closeout gate for run 6c47450f9660485c83917fa766a968a0. Invoke $production-goal-review and follow that skill fully. Run its independent adversarial review against contract PROD-20260812-starshape-successor-lf-execution-amendment-1 at Z:\\WeForm Starshape\\runtime\\goal-contracts\\PROD-20260812-starshape-successor-lf-execution-amendment-1.json AND inspect the entire Plotkeeper run: every task, child report, blocker, timeline entry, and evidence link. Do not substitute a generic PK review for the production goal review. Resolve anything still open. End with exactly: PK:REVIEW_RESULT run_id=6c47450f9660485c83917fa766a968a0 verdict=<PASS|PARTIAL|FAIL|BLOCKED> open_items=<integer>",
+    "captured_at_utc": "2026-08-12T19:44:38.7062622Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task:019ff5a7-6774-7b82-a978-e5c14e33b4dd/user-request/plotkeeper-closeout-20260812"
+  },
+  "baseline": {
+    "protected_ref": "main",
+    "sha": "3dc3488cbfaa55df13e6abebf4b1ca395c319916",
+    "retrieved_at_utc": "2026-08-12T19:44:38.7062622Z",
+    "protection_evidence": "Local main HEAD before closeout-control mutation; repository had only checkpoint edits created for this review turn and no extra worktrees.",
+    "selection_reason": "This is the exact Plotkeeper code baseline that accepted a marker-only PASS and closed without independently revalidating its immutable receipt evidence."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/ledger.py",
+      "tests/test_backend.py",
+      "tests/test_codex_integration.py",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-starshape-closeout-revalidation.json",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/goal-reviews/"
+    ],
+    "resources": [
+      "local Plotkeeper run 6c47450f9660485c83917fa766a968a0",
+      "Z:/WeForm Starshape/tests/test_successor_lf_governance.py",
+      "Z:/WeForm Starshape/runtime/plotkeeper/STARSHAPE_SUCCESSOR_LF_TASK_STATUS.md",
+      "Z:/WeForm Starshape/runtime/checkpoints/LATEST.json",
+      "Z:/WeForm Starshape/runtime/checkpoints/LATEST.md"
+    ],
+    "semantic_changes": [
+      "Require an exact review-receipt locator on PASS markers and run the canonical validator against the bound run contract and repository before receipt ingestion.",
+      "Atomically persist the validated receipt, complete the sole final independent-review task, and close the run only after every other task is complete.",
+      "Restore the Starshape Q-008 source mirror and checkpoint to pre-close pending state before review, and make the governance assertion phase-aware without weakening any implementation obligation."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "scripts/verify_public_release.py",
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "plotkeeper/web/",
+      "Z:/WeForm Starshape/app/",
+      "Z:/WeForm Starshape/frontend/",
+      "Z:/WeForm Starshape/artifacts/",
+      "Z:/WeForm Starshape/migrations/"
+    ],
+    "semantic_changes": [
+      "Do not weaken the production-goal-review validator, accept marker-only PASS, accept non-PASS/open receipts, bypass candidate/contract/diff/evidence validation, or permit multiple pending tasks at closure.",
+      "Do not alter Starshape application behavior, artifacts, migrations, locked planning documents, public/deployment state, or unrelated dirty files.",
+      "Do not close the target run from implementation code or root prose; only a fresh independent validated PASS may trigger Plotkeeper-owned closure."
+    ]
+  },
+  "invariants": [
+    "The original Starshape contract, baseline, locked hashes, and 28 acceptance/57 task/16 gate closed world remain unchanged.",
+    "A PASS marker is non-authoritative without a readable immutable receipt that the canonical validator accepts at ingestion time.",
+    "Receipt validation, final-task transition, receipt persistence, and run closure fail closed and occur as one ledger transaction after every non-final task is complete.",
+    "The prior adverse receipt remains immutable and the live run remains unclosed until a new independent PASS is ingested.",
+    "No extra worktree, release, merge, push, PR, deployment, or public claim is created."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-PK-REVALIDATE",
+      "phase": "VALIDATED",
+      "promised_behavior": "Plotkeeper independently revalidates the exact immutable production-goal-review receipt against the run contract and repository at ingestion.",
+      "forbidden_behavior": "Marker-only, missing, mutable-drifted, wrong-contract, wrong-candidate, non-PASS, or open-item receipts cannot advance the run.",
+      "target_and_actor": "Plotkeeper closeout service consuming a fresh independent reviewer result for the Starshape LF run.",
+      "required_proof_ids": [
+        "PR-PK-REVALIDATE"
+      ]
+    },
+    {
+      "id": "AC-PK-ATOMIC-CLOSE",
+      "phase": "VALIDATED",
+      "promised_behavior": "The sole final review task advances from pending to complete in the same transaction that persists the valid receipt and closes the run, with every other task already complete.",
+      "forbidden_behavior": "Q-008 may not be pre-completed, partially completed, or left out of sync with a closed run.",
+      "target_and_actor": "Plotkeeper ledger and target run 6c47450f9660485c83917fa766a968a0.",
+      "required_proof_ids": [
+        "PR-PK-ATOMIC-CLOSE"
+      ]
+    },
+    {
+      "id": "AC-STARSHAPE-PHASE-GATE",
+      "phase": "VALIDATED",
+      "promised_behavior": "Starshape full-suite governance proof is green both before closeout with Q-008 pending and after a validator-green immutable PASS snapshot exists.",
+      "forbidden_behavior": "A checked Q-008 without immutable validated PASS evidence, or a stale test that rejects a valid completed phase, may not be green.",
+      "target_and_actor": "Starshape governance suite and independent production reviewer at the exact candidate SHA.",
+      "required_proof_ids": [
+        "PR-STARSHAPE-PHASE-GATE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-PK-REVALIDATE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-PK-REVALIDATE"
+      ],
+      "claim": "Receipt ingestion rejects all replay, mutation, locator, contract, candidate, and verdict mismatch cases.",
+      "required_environment": "Disposable Plotkeeper ledger plus bundled canonical production-goal-review validator.",
+      "command_or_read_only_check": "Run targeted backend/session integration tests with red pre-control fixtures and validator-backed post-control receipts.",
+      "expected_observation": "Every invalid receipt remains REVIEW_PENDING with the final task pending; exact valid receipt alone advances."
+    },
+    {
+      "id": "PR-PK-ATOMIC-CLOSE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-PK-ATOMIC-CLOSE"
+      ],
+      "claim": "Final task, receipt, and CLOSED state transition are atomic and require all predecessor tasks complete.",
+      "required_environment": "Disposable SQLite ledger with injected failure boundary.",
+      "command_or_read_only_check": "Run transaction rollback and task-state tests, then inspect the live target run after independent PASS ingestion.",
+      "expected_observation": "Failure leaves state/tasks/receipt unchanged; success yields CLOSED, 57/57, and an exact stored validated receipt."
+    },
+    {
+      "id": "PR-STARSHAPE-PHASE-GATE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-STARSHAPE-PHASE-GATE"
+      ],
+      "claim": "The Starshape phase assertion cannot be green on premature completion and does not become stale after legitimate closeout.",
+      "required_environment": "Starshape full pytest suite at the new exact candidate plus immutable review snapshots.",
+      "command_or_read_only_check": "Run red pre-control fixture, focused governance test, full pytest, PostgreSQL, frontend lint/build, local E2E, and canonical receipt validation.",
+      "expected_observation": "Premature Q-008 is rejected; pending phase is green before review; completed phase is green only with a valid immutable PASS snapshot."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-PK-REPAIR",
+      "phase": "VALIDATED",
+      "required_role": "Fresh independent reviewer with no implementation/delegation/approval authorship validates the Plotkeeper repair contract and adversarial fixtures."
+    },
+    {
+      "id": "RR-STARSHAPE-CLOSEOUT",
+      "phase": "VALIDATED",
+      "required_role": "Fresh independent production-goal-review reruns the original Starshape contract across the entire Plotkeeper surface and emits an immutable validator-green PASS or adverse verdict."
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-LOCAL-SERVICE",
+      "phase": "VALIDATED",
+      "required_receipt": "Independent Plotkeeper repair PASS before local service restart; health and target-run state verified after restart."
+    }
+  ],
+  "stop_conditions": [
+    "Stop on any Starshape application/artifact/migration/locked-input change or unrelated dirty-state absorption.",
+    "Stop if canonical validator invocation cannot be made independent of the review marker payload.",
+    "Stop if the final task and run state cannot transition atomically or rollback cleanly.",
+    "Stop closeout on any new non-PASS independent verdict, red required suite, broken binding, or incomplete Plotkeeper inventory."
+  ],
+  "known_discrepancies": [
+    "Prior PASS receipt file is immutable but now invalid because it bound two mutable latest-state files later changed during closeout.",
+    "Target run currently exposes 57/57 while REVIEW_PENDING; Starshape governance test correctly detects that premature transition.",
+    "Plotkeeper repository starts with only this turn's checkpoint edits; Starshape starts with preserved unrelated dirty/untracked state already documented by the original contract."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "acceptance_case_id": "AC-PK-REVALIDATE",
+      "user_constraint": "Invoke production-goal-review fully and resolve anything still open.",
+      "source": "independent finding F-PK-001"
+    },
+    {
+      "acceptance_case_id": "AC-PK-ATOMIC-CLOSE",
+      "user_constraint": "Plotkeeper owns the closeout gate and only PASS/open_items=0 permits freezing.",
+      "source": "independent finding F-PK-002"
+    },
+    {
+      "acceptance_case_id": "AC-STARSHAPE-PHASE-GATE",
+      "user_constraint": "Do not substitute a generic Plotkeeper review for the production goal review.",
+      "source": "production-goal-review PR-LF-AUTOMATION failure"
+    }
+  ],
+  "previous_contract": {
+    "path": "Z:/WeForm Starshape/runtime/goal-contracts/PROD-20260812-starshape-successor-lf-execution-amendment-1.json",
+    "sha256": "697c1a8b97846c635af84a19039511bc4f66eadcb15b6bdfa11b5da024f1565f"
+  }
+}

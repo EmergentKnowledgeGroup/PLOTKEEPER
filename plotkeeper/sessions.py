@@ -14,7 +14,15 @@ SPEC_RE = re.compile(r"(?:\$specswarm\b|\brun\s+specswarm\b)", re.IGNORECASE)
 CLAIM_RE = re.compile(r"(?:claim|report)\s*[:=]\s*(.+)", re.IGNORECASE)
 EVIDENCE_RE = re.compile(r"https?://[^\s)]+", re.IGNORECASE)
 GOAL_COMPLETE_RE = re.compile(r"(?:PK:GOAL_COMPLETE_REQUEST|\bgoal\s+(?:is\s+)?complete\b)", re.IGNORECASE)
-REVIEW_RESULT_RE = re.compile(r"PK:REVIEW_RESULT\s+run_id=(\S+)\s+verdict=(PASS|PARTIAL|FAIL|BLOCKED)\s+open_items=(\d+)", re.IGNORECASE)
+# The marker is only a routing envelope.  A PASS is not authoritative without
+# the exact immutable receipt locator emitted by the independent reviewer.
+# Keep the locator optional at parse time so adverse/legacy markers remain
+# observable; the service rejects PASS envelopes that omit it.
+REVIEW_RESULT_RE = re.compile(
+    r"PK:REVIEW_RESULT\s+run_id=(\S+)\s+verdict=(PASS|PARTIAL|FAIL|BLOCKED)\s+"
+    r"open_items=(\d+)(?:\s+(?:receipt_locator|receipt_path|receipt)=(\S+))?",
+    re.IGNORECASE,
+)
 ATTACH_RE = re.compile(r"Plotkeeper-Run-ID\s*:\s*([A-Za-z0-9_-]+)", re.IGNORECASE)
 
 
@@ -166,7 +174,15 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
         if p.get("role") == "assistant" and GOAL_COMPLETE_RE.search(text):
             parsed.goal_complete = True
         for result in REVIEW_RESULT_RE.finditer(text):
-            parsed.review_results.append({"run_id": result.group(1), "verdict": result.group(2).upper(), "open_items": int(result.group(3)), "timestamp": obj.get("timestamp")})
+            marker = {
+                "run_id": result.group(1),
+                "verdict": result.group(2).upper(),
+                "open_items": int(result.group(3)),
+                "timestamp": obj.get("timestamp"),
+            }
+            if result.group(4):
+                marker["receipt_locator"] = result.group(4)
+            parsed.review_results.append(marker)
         parsed.attach_run_ids.extend(ATTACH_RE.findall(text))
         match = CLAIM_RE.search(text)
         if match:

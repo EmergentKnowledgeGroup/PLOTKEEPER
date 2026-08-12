@@ -6,7 +6,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from .models import Run, RunState
 
@@ -326,16 +326,80 @@ class Ledger:
             return True
 
     def record_receipt(self, run_id: str, receipt: dict[str, Any]) -> bool:
-        if (not receipt.get("terminal") or not receipt.get("injected") or
-                str(receipt.get("verdict", "")).upper() != "PASS" or
-                int(receipt.get("open_items", -1)) != 0):
+        """Reject the pre-revalidation receipt shortcut.
+
+        Kept as a compatibility-shaped method for callers that still import
+        it, but deliberately cannot advance a run.  Only ``finalize_review``
+        after service-owned canonical validation may persist a receipt.
+        """
+        return False
+
+    @staticmethod
+    def _is_final_review_task(task: sqlite3.Row) -> bool:
+        """Return whether a task is the independent review closeout task.
+
+        Task plans are user-owned text, so avoid a task-id or ordinal magic
+        value.  The final task must explicitly identify itself as independent
+        review/receipt work; a lone arbitrary pending task is not sufficient.
+        """
+        title = str(task["title"] or "").casefold()
+        return "independent" in title and ("review" in title or "receipt" in title)
+
+    def finalize_review(self, run_id: str, receipt: dict[str, Any], *,
+                        failure_hook: Callable[[str], None] | None = None) -> bool:
+        """Atomically persist a validated receipt and close its run.
+
+        Receipt validation is deliberately owned by :class:`PlotkeeperService`;
+        this narrow ledger primitive only accepts the already validated JSON
+        and performs the final-task transition plus run close in one SQLite
+        transaction.  ``failure_hook`` is test-only fault injection at named
+        transaction boundaries and is never consulted by production callers.
+        """
+        if not isinstance(receipt, dict) or str(receipt.get("verdict", "")).upper() != "PASS":
             return False
-        with self._lock, self.db:
-            row = self.db.execute("SELECT state FROM runs WHERE run_id=?", (run_id,)).fetchone()
-            if not row or row[0] not in {RunState.REVIEW_PENDING.value, RunState.REVIEW_REQUIRED.value}:
+        with self._lock:
+            try:
+                self.db.execute("BEGIN IMMEDIATE")
+                row = self.db.execute(
+                    "SELECT state,review_receipt FROM runs WHERE run_id=?", (run_id,)
+                ).fetchone()
+                if not row or row[0] != RunState.REVIEW_PENDING.value or row[1] is not None:
+                    self.db.rollback()
+                    return False
+                tasks = list(self.db.execute(
+                    "SELECT * FROM tasks WHERE run_id=? ORDER BY ordinal", (run_id,)
+                ))
+                pending = [task for task in tasks if str(task["status"]).casefold() != "completed"]
+                if len(pending) != 1 or not self._is_final_review_task(pending[0]):
+                    self.db.rollback()
+                    return False
+                task = pending[0]
+                changed = self.db.execute(
+                    "UPDATE tasks SET status=? WHERE run_id=? AND task_id=? AND status<>?",
+                    ("completed", run_id, task["task_id"], "completed"),
+                )
+                if changed.rowcount != 1:
+                    self.db.rollback()
+                    return False
+                if failure_hook:
+                    failure_hook("final_task_completed")
+                stamp = now_iso()
+                self.db.execute(
+                    "UPDATE runs SET state=?,review_receipt=?,closed_at=?,updated_at=? "
+                    "WHERE run_id=? AND state=? AND review_receipt IS NULL",
+                    (RunState.CLOSED.value, json.dumps(receipt, sort_keys=True), stamp,
+                     stamp, run_id, RunState.REVIEW_PENDING.value),
+                )
+                if self.db.execute("SELECT changes()").fetchone()[0] != 1:
+                    self.db.rollback()
+                    return False
+                if failure_hook:
+                    failure_hook("run_closed")
+                self.db.commit()
+                return True
+            except Exception:
+                self.db.rollback()
                 return False
-            self.db.execute("UPDATE runs SET state=?,review_receipt=?,updated_at=? WHERE run_id=?", (RunState.REVIEWED.value, json.dumps(receipt, sort_keys=True), now_iso(), run_id))
-            return True
 
     def close(self, run_id: str) -> bool:
         with self._lock, self.db:

@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from urllib.request import urlopen
+from unittest import mock
 
 from plotkeeper.ledger import Ledger
 from plotkeeper.models import RunState
@@ -24,8 +25,14 @@ class BackendTests(unittest.TestCase):
             self.assertIsNotNone(first)
             assert first is not None
             self.assertTrue(ledger.mark_review_required(first.run_id))
-            self.assertTrue(ledger.record_receipt(first.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0}))
-            self.assertTrue(ledger.close(first.run_id))
+            self.assertFalse(ledger.record_receipt(first.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0}))
+            self.assertTrue(ledger.mark_review_pending(first.run_id))
+            ledger.replace_tasks(first.run_id, [
+                {"task_id": "T001", "title": "implementation", "status": "completed"},
+                {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
+            ])
+            receipt = {"verdict": "PASS", "phase": "VALIDATED", "review_receipt_hash": "h"}
+            self.assertTrue(ledger.finalize_review(first.run_id, receipt))
             before = ledger.get(first.run_id)
             self.assertEqual(before.state, RunState.CLOSED)
             successor = ledger.enroll("root-followup", td, "http://pk", "task-1")
@@ -119,8 +126,10 @@ class BackendTests(unittest.TestCase):
             line("2026-08-07T00:00:00Z", "session_meta", {"id": "root-1", "cwd": "Z:\\demo"}),
             line("2026-08-07T00:00:01Z", "message", {"role": "user", "content": [{"type": "input_text", "text": "$specswarm run"}]}),
             line("2026-08-07T00:00:02Z", "event_msg", {"type": "task_complete"}),
+            line("2026-08-07T00:00:03Z", "message", {"role": "assistant", "content": "PK:REVIEW_RESULT run_id=run-1 verdict=PASS open_items=0 receipt_locator=Z:\\review\\receipt.json"}),
         ])
         self.assertTrue(obs and obs.is_root and obs.invoked_specswarm and obs.root_complete)
+        self.assertEqual(obs.review_results[0]["receipt_locator"], "Z:\\review\\receipt.json")
 
     def test_historical_invocation_is_excluded_by_first_activation_watermark(self):
         with tempfile.TemporaryDirectory() as td:
@@ -157,8 +166,20 @@ class BackendTests(unittest.TestCase):
             self.assertTrue(service.inject_review(run.run_id, runner=lambda _args: 0)["ok"])
             self.assertFalse(service.close(run.run_id)["ok"])
             self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "FAIL", "open_items": 1})["ok"])
-            self.assertTrue(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0})["ok"])
-            self.assertTrue(service.close(run.run_id)["ok"])
+            contract_path = Path(td) / "contract.json"
+            contract_path.write_text(json.dumps({"id": "C1", "user_goal": "goal", "contract_hash": "contract-hash"}), encoding="utf-8")
+            service.ledger.set_goal_contract(run.run_id, str(contract_path), {"id": "C1", "user_goal": "goal", "contract_hash": "contract-hash"})
+            service.ledger.replace_tasks(run.run_id, [
+                {"task_id": "T001", "title": "implementation", "status": "completed"},
+                {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
+            ])
+            receipt_path = Path(td) / "receipt.json"
+            receipt = {"verdict": "PASS", "phase": "VALIDATED", "review_receipt_hash": "receipt-hash"}
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0})["ok"])
+            with mock.patch("plotkeeper.service.subprocess.run", return_value=mock.Mock(returncode=0)):
+                self.assertTrue(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0, "receipt_locator": str(receipt_path)})["ok"])
+            self.assertFalse(service.close(run.run_id)["ok"])
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.CLOSED)
             child = root / "child.jsonl"
             child.write_text(line("5", "session_meta", {"id": "child-1", "parent_session_id": "root-1"}) + line("6", "message", {"role": "assistant", "content": "claim: late"}), encoding="utf-8")
@@ -167,6 +188,39 @@ class BackendTests(unittest.TestCase):
             reports = service.ledger.reports(run.run_id)
             self.assertEqual([item["kind"] for item in reports], ["goal_complete"])
             service.close_db()
+
+    def test_atomic_review_failure_rolls_back_task_receipt_and_run(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger = Ledger(Path(td) / "ledger.sqlite")
+            run = ledger.enroll("root-1", td, "http://pk")
+            assert run is not None
+            ledger.replace_tasks(run.run_id, [
+                {"task_id": "T001", "title": "implementation", "status": "completed"},
+                {"task_id": "T002", "title": "independent review receipt", "status": "pending"},
+            ])
+            ledger.mark_review_pending(run.run_id)
+            def fail(_point):
+                raise RuntimeError("injected")
+            self.assertFalse(ledger.finalize_review(run.run_id, {"verdict": "PASS"}, failure_hook=fail))
+            self.assertEqual(ledger.get(run.run_id).state, RunState.REVIEW_PENDING)
+            self.assertIsNone(ledger.get(run.run_id).review_receipt)
+            self.assertEqual(ledger.tasks(run.run_id)[1]["status"], "pending")
+            ledger.close_db()
+
+    def test_atomic_review_rejects_multiple_pending_tasks(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger = Ledger(Path(td) / "ledger.sqlite")
+            run = ledger.enroll("root-1", td, "http://pk")
+            assert run is not None
+            ledger.replace_tasks(run.run_id, [
+                {"task_id": "T001", "title": "independent review receipt", "status": "pending"},
+                {"task_id": "T002", "title": "another pending task", "status": "pending"},
+            ])
+            ledger.mark_review_pending(run.run_id)
+            self.assertFalse(ledger.finalize_review(run.run_id, {"verdict": "PASS"}))
+            self.assertEqual(ledger.get(run.run_id).state, RunState.REVIEW_PENDING)
+            self.assertIsNone(ledger.get(run.run_id).review_receipt)
+            ledger.close_db()
 
     def test_child_meta_prefers_child_id_over_root_session_id(self):
         obs = parse_session("child.jsonl", [
