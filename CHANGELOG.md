@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6 - 2026-08-12
+
+- Launch every Plotkeeper-injected Codex review and check-in resume from the
+  enrolled run repository instead of inheriting Plotkeeper's process directory.
+- Fail closed before launch or state mutation when an enrolled run directory is
+  missing, relative, nonexistent, or not a directory.
+- Add cross-repository regressions proving resumed cwd, workspace root, and
+  project association remain bound to the enrolled repository.
+
 ## 0.1.5 - 2026-08-12
 
 - Let the production guard discover cryptographically valid DEPLOY_READY

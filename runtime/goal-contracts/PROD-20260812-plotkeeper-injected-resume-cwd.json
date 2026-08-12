@@ -1,0 +1,218 @@
+{
+  "id": "PROD-20260812-plotkeeper-injected-resume-cwd",
+  "status": "ACTIVE",
+  "contract_hash": "a8a0c98496ebed4b97cf4c76415f7f9e25d683bfb6ea2f3e12a9fb7b296aa5bd",
+  "origin": "DIRECT",
+  "user_goal": "Keep every Plotkeeper-injected Codex resume bound to the enrolled run repository and fail closed when that directory is invalid.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff7c4-7c67-7573-a15d-159842df5edd",
+    "original_request_hash": "e785414001870b242acc5848415eaae1fe1f21422b8ea687d33009439a1a5621",
+    "verbatim_text": "Plotkeeper’s injected resume changed MoonMarket task 019dc5bc-9c57-7aa0-a007-18250d608ad3 from Z:\\MoonMarket to Z:\\Plotkeeper. The cause is PlotkeeperService._run_codex() launching codex.exe exec resume without an explicit subprocess working directory.  \nFix every injected resume path—including inject_review, inject_check_in, and future equivalents—to launch with cwd=run.cwd. Fail closed if the enrolled run directory is missing or invalid; never fall back to Plotkeeper’s own process directory. The resume CLI has no --cd option, so this must be enforced through subprocess.run(..., cwd=run.cwd).  \nAdd a regression test that enrolls a run rooted in another repository, injects a review while Plotkeeper itself runs from Z:\\Plotkeeper, and proves the resumed task’s cwd, workspace root, and project association remain bound to the enrolled repository.",
+    "captured_at_utc": "2026-08-12T20:58:45Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "local main after atomic closeout-gate work",
+    "sha": "796e4ab6e0daccf9e38219b9bb93980193daa1e4",
+    "retrieved_at_utc": "2026-08-12T20:58:45Z",
+    "protection_evidence": "clean single worktree and exact git rev-parse HEAD before task mutation",
+    "selection_reason": "Current clean source and installed-line successor to public v0.1.5; preserves already-committed unrelated closeout-gate work."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-injected-resume-cwd.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "plotkeeper/service.py",
+      "tests/test_backend.py",
+      "plotkeeper/__init__.py",
+      "pyproject.toml",
+      "CHANGELOG.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      ".github/workflows/release-verifier.yml"
+    ],
+    "resources": [
+      "installed Plotkeeper service on 127.0.0.1:47831",
+      "EmergentKnowledgeGroup/PLOTKEEPER main, patch tag/release, Actions, and signed deploy receipt variable"
+    ],
+    "semantic_changes": [
+      "Route every Plotkeeper-owned Codex resume subprocess through one run-aware launcher that supplies cwd equal to the validated enrolled run directory.",
+      "Reject missing, relative, nonexistent, or non-directory run cwd before changing run state or launching Codex.",
+      "Prove cross-repository review and check-in injection retain cwd, workspace root, and project association.",
+      "Publish and install a matching patch release if independent review passes."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/web/**",
+      "integrations/codex/bundled/skills/specswarm/**",
+      "integrations/codex/adaptive-execution/**",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/goal-reviews/**",
+      "integrations/codex/bundled/upstream/slopware/**"
+    ],
+    "semantic_changes": [
+      "No run enrollment, successor, closeout-validation, task/report, UI, SpecSwarm, timing, hook, guard, or ledger-data behavior changes.",
+      "No fallback to process cwd, Plotkeeper repository cwd, caller cwd, project-name inference, or an unrelated run.",
+      "No mutation of MoonMarket or any enrolled project repository as part of injection proof.",
+      "No secret, session transcript, runtime database, or personal data commit."
+    ]
+  },
+  "invariants": [
+    "Review and check-in injection preserve their existing command, session ID, prompts, state transitions, and error rollback except for explicit cwd validation.",
+    "A valid absolute run cwd is passed exactly as subprocess cwd after canonical resolution.",
+    "An invalid run cwd launches no process and does not mark review pending or add a successful check-in report.",
+    "All existing linked-successor and atomic closeout behavior remains green.",
+    "MoonMarket run records and repository contents remain read-only during verification."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "Review injection for a run enrolled in another repository launches Codex with that repository as cwd.",
+      "forbidden_behavior": "The resume inherits Plotkeeper's process cwd or changes project association.",
+      "target_and_actor": "PlotkeeperService.inject_review launching the MoonMarket-shaped root session.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "VALIDATED",
+      "promised_behavior": "Check-in and all future internal resume calls use the same run-aware cwd boundary.",
+      "forbidden_behavior": "Any injection path directly calls subprocess without the enrolled cwd.",
+      "target_and_actor": "PlotkeeperService injected-resume paths.",
+      "required_proof_ids": [
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "VALIDATED",
+      "promised_behavior": "Missing, relative, nonexistent, and file-valued run cwd fail closed before launch or state mutation.",
+      "forbidden_behavior": "Fallback launch from Plotkeeper or partial success mutation.",
+      "target_and_actor": "PlotkeeperService with malformed enrolled run metadata.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-4",
+      "phase": "ATTESTED",
+      "promised_behavior": "Installed and public patch sources match and a disposable cross-repository smoke preserves cwd/workspace/project identity.",
+      "forbidden_behavior": "Source/install/public split-brain or mutation of the real MoonMarket task.",
+      "target_and_actor": "Installed Plotkeeper and public repository.",
+      "required_proof_ids": [
+        "PR-4"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "A cross-repository review regression captures subprocess cwd and proves cwd, workspace root, and project association remain the enrolled repository while Plotkeeper process cwd differs.",
+      "required_environment": "isolated Z-drive repositories and ledger",
+      "command_or_read_only_check": "focused backend regression",
+      "expected_observation": "captured subprocess cwd equals enrolled repository and differs from Plotkeeper cwd"
+    },
+    {
+      "id": "PR-2",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Source audit and tests prove review/check-in share the sole run-aware launcher.",
+      "required_environment": "exact candidate source",
+      "command_or_read_only_check": "source scan plus focused tests",
+      "expected_observation": "no injected resume bypass exists"
+    },
+    {
+      "id": "PR-3",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Adversarial invalid cwd cases launch zero subprocesses and preserve pre-injection state.",
+      "required_environment": "isolated ledgers",
+      "command_or_read_only_check": "focused invalid-path tests",
+      "expected_observation": "explicit run_cwd_invalid failures with no launch/state success"
+    },
+    {
+      "id": "PR-4",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-4"
+      ],
+      "claim": "Public SHA/tag/release/Actions and installed package bind to the approved candidate; disposable installed smoke retains external-repository identity.",
+      "required_environment": "GitHub, installed service, and isolated Z-drive repository",
+      "command_or_read_only_check": "hash/version/Actions reconciliation and installed smoke",
+      "expected_observation": "all surfaces exact and identity retained"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "MERGE_READY",
+      "required_role": "independent adversarial reviewer of every resume path and invalid-cwd behavior"
+    },
+    {
+      "id": "RR-2",
+      "phase": "ATTESTED",
+      "required_role": "independent public/install/cross-repository attestation reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "HMAC-signed exact-candidate phase chain plus rollback and full-suite proof"
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "exact public/install/live attestation and CLOSED PASS"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected diff, any remaining resume bypass, invalid cwd launch, run-state mutation before validation, MoonMarket write, failing test/review, secret exposure, dirty candidate, or public/install mismatch."
+  ],
+  "known_discrepancies": [
+    "Live MoonMarket root 019dc5bc-9c57-7aa0-a007-18250d608ad3 has closed predecessor fb268d7891844583be9242b3b8658788 and active REVIEW_PENDING successor 2689aee603a841178fc1302559fd7984, both enrolled at Z:\\MoonMarket.",
+    "Current PlotkeeperService._run_codex omits subprocess cwd; inject_review and inject_check_in call it.",
+    "Local main begins two committed closeout-gate commits ahead of public v0.1.5; they are protected baseline, not scope for this repair."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "Every injected resume must use run.cwd and invalid cwd must fail closed",
+      "acceptance_cases": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    },
+    {
+      "authority": "Regression must prove cross-repository cwd, workspace root, and project association",
+      "acceptance_cases": [
+        "AC-1",
+        "AC-4"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

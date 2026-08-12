@@ -240,7 +240,7 @@ class PlotkeeperService:
         payload = self._run_payload(run, session_id=session_id)
         return {"ok": True, "run": payload, **payload}
 
-    def inject_review(self, run_id: str, *, runner: Callable[[list[str]], Any] | None = None) -> dict[str, Any]:
+    def inject_review(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
             return {"ok": False, "error": "run_not_open"}
@@ -248,11 +248,14 @@ class PlotkeeperService:
             return {"ok": False, "error": "root_not_complete"}
         if run.state == RunState.REVIEW_PENDING:
             return {"ok": False, "error": "review_already_pending"}
+        run_cwd = self._validated_run_cwd(run.cwd)
+        if run_cwd is None:
+            return {"ok": False, "error": "run_cwd_invalid"}
         args = ["codex.exe", "exec", "resume", run.root_session_id, self.review_prompt(run_id), "--json", "--skip-git-repo-check"]
         runner = runner or self._run_codex
         self.ledger.mark_review_pending(run_id)
         try:
-            result = runner(args)
+            result = runner(args, cwd=str(run_cwd))
             code = getattr(result, "returncode", result if isinstance(result, int) else 0)
         except Exception as exc:
             self.ledger.mark_review_required(run_id)
@@ -263,8 +266,22 @@ class PlotkeeperService:
         return {"ok": True, "state": RunState.REVIEW_PENDING.value, "run_id": run_id}
 
     @staticmethod
-    def _run_codex(args: list[str]):
-        return subprocess.run(args, capture_output=True, text=True, check=False)
+    def _validated_run_cwd(raw_cwd: str | None) -> Path | None:
+        """Resolve only an explicit enrolled directory; never inherit service cwd."""
+        if not raw_cwd:
+            return None
+        path = Path(raw_cwd)
+        if not path.is_absolute():
+            return None
+        try:
+            resolved = path.resolve(strict=True)
+        except (OSError, RuntimeError):
+            return None
+        return resolved if resolved.is_dir() else None
+
+    @staticmethod
+    def _run_codex(args: list[str], *, cwd: str):
+        return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
 
     def review_prompt(self, run_id: str) -> str:
         contract = self.ledger.goal_contract(run_id)
@@ -323,15 +340,19 @@ class PlotkeeperService:
         self.ledger.add_report(run_id, "check-in-request", "Human requested: complete the current objective, report status, and end the turn.")
         return {"ok": True, "queued": True}
 
-    def inject_check_in(self, run_id: str) -> dict[str, Any]:
+    def inject_check_in(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
             return {"ok": False, "error": "run_closed_or_missing"}
+        run_cwd = self._validated_run_cwd(run.cwd)
+        if run_cwd is None:
+            return {"ok": False, "error": "run_cwd_invalid"}
         args = ["codex.exe", "exec", "resume", run.root_session_id,
                 "PLOTKEEPER CHECK-IN REQUEST: Complete only your current bounded objective, update Plotkeeper with your status/evidence, then check in with the human and end this turn. Do not begin another task.",
                 "--json", "--skip-git-repo-check"]
+        runner = runner or self._run_codex
         try:
-            result = self._run_codex(args)
+            result = runner(args, cwd=str(run_cwd))
             if result.returncode == 0:
                 self.ledger.add_report(run_id, "check-in-injected", "Check-in turn injected into the root session.")
             return {"ok": result.returncode == 0, "returncode": result.returncode}

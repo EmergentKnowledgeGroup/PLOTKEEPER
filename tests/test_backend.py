@@ -172,9 +172,9 @@ class BackendTests(unittest.TestCase):
             run = service.ledger.list_runs()[0]
             self.assertEqual(run.state, RunState.REVIEW_REQUIRED)
             self.assertFalse(service.close(run.run_id)["ok"])
-            self.assertEqual(service.inject_review(run.run_id, runner=lambda _args: 1)["error"], "injection_failed")
+            self.assertEqual(service.inject_review(run.run_id, runner=lambda _args, **_kwargs: 1)["error"], "injection_failed")
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.REVIEW_REQUIRED)
-            self.assertTrue(service.inject_review(run.run_id, runner=lambda _args: 0)["ok"])
+            self.assertTrue(service.inject_review(run.run_id, runner=lambda _args, **_kwargs: 0)["ok"])
             self.assertFalse(service.close(run.run_id)["ok"])
             self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "FAIL", "open_items": 1})["ok"])
             contract_path = Path(td) / "contract.json"
@@ -324,6 +324,67 @@ class BackendTests(unittest.TestCase):
             result = service.sync_plan(run.run_id, [str(plan)])
             self.assertEqual(result["count"], 2)
             self.assertEqual([t["status"] for t in service.ledger.tasks(run.run_id)], ["pending", "completed"])
+            service.close_db()
+
+    def test_injected_resumes_preserve_enrolled_cross_repository_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            plotkeeper_repo = base / "Plotkeeper"
+            moonmarket_repo = base / "MoonMarket"
+            sessions = plotkeeper_repo / "sessions"
+            sessions.mkdir(parents=True)
+            moonmarket_repo.mkdir()
+            service = PlotkeeperService(ledger_path=plotkeeper_repo / "ledger.sqlite", sessions_root=sessions)
+            run = service.ledger.enroll("moonmarket-root", str(moonmarket_repo), service.dashboard_url)
+            assert run is not None
+            service.ledger.mark_review_required(run.run_id)
+            launches = []
+
+            def capture(args, *, cwd):
+                resolved = Path(cwd).resolve()
+                launches.append({
+                    "args": args,
+                    "cwd": resolved,
+                    "workspace_root": resolved,
+                    "project": resolved.name,
+                })
+                return mock.Mock(returncode=0)
+
+            with mock.patch("plotkeeper.service.Path.cwd", return_value=plotkeeper_repo.resolve()):
+                self.assertTrue(service.inject_review(run.run_id, runner=capture)["ok"])
+                # Return to an open state only inside this disposable fixture so
+                # the same enrolled run can exercise the check-in path.
+                service.ledger.mark_review_required(run.run_id)
+                self.assertTrue(service.inject_check_in(run.run_id, runner=capture)["ok"])
+
+            self.assertEqual(len(launches), 2)
+            for launch in launches:
+                self.assertEqual(launch["cwd"], moonmarket_repo.resolve())
+                self.assertEqual(launch["workspace_root"], moonmarket_repo.resolve())
+                self.assertEqual(launch["project"], "MoonMarket")
+                self.assertNotEqual(launch["cwd"], plotkeeper_repo.resolve())
+                self.assertEqual(launch["args"][:4], ["codex.exe", "exec", "resume", "moonmarket-root"])
+            service.close_db()
+
+    def test_injected_resumes_fail_closed_for_invalid_enrolled_cwd(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            sessions = base / "sessions"
+            sessions.mkdir()
+            service = PlotkeeperService(ledger_path=base / "ledger.sqlite", sessions_root=sessions)
+            invalid_values = [None, "relative/path", str(base / "missing"), str(base / "not-a-directory.txt")]
+            (base / "not-a-directory.txt").write_text("x", encoding="utf-8")
+            for index, invalid in enumerate(invalid_values):
+                run = service.ledger.enroll(f"root-{index}", invalid, service.dashboard_url, f"task-{index}")
+                assert run is not None
+                service.ledger.mark_review_required(run.run_id)
+                runner = mock.Mock()
+                before = service.ledger.get(run.run_id)
+                self.assertEqual(service.inject_review(run.run_id, runner=runner), {"ok": False, "error": "run_cwd_invalid"})
+                self.assertEqual(service.ledger.get(run.run_id).state, before.state)
+                self.assertEqual(service.inject_check_in(run.run_id, runner=runner), {"ok": False, "error": "run_cwd_invalid"})
+                self.assertFalse(service.ledger.has_report_kind(run.run_id, "check-in-injected"))
+                runner.assert_not_called()
             service.close_db()
 
     def test_sync_plan_persists_goal_contract_and_closeout_invokes_review_skill(self):

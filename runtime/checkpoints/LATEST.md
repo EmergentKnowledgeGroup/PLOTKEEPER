@@ -4,6 +4,15 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER INJECTED RESUME CWD FIX
+
+- step: post-green-tests
+- note: Review and check-in resumes now share a fail-closed run-aware subprocess boundary that launches from the enrolled repository; cross-repository and invalid-cwd regressions are green. Independent review and release remain.
+- branch: main
+- head: 796e4ab6e0daccf9e38219b9bb93980193daa1e4
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active contract `PROD-20260812-plotkeeper-injected-resume-cwd` validates at `a8a0c98496ebed4b97cf4c76415f7f9e25d683bfb6ea2f3e12a9fb7b296aa5bd`; MoonMarket run record confirms `Z:\MoonMarket`; focused 3 tests and full 70-test suite green; source scan finds no injected-resume subprocess bypass
+
 ## PLOTKEEPER STARSHAPE ATOMIC GATE INDEPENDENT REVIEW
 
 - step: phase-start-independent-review

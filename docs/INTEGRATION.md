@@ -41,6 +41,11 @@ Plotkeeper-Run-ID: <RUN_ID>
 Put the marker in locked artifacts and delegated prompts when a separate task
 must remain visible under the same run.
 
+Plotkeeper-triggered review and check-in resumes execute from the enrolled
+run's validated `cwd`. A missing, relative, nonexistent, or file-valued run
+directory is a hard failure; Plotkeeper never falls back to its own process
+directory or infers a repository from the project name.
+
 ## 3. Populate the task board
 
 Use the run ID shown by `status` or the dashboard:
