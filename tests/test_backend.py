@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -334,35 +335,37 @@ class BackendTests(unittest.TestCase):
             sessions = plotkeeper_repo / "sessions"
             sessions.mkdir(parents=True)
             moonmarket_repo.mkdir()
+            __import__("subprocess").run(["git", "init", "--quiet", str(moonmarket_repo)], check=True)
             service = PlotkeeperService(ledger_path=plotkeeper_repo / "ledger.sqlite", sessions_root=sessions)
             run = service.ledger.enroll("moonmarket-root", str(moonmarket_repo), service.dashboard_url)
             assert run is not None
             service.ledger.mark_review_required(run.run_id)
             launches = []
+            probe = (
+                "import json, os, pathlib, subprocess; "
+                "root=subprocess.run(['git','rev-parse','--show-toplevel'],capture_output=True,text=True,check=True).stdout.strip(); "
+                "print(json.dumps({'cwd':os.getcwd(),'workspace_root':root,'project':pathlib.Path(root).name}))"
+            )
 
             def capture(args, *, cwd):
-                resolved = Path(cwd).resolve()
-                launches.append({
-                    "args": args,
-                    "cwd": resolved,
-                    "workspace_root": resolved,
-                    "project": resolved.name,
-                })
-                return mock.Mock(returncode=0)
+                result = service._run_codex([sys.executable, "-c", probe], cwd=cwd)
+                launches.append({"args": args, "child": json.loads(result.stdout)})
+                return result
 
-            with mock.patch("plotkeeper.service.Path.cwd", return_value=plotkeeper_repo.resolve()):
-                self.assertTrue(service.inject_review(run.run_id, runner=capture)["ok"])
-                # Return to an open state only inside this disposable fixture so
-                # the same enrolled run can exercise the check-in path.
-                service.ledger.mark_review_required(run.run_id)
-                self.assertTrue(service.inject_check_in(run.run_id, runner=capture)["ok"])
+            self.assertNotEqual(Path.cwd().resolve(), moonmarket_repo.resolve())
+            self.assertTrue(service.inject_review(run.run_id, runner=capture)["ok"])
+            # Return to an open state only inside this disposable fixture so
+            # the same enrolled run can exercise the check-in path.
+            service.ledger.mark_review_required(run.run_id)
+            self.assertTrue(service.inject_check_in(run.run_id, runner=capture)["ok"])
 
             self.assertEqual(len(launches), 2)
             for launch in launches:
-                self.assertEqual(launch["cwd"], moonmarket_repo.resolve())
-                self.assertEqual(launch["workspace_root"], moonmarket_repo.resolve())
-                self.assertEqual(launch["project"], "MoonMarket")
-                self.assertNotEqual(launch["cwd"], plotkeeper_repo.resolve())
+                child = launch["child"]
+                self.assertEqual(Path(child["cwd"]).resolve(), moonmarket_repo.resolve())
+                self.assertEqual(Path(child["workspace_root"]).resolve(), moonmarket_repo.resolve())
+                self.assertEqual(child["project"], "MoonMarket")
+                self.assertNotEqual(Path(child["cwd"]).resolve(), Path.cwd().resolve())
                 self.assertEqual(launch["args"][:4], ["codex.exe", "exec", "resume", "moonmarket-root"])
             service.close_db()
 
