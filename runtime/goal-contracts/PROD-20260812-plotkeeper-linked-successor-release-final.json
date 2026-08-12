@@ -1,0 +1,292 @@
+{
+  "id": "PROD-20260812-plotkeeper-linked-successor-release-final",
+  "status": "ACTIVE",
+  "contract_hash": "413c520c0713c30cebb37d2a52d2f24e7f604158eec29db6a8ee1aef0a931e43",
+  "origin": "DIRECT",
+  "user_goal": "Publish the authorized cumulative Plotkeeper v0.1.4 patch: immutable linked successor runs, corrected SpecSwarm and adaptive timing, preserved Starshape checkpoint, and the already-authorized installer restart/cache fixes.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turns/019ff57a-09bd-7082-a02f-97fa19be4620,019ff592-dc25-7f52-b19f-5458b8dcc985,019ff59c-e4c7-7962-914a-4180bc4306fc",
+    "original_request_hash": "8379992c5a25f69b0d1dc0f76151a95427fbe21fcdad5ac0439df0c3efed1045",
+    "verbatim_text": "Smart man.  Yes, you should not have locked down PK to 1 per thread. NOR should you have altered specswarms skill to account for that.  The old one should be closed, immutable, and preserved.  New followups should be successors, and linked.\n\nProper behavior is correct. Fix it, adjust, correct and update repo with release and patch notes\n\npreserve and include\n\nauthorized (this is getting kind of ridiculous for these short replies, we need to adjust this hard LOL)\n",
+    "captured_at_utc": "2026-08-12T10:55:56Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "origin/main (v0.1.2)",
+    "sha": "e8589d558dee4e41c4f3af50aa2f48818f2af624",
+    "retrieved_at_utc": "2026-08-12T10:55:56Z",
+    "protection_evidence": "origin/main and v0.1.2 tag resolved to the same SHA before mutation",
+    "selection_reason": "Public release preceding all three authorized cumulative patch commits."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-installer-restart-fix.json",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release.json",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release-path-correction.json",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release-final.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "scripts/install.ps1",
+      "tests/test_repository_docs.py",
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/cli.py",
+      "plotkeeper/__init__.py",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "integrations/codex/bundled/skills/specswarm/scripts/plotkeeper_cli.py",
+      "integrations/codex/adaptive-execution/scripts/adaptive_execution.py",
+      "integrations/codex/adaptive-execution/references/comparison-policy.md",
+      "tests/test_active_run_surface.py",
+      "tests/test_backend.py",
+      "tests/test_cli.py",
+      "tests/test_installer.py",
+      "tests/test_repository.py",
+      "tests/test_adaptive_execution.py",
+      "pyproject.toml",
+      "CHANGELOG.md",
+      "README.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      ".github/workflows/release-verifier.yml"
+    ],
+    "resources": [
+      "runtime/plotkeeper.sqlite3 only through controlled backup/migration and live service",
+      "installed Plotkeeper, SpecSwarm, adaptive-execution, hooks, and guard",
+      "EmergentKnowledgeGroup/PLOTKEEPER main, v0.1.4 tag/release, Actions, and signed deploy receipt variable"
+    ],
+    "semantic_changes": [
+      "Closed runs remain immutable; one linked active successor may follow the immediate same-root predecessor.",
+      "SpecSwarm resolves/enrolls the exact active successor without project/cwd substitution or weakened gates.",
+      "Incomplete and unproven execution receipts remain history but cannot seed timing comparisons.",
+      "Owned listeners restart after upgrade, foreign listeners stop installation, and installer temporaries remain on the project drive.",
+      "Preserve the Starshape checkpoint and publish matching v0.1.4 documentation and release surfaces."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "runtime/plotkeeper.sqlite3",
+      "runtime/goal-reviews/**",
+      "integrations/codex/bundled/upstream/slopware/**",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "semantic_changes": [
+      "No closed history rewrite/delete/reopen; no duplicate active root; no unrelated/cwd substitution.",
+      "No weakening of SpecSwarm, contract, review, panel, tracking, installer ownership, or release gates.",
+      "No incomplete/unproven timing comparable, vendored Slopware change, unrelated UI/content change, secret exposure, or committed runtime data."
+    ]
+  },
+  "invariants": [
+    "Closed run rows and dependent history remain unchanged and exactly queryable.",
+    "At most one non-closed run per canonical root; successor linkage is immediate, same-root, and acyclic.",
+    "Legacy migration preserves all rows, semantic payloads, timestamps, receipts, and foreign keys.",
+    "Exact identity fails closed for ambiguity, missing identity, closed-only history, and native subagents.",
+    "Installer replaces only owned listeners, preserves foreign listeners, keeps temp work on Z drive, and installed skills match source.",
+    "Starshape checkpoint remains intact and public/install/live release surfaces bind to the exact signed candidate."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "Same-root follow-up after closure creates one linked OPEN successor and repeated enrollment returns it.",
+      "forbidden_behavior": "Predecessor mutation/reopen or duplicate active successor.",
+      "target_and_actor": "Plotkeeper ledger/service and SpecSwarm.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "VALIDATED",
+      "promised_behavior": "Legacy migration is lossless and exact history remains available.",
+      "forbidden_behavior": "Data/FK loss, rewrite, or ambiguous lookup.",
+      "target_and_actor": "Installer/service opening a pre-patch ledger.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "VALIDATED",
+      "promised_behavior": "Only completed substantive outcomes can seed adaptive timeboxes.",
+      "forbidden_behavior": "Incomplete/unproven preflight becomes timing evidence.",
+      "target_and_actor": "Adaptive execution selector.",
+      "required_proof_ids": [
+        "PR-4"
+      ]
+    },
+    {
+      "id": "AC-4",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "Upgrade replaces an owned listener, refuses and preserves a foreign listener, and leaves no external temp root.",
+      "forbidden_behavior": "Stale owned service, killed foreign service, false readiness, or C-drive build temp.",
+      "target_and_actor": "Windows installer/startup.",
+      "required_proof_ids": [
+        "PR-5"
+      ]
+    },
+    {
+      "id": "AC-5",
+      "phase": "ATTESTED",
+      "promised_behavior": "Public, installed, and live v0.1.4 surfaces execute the exact approved candidate.",
+      "forbidden_behavior": "SHA/version/bundle split-brain or missing successor behavior.",
+      "target_and_actor": "GitHub users and local Codex installation.",
+      "required_proof_ids": [
+        "PR-6"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Lifecycle tests prove linkage, idempotency, uniqueness/race safety, closed immutability, and exact historical lookup.",
+      "required_environment": "isolated Z-drive ledgers",
+      "command_or_read_only_check": "focused and full unittest suites",
+      "expected_observation": "all normal/adversarial lifecycle cases pass"
+    },
+    {
+      "id": "PR-2",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Service, CLI, and SpecSwarm bind only the exact active successor.",
+      "required_environment": "isolated exact-session API/CLI",
+      "command_or_read_only_check": "active-run and bridge tests plus source/installed parity",
+      "expected_observation": "successor selected; closed/unrelated/cwd/ambiguous/subagent paths rejected"
+    },
+    {
+      "id": "PR-3",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Copied live-shaped migration preserves counts, existing-field digests, dependent-table digests, and FK integrity.",
+      "required_environment": "consistent isolated Z-drive backup",
+      "command_or_read_only_check": "before/after digest and PRAGMA checks",
+      "expected_observation": "zero loss or mutation and foreign_key_check empty"
+    },
+    {
+      "id": "PR-4",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Timing regression excludes incomplete/unproven cohorts and admits completed cohorts.",
+      "required_environment": "isolated execution ledger",
+      "command_or_read_only_check": "adaptive comparison test",
+      "expected_observation": "bad cohort calibrates; completed cohort eligible"
+    },
+    {
+      "id": "PR-5",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-4"
+      ],
+      "claim": "Installer ownership/PID and project-temp behavior pass on the exact candidate.",
+      "required_environment": "isolated Windows ports and Z-drive materialization",
+      "command_or_read_only_check": "installer restart/foreign listener harness",
+      "expected_observation": "owned PID replaced, foreign PID unchanged, temp cleaned, readiness truthful"
+    },
+    {
+      "id": "PR-6",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-5"
+      ],
+      "claim": "Signed public SHA/tag/release/Actions and installed/live hashes/behavior match candidate.",
+      "required_environment": "GitHub and local installed service",
+      "command_or_read_only_check": "verifier/guard, GitHub reconciliation, health/version/hash, isolated successor smoke",
+      "expected_observation": "all exact release surfaces pass"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "VALIDATED",
+      "required_role": "independent full-diff, lifecycle, migration, SpecSwarm, adaptive, and cumulative-scope reviewer"
+    },
+    {
+      "id": "RR-2",
+      "phase": "MERGE_READY",
+      "required_role": "independent adversarial phase reviewer"
+    },
+    {
+      "id": "RR-3",
+      "phase": "ATTESTED",
+      "required_role": "independent public/install/live attestation reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "HMAC-signed VALIDATED/MERGE_READY/DEPLOY_READY chain for exact candidate and final contract"
+    },
+    {
+      "id": "RL-2",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "safe rollback and installer ownership/restart proof"
+    },
+    {
+      "id": "RL-3",
+      "phase": "ATTESTED",
+      "required_receipt": "exact public/tag/release/Actions/install/live attestation and CLOSED review"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected/forbidden diff, historical loss/mutation, duplicate active run, identity substitution, timing false comparable, installer ownership failure, failing test/review, secret exposure, dirty candidate, release split-brain, or rollback uncertainty."
+  ],
+  "known_discrepancies": [
+    "The prior review correctly found three cumulative paths omitted from the literal allowlist: the predecessor installer contract, scripts/install.ps1, and tests/test_repository_docs.py. They are authorized cumulative v0.1.3 work and are explicitly added here.",
+    "The prior two contracts and their adverse receipt remain immutable; candidate f3f82cc is unchanged pending this final append-only contract commit/review.",
+    "Authorized Starshape checkpoint content is included and preserved."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "Closed predecessor immutable; new follow-ups linked",
+      "acceptance_cases": [
+        "AC-1",
+        "AC-2"
+      ]
+    },
+    {
+      "authority": "Do not alter SpecSwarm for one-run-per-thread",
+      "acceptance_cases": [
+        "AC-1"
+      ]
+    },
+    {
+      "authority": "Adjust ridiculous timing behavior",
+      "acceptance_cases": [
+        "AC-3"
+      ]
+    },
+    {
+      "authority": "Preserve/include prior work and publish release notes",
+      "acceptance_cases": [
+        "AC-4",
+        "AC-5"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release-path-correction.json",
+    "sha256": "531bd5f879f3bc86a6b3a314af8896e579811ab3caa5f50513ee50d629d6f22f"
+  }
+}
