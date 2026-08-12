@@ -48,14 +48,17 @@ class PlotkeeperService:
                 "task_label": obs.task_label or obs.task_id or obs.session_id,
                 "project_name": self._project_name(obs.cwd),
             }
-            run = self.ledger.by_root(obs.session_id)
+            # Closed roots are historical only.  A follow-up with the same
+            # canonical task identity must enroll through ``Ledger.enroll`` so
+            # it receives a fresh successor rather than reopening history.
+            run = self.ledger.by_root(obs.session_id, active_only=True)
             # A root task can have multiple Codex session files (worktree or
             # message-id variants). Resolve those to the same ledger run before
             # considering enrollment, then retain the variant as a child so
             # its reports/history remain visible.
             if run is None and obs.canonical_root_id:
-                run = self.ledger.by_canonical_root(obs.canonical_root_id)
-                if run and run.root_session_id != obs.session_id and run.state != RunState.CLOSED:
+                run = self.ledger.by_canonical_root(obs.canonical_root_id, active_only=True)
+                if run and run.root_session_id != obs.session_id:
                     self.ledger.attach_child(run.run_id, obs.session_id)
                     events.append({"type": "root_variant_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if obs.invoked_specswarm and obs.is_root:
@@ -63,7 +66,10 @@ class PlotkeeperService:
                     run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url, obs.canonical_root_id)
                     if run is None:
                         continue
-                    events.append({"type": "run_enrolled", "run_id": run.run_id, "session_id": obs.session_id})
+                    event = {"type": "run_enrolled", "run_id": run.run_id, "session_id": obs.session_id}
+                    if run.predecessor_run_id:
+                        event["predecessor_run_id"] = run.predecessor_run_id
+                    events.append(event)
             if run is None and obs.attach_run_ids:
                 candidate = self.ledger.get(obs.attach_run_ids[-1])
                 if candidate and candidate.state != RunState.CLOSED:

@@ -112,8 +112,12 @@ reviewers:
    blockerboard, checkpoint, and final report. Never mutate the sealed
    production goal contract; pass its path to Plotkeeper instead.
 
-Never create a second Plotkeeper run for implementation. Later agents attach
-to the immutable run ID written into these artifacts.
+Never reopen or overwrite a closed Plotkeeper run. If the same Codex task has
+follow-up work after closeout, Plotkeeper enrollment creates one OPEN successor
+linked to the immediate predecessor; repeated enrollment returns that active
+successor. Later agents resolve the exact active successor and attach their
+session to it, while the immutable predecessor remains available by explicit
+run ID for history.
 
 ### 1. Ground The Work
 

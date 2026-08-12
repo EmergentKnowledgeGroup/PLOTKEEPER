@@ -17,6 +17,71 @@ def line(timestamp, typ, payload):
 
 
 class BackendTests(unittest.TestCase):
+    def test_closed_root_enrolls_one_linked_successor_and_stays_immutable(self):
+        with tempfile.TemporaryDirectory() as td:
+            ledger = Ledger(Path(td) / "ledger.sqlite")
+            first = ledger.enroll("root-original", td, "http://pk", "task-1")
+            self.assertIsNotNone(first)
+            assert first is not None
+            self.assertTrue(ledger.mark_review_required(first.run_id))
+            self.assertTrue(ledger.record_receipt(first.run_id, {"terminal": True, "injected": True, "verdict": "PASS", "open_items": 0}))
+            self.assertTrue(ledger.close(first.run_id))
+            before = ledger.get(first.run_id)
+            self.assertEqual(before.state, RunState.CLOSED)
+            successor = ledger.enroll("root-followup", td, "http://pk", "task-1")
+            self.assertIsNotNone(successor)
+            assert successor is not None
+            self.assertNotEqual(successor.run_id, first.run_id)
+            self.assertEqual(successor.state, RunState.OPEN)
+            self.assertEqual(successor.predecessor_run_id, first.run_id)
+            self.assertEqual(ledger.enroll("another-session", td, "http://pk", "task-1").run_id, successor.run_id)
+            self.assertEqual(len([r for r in ledger.list_runs() if r.state != RunState.CLOSED]), 1)
+            self.assertEqual(ledger.add_report(first.run_id, "late", "must reject"), 0)
+            ledger.attach_child(first.run_id, "late-child")
+            self.assertEqual(ledger.get(first.run_id).children, ())
+            self.assertEqual(ledger.get(first.run_id).to_dict()["successor_run_id"], successor.run_id)
+            self.assertEqual(ledger.get(first.run_id).state, before.state)
+            ledger.close_db()
+
+    def test_legacy_unique_root_schema_migrates_without_losing_rows(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "legacy.sqlite"
+            db = __import__("sqlite3").connect(path)
+            db.executescript("""
+                CREATE TABLE runs (
+                    run_id TEXT PRIMARY KEY, root_session_id TEXT NOT NULL UNIQUE,
+                    state TEXT NOT NULL, cwd TEXT, dashboard_url TEXT NOT NULL,
+                    created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                    review_injected_at TEXT, review_receipt TEXT, closed_at TEXT
+                );
+                CREATE TABLE children (run_id TEXT NOT NULL, session_id TEXT NOT NULL, PRIMARY KEY(run_id, session_id), FOREIGN KEY(run_id) REFERENCES runs(run_id));
+                CREATE TABLE reports (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, session_id TEXT, kind TEXT NOT NULL, text TEXT NOT NULL, evidence TEXT, created_at TEXT NOT NULL);
+                CREATE TABLE tasks (run_id TEXT NOT NULL, task_id TEXT NOT NULL, title TEXT NOT NULL, status TEXT NOT NULL, owner TEXT, parent_task_id TEXT, workstream TEXT, source TEXT, ordinal INTEGER NOT NULL, PRIMARY KEY(run_id, task_id));
+                CREATE TABLE goal_contracts (run_id TEXT PRIMARY KEY, contract_id TEXT NOT NULL, path TEXT NOT NULL, status TEXT NOT NULL, user_goal TEXT NOT NULL, contract_hash TEXT, baseline_sha TEXT, payload TEXT NOT NULL, synced_at TEXT NOT NULL, FOREIGN KEY(run_id) REFERENCES runs(run_id));
+                CREATE TABLE watermarks (path TEXT PRIMARY KEY, byte_offset INTEGER NOT NULL);
+                CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            """)
+            db.execute("INSERT INTO runs VALUES (?,?,?,?,?,?,?,?,?,?)", ("legacy-run", "legacy-root", "CLOSED", td, "http://pk", "2026-01-01", "2026-01-02", None, '{"verdict":"PASS"}', "2026-01-02"))
+            db.execute("INSERT INTO children VALUES (?,?)", ("legacy-run", "legacy-child"))
+            db.execute("INSERT INTO reports(run_id,session_id,kind,text,evidence,created_at) VALUES (?,?,?,?,?,?)", ("legacy-run", "legacy-root", "claim", "preserve", "[]", "2026-01-02"))
+            db.execute("INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?)", ("legacy-run", "T1", "Keep", "completed", "owner", None, "ws", "plan", 0))
+            db.execute("INSERT INTO goal_contracts VALUES (?,?,?,?,?,?,?,?,?)", ("legacy-run", "C1", "contract.json", "ACTIVE", "goal", "hash", "base", "{}", "2026-01-02"))
+            db.commit(); db.close()
+            ledger = Ledger(path)
+            self.assertEqual(len(ledger.list_runs()), 1)
+            historical = ledger.by_root("legacy-root")
+            self.assertEqual(historical.run_id, "legacy-run")
+            self.assertEqual(historical.children, ("legacy-child",))
+            for dependent in ("children", "goal_contracts"):
+                foreign_keys = [tuple(item) for item in ledger.db.execute(f"PRAGMA foreign_key_list({dependent})")]
+                self.assertTrue(foreign_keys)
+                self.assertEqual(foreign_keys[0][2], "runs")
+            self.assertEqual(ledger.reports("legacy-run")[0]["text"], "preserve")
+            self.assertEqual(ledger.tasks("legacy-run")[0]["title"], "Keep")
+            successor = ledger.enroll("legacy-followup", td, "http://pk", historical.canonical_root_id)
+            self.assertEqual(successor.predecessor_run_id, historical.run_id)
+            ledger.close_db()
+
     def test_packaged_dashboard_is_served(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "sessions"; root.mkdir()

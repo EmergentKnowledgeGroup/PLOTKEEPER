@@ -28,6 +28,8 @@ session truth:
   evidence links;
 - opens the exact active run by run/session locator, and groups the active
   picker by project with real task labels and IDs;
+- preserves closed runs as immutable history and creates a predecessor-linked
+  successor when the same Codex task begins genuinely new SpecSwarm work;
 - injects the required closeout review after the root requests completion;
 - closes only on `verdict=PASS open_items=0` from that injected review.
 
@@ -65,8 +67,9 @@ The populated demo runs at <http://127.0.0.1:47832/>.
 ## Use with SpecSwarm
 
 1. Start Plotkeeper before beginning a new SpecSwarm run.
-2. Invoke `$specswarm` in the root Codex task. Plotkeeper enrolls that new root
-   session; historical sessions are intentionally ignored.
+2. Invoke `$specswarm` in the root Codex task. Plotkeeper enrolls that root or,
+   when its previous run is closed, creates one active successor linked to the
+   immutable predecessor. Historical sessions remain available by exact run ID.
 3. Put the displayed `Plotkeeper-Run-ID` in locked artifacts and any independent
    task that must attach to the run.
 4. Sync the approved checklist and goal contract:
@@ -116,7 +119,8 @@ of Slopware's `msw`, `msw-hook`, and `timebox` packages. No required skill code
 is downloaded from another marketplace. It then adds Plotkeeper's adaptive
 `UserPromptSubmit` and `Stop` hooks. The first
 unfamiliar task runs as an untimed calibration; later comparable work reuses
-measured timing evidence. The stop hook loops an agent back when its execution
+measured timing evidence from completed work. Incomplete or unproven preflights
+remain in history but cannot seed a timebox. The stop hook loops an agent back when its execution
 receipt is missing or incomplete.
 
 After installation, run `/hooks` in Codex to inspect and trust the three

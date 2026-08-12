@@ -1,0 +1,325 @@
+{
+  "id": "PROD-20260812-plotkeeper-linked-successor-release",
+  "status": "ACTIVE",
+  "contract_hash": "45b3adf77bf017cb126dc3eb835474146e9cc339eee0a5b44e329645b35d8b02",
+  "origin": "DIRECT",
+  "user_goal": "Preserve closed Plotkeeper runs immutably, create linked successor runs for later work in the same Codex task, restore SpecSwarm to correct active-run tracking semantics, preserve the authorized Starshape checkpoint, correct adaptive timing admission, and publish a tested patch release with notes.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turns/019ff57a-09bd-7082-a02f-97fa19be4620,019ff592-dc25-7f52-b19f-5458b8dcc985,019ff59c-e4c7-7962-914a-4180bc4306fc",
+    "original_request_hash": "8379992c5a25f69b0d1dc0f76151a95427fbe21fcdad5ac0439df0c3efed1045",
+    "verbatim_text": "Smart man.  Yes, you should not have locked down PK to 1 per thread. NOR should you have altered specswarms skill to account for that.  The old one should be closed, immutable, and preserved.  New followups should be successors, and linked.\n\nProper behavior is correct. Fix it, adjust, correct and update repo with release and patch notes\n\npreserve and include\n\nauthorized (this is getting kind of ridiculous for these short replies, we need to adjust this hard LOL)\n",
+    "captured_at_utc": "2026-08-12T10:55:56Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "origin/main (v0.1.2)",
+    "sha": "e8589d558dee4e41c4f3af50aa2f48818f2af624",
+    "retrieved_at_utc": "2026-08-12T10:55:56Z",
+    "protection_evidence": "git rev-parse origin/main and v0.1.2 tag both resolved to this SHA before task mutation",
+    "selection_reason": "Current public protected release preceding the successor-lifecycle patch; local commits 3177367 and 705ec05 are unreleased ancestors to preserve and include."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/cli.py",
+      "plotkeeper/__init__.py",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "integrations/codex/bundled/skills/specswarm/scripts/plotkeeper_cli.py",
+      "integrations/codex/bundled/skills/adaptive-execution/scripts/adaptive_execution.py",
+      "integrations/codex/bundled/skills/adaptive-execution/references/comparison-policy.md",
+      "tests/test_active_run_surface.py",
+      "tests/test_backend.py",
+      "tests/test_cli.py",
+      "tests/test_installer.py",
+      "tests/test_repository.py",
+      "tests/test_adaptive_execution.py",
+      "pyproject.toml",
+      "CHANGELOG.md",
+      "README.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      ".github/workflows/release-verifier.yml"
+    ],
+    "resources": [
+      "runtime/plotkeeper.sqlite3 via installer-controlled migration and live service",
+      "installed Codex SpecSwarm skill",
+      "installed Codex adaptive-execution skill",
+      "local Plotkeeper service on 127.0.0.1:47831",
+      "EmergentKnowledgeGroup/PLOTKEEPER main branch, tag, GitHub release, Actions, and signed deploy receipt variable"
+    ],
+    "semantic_changes": [
+      "Replace one-run-per-root uniqueness with immutable sequential runs linked by predecessor/successor identity.",
+      "Resolve and display only the correct active run for the exact Codex task while preserving closed history.",
+      "Make SpecSwarm enroll or attach to the exact active successor without reopening or substituting closed/unrelated runs.",
+      "Exclude incomplete, unproven, and blocked-preflight executions from adaptive timing comparables; retain them as calibration history only.",
+      "Preserve and include the pre-existing Starshape checkpoint track exactly, then append the Plotkeeper lifecycle track.",
+      "Bump the patch version and publish matching changelog, release documentation, tag, and GitHub release."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "runtime/plotkeeper.sqlite3",
+      "runtime/goal-reviews/**",
+      "integrations/codex/bundled/upstream/slopware/**",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "semantic_changes": [
+      "Do not mutate, reopen, delete, overwrite, or reassign any closed run or its reports/tasks/contracts.",
+      "Do not allow multiple simultaneous active runs for one canonical root task.",
+      "Do not infer task identity from cwd/project name or attach an unrelated run.",
+      "Do not weaken SpecSwarm enrollment, Plotkeeper availability, visible-panel, contract, or tracking gates.",
+      "Do not treat incomplete or unproven timing records as successful implementation comparables.",
+      "Do not alter vendored Slopware code, attribution, licensing, unrelated UI, or project content.",
+      "Do not expose secrets or commit runtime ledger/review/key data."
+    ]
+  },
+  "invariants": [
+    "Every closed run remains byte-for-byte immutable at the application layer and queryable by exact run ID.",
+    "At most one non-closed run exists for a canonical root identity.",
+    "Every successor records its immediate predecessor and stable canonical root identity; predecessor linkage is acyclic and same-root.",
+    "Legacy ledgers migrate without losing runs, children, reports, tasks, contracts, watermarks, timestamps, or review receipts.",
+    "Exact session/run resolution remains fail-closed for ambiguity, native subagents, missing identity, and closed-only history.",
+    "The authorized Starshape checkpoint content remains present and is not flattened by the new Plotkeeper track.",
+    "Installed bundled skills remain byte-identical to repository sources after installation.",
+    "Public release verification remains HMAC-authenticated and candidate/contract bound."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "Enrolling follow-up work for a root whose prior run is closed creates one OPEN successor linked to that closed predecessor.",
+      "forbidden_behavior": "The closed predecessor is reopened, overwritten, returned as active, or replaced without linkage.",
+      "target_and_actor": "Plotkeeper ledger/service called by SpecSwarm for the same Codex root task.",
+      "required_proof_ids": [
+        "PR-1",
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "VALIDATED",
+      "promised_behavior": "Repeated enrollment while a successor is active idempotently returns that active successor.",
+      "forbidden_behavior": "Parallel active successors or duplicate runs are created.",
+      "target_and_actor": "Concurrent or repeated Plotkeeper enrollment for one canonical root.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "VALIDATED",
+      "promised_behavior": "Legacy ledgers migrate to linked-run schema without data loss and retain exact historical lookup.",
+      "forbidden_behavior": "Any historical row or relationship is deleted, rewritten, or made ambiguous.",
+      "target_and_actor": "Installer/service opening a pre-patch Plotkeeper SQLite ledger.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    },
+    {
+      "id": "AC-4",
+      "phase": "VALIDATED",
+      "promised_behavior": "SpecSwarm binds to the exact active successor and keeps its normal fail-closed tracking rules.",
+      "forbidden_behavior": "SpecSwarm encodes one-run-per-thread, reopens a closed run, substitutes by cwd, or proceeds untracked.",
+      "target_and_actor": "Installed SpecSwarm skill and portable Plotkeeper bridge in a Codex task.",
+      "required_proof_ids": [
+        "PR-2",
+        "PR-4"
+      ]
+    },
+    {
+      "id": "AC-5",
+      "phase": "VALIDATED",
+      "promised_behavior": "Adaptive execution derives timeboxes only from completed verified or completed unverified substantive work, never incomplete/unproven blocked preflights.",
+      "forbidden_behavior": "An incomplete safety stop becomes implementation duration evidence.",
+      "target_and_actor": "Installed and bundled adaptive-execution comparable selector.",
+      "required_proof_ids": [
+        "PR-5"
+      ]
+    },
+    {
+      "id": "AC-6",
+      "phase": "ATTESTED",
+      "promised_behavior": "The published patch release, installed skills, live dashboard, repository tag/release, and Actions all identify the same approved candidate.",
+      "forbidden_behavior": "Local/public/installed split-brain or a release that lacks linked-successor behavior.",
+      "target_and_actor": "Public GitHub users and local Codex/Plotkeeper installation.",
+      "required_proof_ids": [
+        "PR-6",
+        "PR-7"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ],
+      "claim": "Focused ledger tests prove closed-to-open successor creation, linkage, idempotency, uniqueness, and immutability.",
+      "required_environment": "isolated temporary SQLite ledgers on Z drive",
+      "command_or_read_only_check": "focused unittest lifecycle cases",
+      "expected_observation": "all successor lifecycle and adversarial concurrency cases pass"
+    },
+    {
+      "id": "PR-2",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-4"
+      ],
+      "claim": "Service/CLI integration resolves the exact successor and closed-only history fails closed until enrollment.",
+      "required_environment": "isolated Plotkeeper API/CLI with exact session identity",
+      "command_or_read_only_check": "active-run integration tests and portable bridge tests",
+      "expected_observation": "exact active successor returned; closed predecessor only by explicit run ID; unrelated and cwd-only candidates rejected"
+    },
+    {
+      "id": "PR-3",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "A copied live-shaped legacy ledger migrates with preserved row counts and payload digests.",
+      "required_environment": "read-only source snapshot and isolated migrated copy on Z drive",
+      "command_or_read_only_check": "migration replay plus before/after table counts and semantic digests",
+      "expected_observation": "all historical content preserved and linkage columns/indexes valid"
+    },
+    {
+      "id": "PR-4",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-4"
+      ],
+      "claim": "Repository and installed SpecSwarm semantics match and no one-run-per-task workaround remains.",
+      "required_environment": "repository plus isolated installer output",
+      "command_or_read_only_check": "byte comparison and behavioral bridge test",
+      "expected_observation": "installed files match source and exact successor is enrolled/attached"
+    },
+    {
+      "id": "PR-5",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-5"
+      ],
+      "claim": "Adaptive comparison regression proves incomplete/unproven receipts are retained but excluded from timing cohorts.",
+      "required_environment": "isolated adaptive execution ledger on Z drive",
+      "command_or_read_only_check": "focused comparison-policy regression test",
+      "expected_observation": "incomplete/unproven records yield calibration; completed records remain eligible"
+    },
+    {
+      "id": "PR-6",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-6"
+      ],
+      "claim": "Installed live Plotkeeper and bundled skills run the exact approved patch candidate and demonstrate successor enrollment against a disposable isolated ledger without mutating historical production rows.",
+      "required_environment": "local installed Plotkeeper service and isolated Z-drive acceptance ledger",
+      "command_or_read_only_check": "version/health/source hash checks plus live/isolated successor smoke",
+      "expected_observation": "approved version and exact source hashes; linked successor behavior passes"
+    },
+    {
+      "id": "PR-7",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-6"
+      ],
+      "claim": "Public main, signed deploy bundle, tag, GitHub release, and required Actions all bind to the exact candidate.",
+      "required_environment": "EmergentKnowledgeGroup/PLOTKEEPER",
+      "command_or_read_only_check": "GitHub SHA/tag/release/workflow and signed verifier reconciliation",
+      "expected_observation": "all public release surfaces pass at identical candidate SHA"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "VALIDATED",
+      "required_role": "independent reviewer of contract, full diff, migration, lifecycle, SpecSwarm, and adaptive timing evidence"
+    },
+    {
+      "id": "RR-2",
+      "phase": "MERGE_READY",
+      "required_role": "independent phase-matched reviewer with adversarial false-green fixtures"
+    },
+    {
+      "id": "RR-3",
+      "phase": "ATTESTED",
+      "required_role": "independent public/install/live attestation reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "validated HMAC-signed VALIDATED, MERGE_READY, and DEPLOY_READY chain for exact candidate and contract"
+    },
+    {
+      "id": "RL-2",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "rollback proof to protected v0.1.2 baseline and safe installer restart proof"
+    },
+    {
+      "id": "RL-3",
+      "phase": "ATTESTED",
+      "required_receipt": "exact public SHA/tag/release/Actions/install/live attestation and CLOSED review"
+    }
+  ],
+  "stop_conditions": [
+    "Any diff outside allowed paths/resources or any change to forbidden semantics.",
+    "Any migration that rewrites or loses historical run data.",
+    "Any path that permits two simultaneous active runs for one canonical root.",
+    "Any exact-session lookup that selects by cwd/project or returns an unrelated run.",
+    "Any independent review verdict other than phase-matched PASS with zero open items.",
+    "Any mismatch among candidate SHA, signed bundle, public main/tag/release, installed code, or live service.",
+    "Any foreign listener, secret exposure, dirty candidate, failing test, or rollback uncertainty."
+  ],
+  "known_discrepancies": [
+    "Authorized pre-existing dirty checkpoint files add the completed STARSHAPE RUN 670A CLOSEOUT REVIEW track and select it current; preserve and include them.",
+    "Local main begins two commits ahead of public v0.1.2: 3177367 installer restart fix and 705ec05 project-drive installer cache fix; user authorized the complete patch release and these commits are required predecessors.",
+    "Current ledger schema enforces UNIQUE root_session_id/root_key and returns a closed row from enroll, causing the reported deadlock.",
+    "Installed adaptive execution currently admits incomplete and unproven outcomes as timing comparables, demonstrated by the 44-second false timebox."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User requires closed predecessor preservation and linked successors",
+      "acceptance_cases": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    },
+    {
+      "authority": "User rejects changing SpecSwarm to accommodate one-run-per-thread",
+      "acceptance_cases": [
+        "AC-4"
+      ]
+    },
+    {
+      "authority": "User authorizes checkpoint preservation and timing-gate correction",
+      "acceptance_cases": [
+        "AC-5"
+      ]
+    },
+    {
+      "authority": "User requests repository update, release, and patch notes",
+      "acceptance_cases": [
+        "AC-6"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

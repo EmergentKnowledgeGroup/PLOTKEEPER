@@ -54,6 +54,14 @@ class Run:
     review_receipt: dict[str, Any] | None = None
     closed_at: str | None = None
     children: tuple[str, ...] = ()
+    # Stable canonical task identity shared by sequential runs.  The
+    # predecessor is intentionally stored only on the successor: once a run
+    # is closed its row (and all of its payload) must remain immutable.
+    canonical_root_id: str | None = None
+    predecessor_run_id: str | None = None
+    # Populated from the successor row at read time; this is a derived link
+    # and does not require mutating a closed predecessor.
+    successor_run_id: str | None = None
 
     def to_dict(self, identity: Mapping[str, Any] | None = None) -> dict[str, Any]:
         out = asdict(self)
@@ -69,6 +77,9 @@ class Run:
         out["task_id"] = str(task_id)
         out["thread_id"] = str(task_id)
         out["session_id"] = str(task_id)
+        out["canonical_root_id"] = self.canonical_root_id
+        out["predecessor_run_id"] = self.predecessor_run_id
+        out["successor_run_id"] = self.successor_run_id
         if identity.get("agent_path"):
             out["agent_path"] = str(identity["agent_path"])
         return out

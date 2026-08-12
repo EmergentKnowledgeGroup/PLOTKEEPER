@@ -113,12 +113,17 @@ def comparable(db: sqlite3.Connection, project: str, task_type: str, risk: str,
     rows = db.execute(
         """SELECT * FROM executions
            WHERE status='closed' AND task_type=? AND substantive_seconds>0
-           AND outcome IN ('complete_verified','complete_unverified','incomplete','unproven')""",
+           AND outcome IN ('complete_verified','complete_unverified')
+           AND COALESCE(proof, '') <> ''""",
         (task_type,),
     ).fetchall()
     found = []
     for row in rows:
         if abs(RISK[risk] - RISK.get(row["risk"], 99)) > 1:
+            continue
+        if not row["started_at"] or not row["ended_at"]:
+            continue
+        if int(row["substantive_seconds"] or 0) <= 0 or int(row["closeout_seconds"] or 0) < 0:
             continue
         sys_score = overlap(set(systems), set(json.loads(row["systems_json"])))
         val_score = overlap(set(validation), set(json.loads(row["validation_json"])))

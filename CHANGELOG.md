@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.4 - 2026-08-12
+
+- Preserve every closed run as immutable history and create a linked successor
+  when later SpecSwarm work begins in the same Codex task.
+- Enforce one active run per canonical task while keeping predecessor and
+  successor IDs available for exact historical navigation.
+- Migrate existing SQLite ledgers without losing runs, reports, children,
+  tasks, contracts, watermarks, timestamps, or foreign-key integrity.
+- Restore SpecSwarm's gate to exact active-run enrollment without the mistaken
+  one-run-per-task restriction or any fallback to project-directory matching.
+- Exclude incomplete and unproven execution receipts from adaptive timing
+  comparisons so a blocked preflight cannot create an absurd implementation
+  deadline.
+- Include the previously validated owned-listener restart and project-drive
+  installer-cache fixes from the unreleased 0.1.3 candidate.
+
 ## 0.1.3 - 2026-08-11
 
 - Restart an existing Plotkeeper-owned listener after every package upgrade so

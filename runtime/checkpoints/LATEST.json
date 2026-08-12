@@ -1,6 +1,33 @@
 {
-  "current_track": "PLOTKEEPER ACTIVE RUN SURFACE WORK",
+  "current_track": "PLOTKEEPER LINKED SUCCESSOR RELEASE",
   "tracks": {
+    "PLOTKEEPER LINKED SUCCESSOR RELEASE": {
+      "step": "post-green-tests",
+      "note": "Linked immutable successors, lossless legacy migration, exact active resolution, corrected SpecSwarm semantics, adaptive timing admission hardening, v0.1.4 notes, and release workflow binding are implemented; independent production review and release remain.",
+      "branch": "main",
+      "head": "705ec0554728a25c0056db80f128c2ed53e35bd7",
+      "next_cmd": "py -3 -B -m unittest discover -s tests -v",
+      "validations": [
+        "corrected active contract PROD-20260812-plotkeeper-linked-successor-release-path-correction validates at a43d04b8d8d15a30b656bb27667615b4ca0a861d857001a36b58a555cce88253",
+        "62 tests green; Node syntax and git diff check green",
+        "legacy migration foreign keys and closed-run immutability focused tests green",
+        "prior Starshape track preserved unchanged"
+      ]
+    },
+    "STARSHAPE RUN 670A CLOSEOUT REVIEW": {
+      "step": "post-green-independent-production-review",
+      "note": "Independent production-goal review PASS for exact Starshape candidate e1fea74b63c13d464c651bc5585f10ca3d3cf6d6 under PROD-20260811-starshape-professional-v2-execution. The reviewer inspected all 64 tasks, 266 reports, 266 timeline entries, 34 sessions, 33 children, and 1,912 evidence-locator occurrences; current-phase open items are zero. T040, T041, and T053-T058 remain eight explicit future external/release/Stage B/C gates and are not authorized or silently completed.",
+      "branch": "main",
+      "head": "705ec0554728a25c0056db80f128c2ed53e35bd7",
+      "next_cmd": "py -3 C:\\Users\\UltariumV3\\.codex\\skills\\production-goal-review\\scripts\\validate_review_receipt.py runtime\\goal-contracts\\PROD-20260811-starshape-professional-v2-execution.json runtime\\goal-reviews\\plotkeeper-closeout-sol\\review-receipt.json --repo-root . --receipt-dir runtime\\goal-reviews\\plotkeeper-closeout-sol",
+      "validations": [
+        "independent PASS at 98 percent confidence",
+        "receipt 13052d8c21d877117c36a3ee060b0d98967bd0c3c4477921a16c7d37878c6e67 validates for phase VALIDATED",
+        "contract hash 08c719f84e47d208661d095f892afaaf613d18d19413a6a78e1202ceac8ca484 and candidate SHA exact",
+        "111 pytest tests, frontend lint and build, local E2E, isolated PostgreSQL browser lifecycle checks, methodology mobile view, and all ten PDF pages green",
+        "current-phase open items 0; future authority gates 8"
+      ]
+    },
     "PLOTKEEPER ACTIVE RUN SURFACE WORK": {
       "step": "post-green-tests",
       "note": "Successor contract PROD-20260811-plotkeeper-active-run-installer-restart-fix is implemented and verified; upgrades now replace owned listeners and reject foreign listeners before reporting live readiness.",

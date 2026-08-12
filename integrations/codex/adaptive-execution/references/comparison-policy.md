@@ -8,7 +8,10 @@ Treat a completed record as comparable only when:
 2. risk differs by no more than one level;
 3. project identity, systems, and validation overlap produce a score of at least `0.60`;
 4. its measured substantive duration is positive; and
-5. its outcome and timing fields are internally valid.
+5. its outcome and timing fields are internally valid; and
+6. its outcome is `complete_verified` or `complete_unverified`, with proof
+   present and no open items. `incomplete` and `unproven` rows remain in the
+   ledger for calibration/audit history but are never timing comparables.
 
 The deterministic helper calculates the score. Do not manually promote a rejected record merely because its duration is convenient.
 

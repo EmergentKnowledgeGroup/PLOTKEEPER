@@ -6,4 +6,4 @@ from .service import PlotkeeperService
 
 __all__ = ["Ledger", "PlotkeeperService", "Run", "RunState", "SessionObservation"]
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"

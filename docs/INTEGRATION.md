@@ -13,6 +13,12 @@ Start Plotkeeper before the task. A new root user message containing
 `$specswarm` or `run specswarm` enrolls the run. The first activation watermark
 intentionally excludes older session bytes.
 
+If that exact Codex task already has a closed run, enrollment creates one new
+OPEN successor with `predecessor_run_id` pointing at the immutable closed run.
+Repeated enrollment returns the same active successor. Plotkeeper never
+reopens the predecessor, creates parallel active successors, or substitutes a
+run merely because it shares a project directory.
+
 Before opening the panel, resolve the exact active run. Prefer
 `current --session-id <Codex-root-session-id>` (or `current --run-id <RUN_ID>`)
 and use the returned `dashboard_url`; only use `current --cwd` when it returns
@@ -77,7 +83,7 @@ or a missing receipt leaves the run open.
 
 ## Minimal integration checklist
 
-- Start Plotkeeper before the new SpecSwarm root.
+- Start Plotkeeper before the new or follow-up SpecSwarm root.
 - Preserve the run ID in locked artifacts and independent task prompts.
 - Sync the authoritative checklist and sealed production contract.
 - Report evidence paths; do not report conclusions without evidence.
