@@ -60,7 +60,10 @@ def matching_receipt(cwd: Path, contract: dict, candidate: str) -> bool:
     for folder in folders:
         if not folder.is_dir():
             continue
-        for path in folder.glob("*DEPLOY_READY.bundle.json"):
+        # Review runs keep their immutable artifacts in per-review subfolders.
+        # Search only inside the two authorized review roots, but recurse so a
+        # correctly nested authoritative bundle is not made invisible.
+        for path in folder.rglob("*DEPLOY_READY.bundle.json"):
             try:
                 bundle_text = path.read_text(encoding="utf-8")
             except OSError:

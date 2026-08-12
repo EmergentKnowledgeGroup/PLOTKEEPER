@@ -2,7 +2,7 @@
 
 ## Linked-successor patch
 
-This release is `0.1.4`. Before declaring the local dashboard ready, verify
+This release is `0.1.5`. Before declaring the local dashboard ready, verify
 that `/health` is healthy and `/` returns HTTP 200 with a non-empty HTML body
 containing `<html` and the exact `data-testid="plotkeeper-app"` marker. The installer/startup scripts replace a
 listener only when its process is Plotkeeper-owned; a foreign process on the

@@ -61,6 +61,23 @@ class ProductionGuardTests(unittest.TestCase):
             with mock.patch.object(GUARD, "git_head", return_value="f" * 40), mock.patch.dict("os.environ", {"PLOTKEEPER_REVIEW_KEY_FILE": str(key_path)}):
                 self.assertFalse(GUARD.evaluate(self.payload(cwd, "git push origin main"))[0])
 
+    def test_nested_deploy_bundle_is_discovered_inside_authorized_review_root(self):
+        base = Path(__file__).parents[1] / "runtime" / "qa"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as folder:
+            cwd = Path(folder)
+            contracts = cwd / "runtime" / "goal-contracts"
+            nested = cwd / "runtime" / "goal-reviews" / "review-run" / "evidence"
+            contracts.mkdir(parents=True)
+            nested.mkdir(parents=True)
+            (contracts / "active.json").write_text(json.dumps({"status": "ACTIVE", "contract_hash": "abc"}), encoding="utf-8")
+            (nested / "candidate-DEPLOY_READY.bundle.json").write_text("{}", encoding="utf-8")
+            key_path = cwd / "review.key"
+            key_path.write_text("test-review-key", encoding="utf-8")
+            completed = mock.Mock(returncode=0, stdout="verified", stderr="")
+            with mock.patch.object(GUARD, "git_head", return_value="f" * 40), mock.patch.dict("os.environ", {"PLOTKEEPER_REVIEW_KEY_FILE": str(key_path)}), mock.patch.object(GUARD.subprocess, "run", return_value=completed):
+                self.assertTrue(GUARD.evaluate(self.payload(cwd, "git push origin main"))[0])
+
 
 if __name__ == "__main__":
     unittest.main()

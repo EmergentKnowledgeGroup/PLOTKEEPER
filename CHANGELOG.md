@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5 - 2026-08-12
+
+- Let the production guard discover cryptographically valid DEPLOY_READY
+  bundles inside immutable per-review subdirectories.
+- Allow truthful target progression from isolated DEPLOY_READY proof to the
+  public/live ATTESTED path while keeping contract, baseline, candidate, phase,
+  verdict, and artifact identity locked.
+
 ## 0.1.4 - 2026-08-12
 
 - Preserve every closed run as immutable history and create a linked successor

@@ -16,6 +16,16 @@ from typing import Any
 
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
 PHASES = ["VALIDATED", "MERGE_READY", "DEPLOY_READY", "ATTESTED", "CLOSED"]
+
+
+def predecessor_target_matches(phase: str, predecessor_target: dict[str, Any], target: dict[str, Any]) -> bool:
+    """Keep release identity fixed while allowing truthful deployment progress."""
+    if phase == "ATTESTED":
+        return bool(
+            predecessor_target.get("artifact_digest")
+            and predecessor_target.get("artifact_digest") == target.get("artifact_digest")
+        )
+    return predecessor_target == target
 VERDICTS = {"PASS", "PARTIAL", "FAIL", "BLOCKED"}
 
 
@@ -211,7 +221,7 @@ def main() -> int:
                         available[str(item["review_receipt_hash"])] = item
                 required_phase = PHASES[predecessor_index]
                 matching = [available.get(str(h)) for h in predecessor_hashes]
-                if not any(item and item.get("phase") == required_phase and item.get("verdict") == "PASS" and item.get("contract_hash") == receipt.get("contract_hash") and item.get("candidate_sha") == receipt.get("candidate_sha") and item.get("target") == target for item in matching):
+                if not any(item and item.get("phase") == required_phase and item.get("verdict") == "PASS" and item.get("contract_hash") == receipt.get("contract_hash") and item.get("baseline_sha") == receipt.get("baseline_sha") and item.get("candidate_sha") == receipt.get("candidate_sha") and predecessor_target_matches(phase, item.get("target") if isinstance(item.get("target"), dict) else {}, target) for item in matching):
                     errors.append(f"phase {phase} requires a matching PASS {required_phase} predecessor receipt")
     if errors:
         print("INVALID")

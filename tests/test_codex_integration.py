@@ -38,6 +38,14 @@ finally:
 
 
 class CodexIntegrationTests(unittest.TestCase):
+    def test_review_validator_allows_only_artifact_stable_attested_target_progression(self):
+        isolated = {"environment": "isolated", "artifact_digest": "git:" + "a" * 40, "traffic_or_execution_path": "http://127.0.0.1:49100"}
+        public = {"environment": "public", "artifact_digest": "git:" + "a" * 40, "traffic_or_execution_path": "https://github.com/o/r"}
+        wrong = dict(public, artifact_digest="git:" + "b" * 40)
+        self.assertTrue(REVIEW_VALIDATOR.predecessor_target_matches("ATTESTED", isolated, public))
+        self.assertFalse(REVIEW_VALIDATOR.predecessor_target_matches("ATTESTED", isolated, wrong))
+        self.assertFalse(REVIEW_VALIDATOR.predecessor_target_matches("DEPLOY_READY", isolated, public))
+
     def test_bundled_review_validator_defers_attested_acceptance_and_proof(self):
         contract = {
             "acceptance_cases": [

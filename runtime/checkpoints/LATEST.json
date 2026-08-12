@@ -3,14 +3,14 @@
   "tracks": {
     "PLOTKEEPER LINKED SUCCESSOR RELEASE": {
       "step": "post-green-tests",
-      "note": "Linked immutable successors, lossless legacy migration, exact active resolution, corrected SpecSwarm semantics, adaptive timing admission hardening, v0.1.4 notes, and release workflow binding are implemented; independent production review and release remain.",
+      "note": "v0.1.4 linked successors are public and operationally green; final attestation exposed and v0.1.5 repairs nested bundle discovery plus truthful artifact-stable target progression. Independent v0.1.5 review and release remain.",
       "branch": "main",
       "head": "705ec0554728a25c0056db80f128c2ed53e35bd7",
       "next_cmd": "py -3 -B -m unittest discover -s tests -v",
       "validations": [
-        "corrected active contract PROD-20260812-plotkeeper-linked-successor-release-path-correction validates at a43d04b8d8d15a30b656bb27667615b4ca0a861d857001a36b58a555cce88253",
-        "62 tests green; Node syntax and git diff check green",
-        "legacy migration foreign keys and closed-run immutability focused tests green",
+        "active repair contract PROD-20260812-plotkeeper-attestation-gate-repair validates at bb36cb22a43d2fd02f4560b9e35fb02cca6e21c503cd60ca624c32b59ca16f43",
+        "64 tests green; nested valid bundle and target progression adversarial cases green",
+        "v0.1.4 public SHA, tag, release, Actions, and linked-successor behavior green",
         "prior Starshape track preserved unchanged"
       ]
     },

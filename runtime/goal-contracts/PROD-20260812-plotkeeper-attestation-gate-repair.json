@@ -1,0 +1,190 @@
+{
+  "id": "PROD-20260812-plotkeeper-attestation-gate-repair",
+  "status": "ACTIVE",
+  "contract_hash": "bb36cb22a43d2fd02f4560b9e35fb02cca6e21c503cd60ca624c32b59ca16f43",
+  "origin": "DIRECT",
+  "user_goal": "Complete the authorized Plotkeeper release by repairing the two governance defects proven during v0.1.4 attestation: nested DEPLOY_READY bundle discovery and truthful predeployment-to-public target progression.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turns/019ff57a-09bd-7082-a02f-97fa19be4620,019ff59c-e4c7-7962-914a-4180bc4306fc",
+    "original_request_hash": "8379992c5a25f69b0d1dc0f76151a95427fbe21fcdad5ac0439df0c3efed1045",
+    "verbatim_text": "Smart man.  Yes, you should not have locked down PK to 1 per thread. NOR should you have altered specswarms skill to account for that.  The old one should be closed, immutable, and preserved.  New followups should be successors, and linked.\n\nProper behavior is correct. Fix it, adjust, correct and update repo with release and patch notes\n\npreserve and include\n\nauthorized (this is getting kind of ridiculous for these short replies, we need to adjust this hard LOL)\n",
+    "captured_at_utc": "2026-08-12T10:55:56Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "origin/main (v0.1.4)",
+    "sha": "6c78a45825cee2f5b7f27662e03283b24f829372",
+    "retrieved_at_utc": "2026-08-12T12:08:25Z",
+    "protection_evidence": "public main, v0.1.4 tag/release, release verifier, and test matrices all resolve successfully to this SHA",
+    "selection_reason": "The linked-successor product release is green; only its proven attestation enforcement defects require a narrow patch."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-attestation-gate-repair.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "integrations/codex/bundled/skills/production-goal-review/scripts/validate_review_receipt.py",
+      "tests/test_production_guard.py",
+      "tests/test_codex_integration.py",
+      "plotkeeper/__init__.py",
+      "pyproject.toml",
+      "CHANGELOG.md",
+      "docs/RELEASE.md",
+      ".github/workflows/release-verifier.yml"
+    ],
+    "resources": [
+      "installed plotkeeper-guard plugin and production-goal-review skill",
+      "EmergentKnowledgeGroup/PLOTKEEPER main, v0.1.5 tag/release, Actions, and signed deploy receipt variable"
+    ],
+    "semantic_changes": [
+      "Discover candidate DEPLOY_READY bundles recursively within authorized review roots while still verifying every bundle cryptographically.",
+      "Permit phase targets to evolve from isolated predeployment execution to public/live execution while requiring identical contract, baseline, candidate, and artifact digest.",
+      "Publish the narrow v0.1.5 governance patch and matching notes."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/service.py",
+      "plotkeeper/models.py",
+      "integrations/codex/bundled/skills/specswarm/**",
+      "integrations/codex/adaptive-execution/**",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/goal-reviews/**",
+      "integrations/codex/bundled/upstream/slopware/**"
+    ],
+    "semantic_changes": [
+      "No linked-successor, ledger, SpecSwarm, adaptive timing, UI, installer, history, secret, or runtime-data behavior changes.",
+      "No unsigned, wrong-contract, wrong-candidate, wrong-baseline, wrong-artifact, skipped-phase, adverse, or fabricated receipt may authorize release.",
+      "No broad filesystem search outside the two authorized review roots."
+    ]
+  },
+  "invariants": [
+    "Every discovered bundle still passes the exact server verifier and HMAC key before authorization.",
+    "Every phase predecessor remains PASS, same contract, same baseline, same candidate, and same artifact digest.",
+    "Environment and traffic path may change only as required by the ordered deployment lifecycle.",
+    "All v0.1.4 linked-successor behavior, data, installed service, and public history remain unchanged."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "The guard finds a valid nested DEPLOY_READY bundle and authorizes the exact candidate.",
+      "forbidden_behavior": "It misses nested evidence or accepts an invalid/unrelated bundle.",
+      "target_and_actor": "Installed PreToolUse guard evaluating an exact release command.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "VALIDATED",
+      "promised_behavior": "ATTESTED may truthfully name public/live execution after isolated DEPLOY_READY while retaining immutable release identity.",
+      "forbidden_behavior": "Target evolution bypasses contract/baseline/candidate/artifact identity or phase order.",
+      "target_and_actor": "Canonical production-goal-review validator.",
+      "required_proof_ids": [
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "ATTESTED",
+      "promised_behavior": "Public and installed v0.1.5 governance surfaces match the exact signed candidate and can truthfully close the release.",
+      "forbidden_behavior": "Guard/validator source-install split-brain or false closeout.",
+      "target_and_actor": "GitHub and installed Codex governance integration.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Nested valid bundle passes; top-level/nested invalid, wrong-key, wrong-candidate, and outside-root bundles fail.",
+      "required_environment": "isolated Z-drive guard fixture",
+      "command_or_read_only_check": "focused guard tests",
+      "expected_observation": "only exact nested signed bundle authorizes"
+    },
+    {
+      "id": "PR-2",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Validator accepts ordered target progression with identical immutable artifact identity and rejects every identity mismatch/skipped/adverse predecessor.",
+      "required_environment": "isolated canonical receipt fixtures",
+      "command_or_read_only_check": "focused validator tests",
+      "expected_observation": "truthful progression passes and adversarial changes fail"
+    },
+    {
+      "id": "PR-3",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Public SHA/tag/release/Actions and installed guard/validator bytes match candidate; exact live attestation chain validates.",
+      "required_environment": "GitHub and installed Codex integration",
+      "command_or_read_only_check": "public/install/hash/receipt reconciliation",
+      "expected_observation": "exact v0.1.5 surfaces and CLOSED PASS"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "MERGE_READY",
+      "required_role": "independent adversarial guard and phase-validator reviewer"
+    },
+    {
+      "id": "RR-2",
+      "phase": "ATTESTED",
+      "required_role": "independent public/install/live attestation reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "HMAC-signed exact-candidate VALIDATED/MERGE_READY/DEPLOY_READY chain and guard positive/negative proof"
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "public/install exact-SHA attestation and canonical CLOSED PASS"
+    }
+  ],
+  "stop_conditions": [
+    "Any scope drift, weakened cryptographic/identity check, false-green fixture, failed test/review, secret exposure, dirty candidate, or public/install mismatch."
+  ],
+  "known_discrepancies": [
+    "v0.1.4 is publicly and operationally green but its enabled guard cannot find nested authoritative bundles.",
+    "The canonical validator currently requires exact target-object equality across DEPLOY_READY to ATTESTED, preventing truthful target progression.",
+    "The signed v0.1.4 ATTESTED FAIL/CLOSED BLOCKED receipts remain immutable evidence and cannot be relabeled."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "Fix, adjust, correct, update repo with release and reduce ridiculous governance deadlocks",
+      "acceptance_cases": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260812-plotkeeper-linked-successor-release-final.json",
+    "sha256": "ec8718d484e65179a72b9a4765d73595b2ec8da34d27fe6e58a5bff03b8d90e6"
+  }
+}
