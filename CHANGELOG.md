@@ -2,6 +2,9 @@
 
 ## 0.1.6 - 2026-08-12
 
+- Validate closeout receipts atomically at the ledger boundary so direct callers
+  cannot bypass the canonical review validator, substitute another validator,
+  or persist a terminal closeout from a malformed receipt.
 - Launch every Plotkeeper-injected Codex review and check-in resume from the
   enrolled run repository instead of inheriting Plotkeeper's process directory.
 - Fail closed before launch or state mutation when an enrolled run directory is

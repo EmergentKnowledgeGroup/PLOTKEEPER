@@ -1,0 +1,197 @@
+{
+  "id": "PROD-20260812-plotkeeper-v016-combined-release",
+  "status": "ACTIVE",
+  "contract_hash": "b8d7377f5374de1a44dec11ec1d59c10efb1421dfa36638be94e20d26414d8a2",
+  "origin": "DIRECT",
+  "user_goal": "Publish the complete reviewed Plotkeeper 0.1.6 branch to main with accurate changelog and documentation, create the GitHub release, install it locally, and verify the public and live result.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff7df-b683-7413-a66a-301b5b2940b7",
+    "original_request_hash": "55f2e01f0d52344c82d8e8df7b070a41892aca475fc49e0bd446b157ca7eea81",
+    "verbatim_text": "push to main, write up the changelog, fix any docs that need to, frontfacing or internal, then set a release and get it pushed!",
+    "captured_at_utc": "2026-08-12T21:23:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "public v0.1.5 and origin/main",
+    "sha": "3dc3488cbfaa55df13e6abebf4b1ca395c319916",
+    "retrieved_at_utc": "2026-08-12T21:23:00Z",
+    "protection_evidence": "git rev-parse origin/main and public v0.1.5 tag both resolve to the same SHA",
+    "selection_reason": "This is the exact public predecessor; the user explicitly authorized publishing the complete four-commit local successor branch."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".github/workflows/release-verifier.yml",
+      "CHANGELOG.md",
+      "README.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      "plotkeeper/__init__.py",
+      "plotkeeper/ledger.py",
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "pyproject.toml",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-starshape-closeout-revalidation.json",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-injected-resume-cwd.json",
+      "runtime/goal-contracts/PROD-20260812-plotkeeper-v016-combined-release.json",
+      "tests/test_backend.py"
+    ],
+    "resources": [
+      "EmergentKnowledgeGroup/PLOTKEEPER main branch, v0.1.6 tag/release, Actions, and release receipt variable",
+      "locally installed Plotkeeper package, startup entry, and owned service on 127.0.0.1:47831"
+    ],
+    "semantic_changes": [
+      "Publish the already-committed atomic closeout validation and cwd-bound injected-resume repairs together as 0.1.6.",
+      "Correct changelog, integration, release, and front-facing documentation so the combined release and rollback baseline are truthful.",
+      "Install and restart only the Plotkeeper-owned local service after an exact-candidate DEPLOY_READY PASS."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/web/**",
+      "integrations/codex/bundled/skills/**",
+      "integrations/codex/bundled/upstream/**",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/goal-reviews/**"
+    ],
+    "semantic_changes": [
+      "No new product behavior beyond the four existing commits and documentation needed to describe and release them.",
+      "No runtime ledger mutation, MoonMarket mutation, secret disclosure, destructive Git rewrite, unrelated UI change, or fallback around release verification.",
+      "No release if the exact public-baseline diff, signed phase chain, GitHub state, installed artifact, or live behavior disagree."
+    ]
+  },
+  "invariants": [
+    "The exact public-baseline-to-candidate diff contains only the declared atomic closeout gate, cwd-bound resume repair, tests, contracts, release metadata, and truthful documentation.",
+    "Closed-run immutability, linked successors, active-run filtering, and all existing tests remain green.",
+    "Every injected resume uses validated run cwd and invalid cwd changes no review/check-in state.",
+    "Release tag, GitHub release, public main, workflow verification, installed package, and live service all bind to the same candidate and version 0.1.6.",
+    "Rollback uses the exact public v0.1.5 predecessor and lease-bound Git update without downgrading a migrated ledger."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "The complete v0.1.6 diff implements atomic receipt validation and repository-bound injected resumes with accurate release documentation.",
+      "forbidden_behavior": "A direct closeout bypass, inherited Plotkeeper cwd, false-green test, undocumented release behavior, or unrelated change remains.",
+      "target_and_actor": "Plotkeeper source and test suite at the exact combined candidate.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "The exact candidate is clean, signed, rollback-safe, and authorized for main/tag/release/install.",
+      "forbidden_behavior": "Publishing a mismatched candidate, stale contract, missing predecessor proof, or dirty source.",
+      "target_and_actor": "Release executor and trusted release verifier.",
+      "required_proof_ids": [
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "ATTESTED",
+      "promised_behavior": "Public main, v0.1.6 release, successful Actions, installed package, and live service are the approved candidate.",
+      "forbidden_behavior": "Public/install/live split-brain or unhealthy service.",
+      "target_and_actor": "GitHub users and the local Plotkeeper service.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "Full tests plus real caller-level and adversarial regressions prove both repairs across the complete public-baseline diff.",
+      "required_environment": "exact clean candidate and disposable Z-drive fixtures",
+      "command_or_read_only_check": "full unittest suite, focused regressions, diff/AST/Node checks, and independent source review",
+      "expected_observation": "all checks pass without mocked caller substitution, scope drift, runtime data mutation, or bypass"
+    },
+    {
+      "id": "PR-2",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "A fresh independent signed phase chain and server verifier authorize the exact combined candidate and rollback plan.",
+      "required_environment": "clean repository, review key, exact public baseline, and release verifier",
+      "command_or_read_only_check": "canonical receipt validation, release verifier, trusted guard, wrong-key and wrong-candidate negatives",
+      "expected_observation": "one authoritative DEPLOY_READY PASS bundle accepts only the exact candidate"
+    },
+    {
+      "id": "PR-3",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "GitHub, Actions, tag/release, installed package, and owned live service bind to the approved 0.1.6 candidate.",
+      "required_environment": "public GitHub repository and local Plotkeeper installation",
+      "command_or_read_only_check": "public SHA/tag/release/Actions reconciliation, installed version/source parity, health/root marker, and disposable cross-repository smoke",
+      "expected_observation": "all public and live surfaces are healthy and exact with no MoonMarket mutation"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "MERGE_READY",
+      "required_role": "independent reviewer of the entire origin/main-to-candidate diff and both repair contracts"
+    },
+    {
+      "id": "RR-2",
+      "phase": "ATTESTED",
+      "required_role": "independent public, Actions, installed-artifact, live-service, and rollback attestation reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "HMAC-signed VALIDATED, MERGE_READY, and DEPLOY_READY PASS bundle for the exact combined candidate"
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "HMAC-signed ATTESTED and CLOSED PASS receipts after public and local deployment proof"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected diff or worktree, failed test or review, missing release key/receipt, stale workflow contract, GitHub SHA/tag/release mismatch, failed Actions, foreign listener, unhealthy live surface, installed-source mismatch, MoonMarket mutation, or rollback ambiguity."
+  ],
+  "known_discrepancies": [
+    "Local main is four commits ahead of public v0.1.5; the first two have an independent VALIDATED PASS and the final cwd repair has an independent DEPLOY_READY PASS only relative to that local predecessor.",
+    "The existing 0.1.6 changelog covers the cwd repair but omits the atomic closeout gate, and docs/RELEASE.md still names an obsolete v0.1.2 rollback baseline.",
+    "The local Plotkeeper service was not listening on 127.0.0.1:47831 at contract creation."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "Push the complete current branch to main and publish a release",
+      "acceptance_cases": [
+        "AC-2",
+        "AC-3"
+      ]
+    },
+    {
+      "authority": "Write the changelog and fix front-facing and internal documentation",
+      "acceptance_cases": [
+        "AC-1"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260812-plotkeeper-injected-resume-cwd.json",
+    "sha256": "c7820d62e0d9db3d21bdae44a14d74f6b17897e315bcc9ca3fa835260935e7fa"
+  }
+}

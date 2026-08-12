@@ -32,6 +32,8 @@ session truth:
   successor when the same Codex task begins genuinely new SpecSwarm work;
 - injects the required closeout review after the root requests completion;
 - closes only on `verdict=PASS open_items=0` from that injected review.
+- resumes injected reviews and check-ins from the enrolled run repository, and
+  fails closed instead of inheriting Plotkeeper's own working directory.
 
 ## Requirements
 

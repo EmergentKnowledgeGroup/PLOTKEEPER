@@ -4,6 +4,15 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER V0.1.6 COMBINED RELEASE
+
+- step: post-green-tests
+- note: Combined v0.1.6 changelog, front-facing summary, workflow contract pointer, and rollback documentation are corrected; the full exact suite and static checks are green, and the combined candidate review is next.
+- branch: main
+- head: bf2b50a33c5436b323af8f06f14de7d9f5116acf
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: adaptive calibration receipt active; sealed combined release contract validates at `b8d7377f5374de1a44dec11ec1d59c10efb1421dfa36638be94e20d26414d8a2`; public baseline is v0.1.5 at `3dc3488cbfaa55df13e6abebf4b1ca395c319916`; 70/70 tests green; Node syntax, contract validation, and git diff check green; GitHub CLI authenticated
+
 ## PLOTKEEPER INJECTED RESUME CWD FIX
 
 - step: post-green-tests
