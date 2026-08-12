@@ -1,6 +1,7 @@
 import importlib.util
 import hashlib
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,8 +15,58 @@ INSTALLER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader
 SPEC.loader.exec_module(INSTALLER)
 
+REVIEW_VALIDATOR_PATH = BUNDLED_ROOT / "skills" / "production-goal-review" / "scripts" / "validate_review_receipt.py"
+REVIEW_SPEC = importlib.util.spec_from_file_location("plotkeeper_review_validator", REVIEW_VALIDATOR_PATH)
+REVIEW_VALIDATOR = importlib.util.module_from_spec(REVIEW_SPEC)
+assert REVIEW_SPEC.loader
+_previous_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    REVIEW_SPEC.loader.exec_module(REVIEW_VALIDATOR)
+finally:
+    sys.dont_write_bytecode = _previous_bytecode
+
+CONTRACT_VALIDATOR_PATH = BUNDLED_ROOT / "skills" / "production-goal-contract" / "scripts" / "validate_contract_receipt.py"
+CONTRACT_SPEC = importlib.util.spec_from_file_location("plotkeeper_contract_validator", CONTRACT_VALIDATOR_PATH)
+CONTRACT_VALIDATOR = importlib.util.module_from_spec(CONTRACT_SPEC)
+assert CONTRACT_SPEC.loader
+sys.dont_write_bytecode = True
+try:
+    CONTRACT_SPEC.loader.exec_module(CONTRACT_VALIDATOR)
+finally:
+    sys.dont_write_bytecode = _previous_bytecode
+
 
 class CodexIntegrationTests(unittest.TestCase):
+    def test_bundled_review_validator_defers_attested_acceptance_and_proof(self):
+        contract = {
+            "acceptance_cases": [
+                {"id": "AC-NOW", "phase": "VALIDATED"},
+                {"id": "AC-LIVE", "phase": "ATTESTED"},
+            ],
+            "proof_requirements": [
+                {"id": "PR-NOW"},
+                {"id": "PR-LIVE", "phase": "ATTESTED"},
+            ],
+            "review_requirements": [],
+            "release_requirements": [],
+        }
+        deploy = REVIEW_VALIDATOR.required_ids(contract, "DEPLOY_READY")
+        attested = REVIEW_VALIDATOR.required_ids(contract, "ATTESTED")
+        self.assertEqual(deploy["acceptance"], {"AC-NOW"})
+        self.assertEqual(deploy["proof"], {"PR-NOW"})
+        self.assertEqual(attested["acceptance"], {"AC-NOW", "AC-LIVE"})
+        self.assertEqual(attested["proof"], {"PR-NOW", "PR-LIVE"})
+
+    def test_contract_validator_rejects_unknown_acceptance_or_proof_phase(self):
+        source = json.loads((BUNDLED_ROOT / "skills" / "production-goal-contract" / "references" / "valid-contract-receipt.json").read_text(encoding="utf-8"))
+        source["acceptance_cases"][0]["phase"] = "SOMEDAY"
+        source["proof_requirements"][0]["phase"] = "LATER"
+        source["contract_hash"] = CONTRACT_VALIDATOR.canonical_hash(source)
+        errors = CONTRACT_VALIDATOR.validate(source, None)
+        self.assertIn("acceptance_case.phase must be a valid lifecycle phase", errors)
+        self.assertIn("proof_requirement.phase must be a valid lifecycle phase", errors)
+
     def test_bundle_contains_no_generated_python_cache(self) -> None:
         generated = [
             path

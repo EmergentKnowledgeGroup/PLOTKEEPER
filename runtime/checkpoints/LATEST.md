@@ -7,11 +7,11 @@ Track: `PLOTKEEPER ACTIVE RUN SURFACE WORK`
 ## PLOTKEEPER ACTIVE RUN SURFACE WORK
 
 - step: post-green-tests
-- note: Successor contract `PROD-20260811-plotkeeper-active-run-surface-verifier-phase-fix` is implemented and verified; subagent exclusion remains green and DEPLOY_READY no longer fabricates ATTESTED-only obligations.
+- note: Successor contract `PROD-20260811-plotkeeper-active-run-surface-phase-sequencing-fix` is implemented and verified; all obligation classes now honor lifecycle phases without predeployment live-proof circularity.
 - branch: main
-- head: c498d369c6b5c29b5af28ec8f4189b0e029c67e8
+- head: 4bfa592788cec1fd0d76c0e9378882568664f9cb
 - next_cmd: `git diff --check`
-- validations: successor contract VALID at 82d41e46d2b6de525421ece81916e98ae6e9b283f5d4da939ad6bf26ee7964a7; predecessor 5bf9dcefcbdfdf8ca9950a1bd721b946e1f4940bded9a282badd255e89bfaf0f preserved; 56 tests green including DEPLOY_READY versus ATTESTED phase regression; Node syntax and diff check green; copied-live inventory remains four non-subagent active runs
+- validations: successor contract VALID at 3064525e6de091b477e452605f7c067f5c98ac8c18ff95a0c8e2c6ae070ef76e; predecessor 82d41e46d2b6de525421ece81916e98ae6e9b283f5d4da939ad6bf26ee7964a7 preserved; 59 tests green including phase-aware server/bundled validators and invalid-phase rejection; Node syntax, cache hygiene, and diff check green; copied-live inventory remains four non-subagent active runs
 
 ## PLOTKEEPER ACTIVE RUN SURFACE IMPLEMENTATION
 

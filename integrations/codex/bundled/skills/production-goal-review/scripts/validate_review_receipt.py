@@ -53,8 +53,8 @@ def path_matches(rule: str, path: str) -> bool:
 def required_ids(contract: dict[str, Any], phase: str) -> dict[str, set[str]]:
     phase_index = PHASES.index(phase)
     return {
-        "acceptance": {str(item["id"]) for item in contract.get("acceptance_cases", []) if isinstance(item, dict) and item.get("id")},
-        "proof": {str(item["id"]) for item in contract.get("proof_requirements", []) if isinstance(item, dict) and item.get("id")},
+        "acceptance": {str(item["id"]) for item in contract.get("acceptance_cases", []) if isinstance(item, dict) and item.get("id") and str(item.get("phase") or "VALIDATED") in PHASES and PHASES.index(str(item.get("phase") or "VALIDATED")) <= phase_index},
+        "proof": {str(item["id"]) for item in contract.get("proof_requirements", []) if isinstance(item, dict) and item.get("id") and str(item.get("phase") or "VALIDATED") in PHASES and PHASES.index(str(item.get("phase") or "VALIDATED")) <= phase_index},
         "review": {str(item["id"]) for item in contract.get("review_requirements", []) if isinstance(item, dict) and item.get("id") and item.get("phase") in PHASES and PHASES.index(str(item["phase"])) <= phase_index},
         "release": {str(item["id"]) for item in contract.get("release_requirements", []) if isinstance(item, dict) and item.get("id") and item.get("phase") in PHASES and PHASES.index(str(item["phase"])) <= phase_index},
     }

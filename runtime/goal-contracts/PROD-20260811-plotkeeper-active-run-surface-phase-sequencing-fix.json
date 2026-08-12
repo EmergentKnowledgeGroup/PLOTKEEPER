@@ -1,0 +1,280 @@
+{
+  "id": "PROD-20260811-plotkeeper-active-run-surface-phase-sequencing-fix",
+  "status": "ACTIVE",
+  "contract_hash": "3064525e6de091b477e452605f7c067f5c98ac8c18ff95a0c8e2c6ae070ef76e",
+  "origin": "DIRECT",
+  "user_goal": "Finish the authorized Plotkeeper active-run remediation as a versioned, independently reviewed, public, installed, and live-verified correction without notifying other Codex tasks, including excluding every Codex subagent thread from interactive active-run discovery. The release verifier must enforce only obligations due at the phase being authorized, never require post-deployment attestation before deployment. Acceptance and proof obligations must likewise become due only at their declared lifecycle phase.",
+  "authority": {
+    "original_request_ref": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2fa-c79e-73a0-8883-3e2f3e07eedd",
+    "original_request_hash": "d3f712e49bbd1df543c11617aca3edcc20f601751a455e84697aaf47588d73b8",
+    "verbatim_text": "authorized #2 - then continue the remediation and correction of PK.  Do not alert other threads after you finish",
+    "captured_at_utc": "2026-08-11T22:41:23.4430255Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task://019fde25-c83c-7721-8902-a2f47fd67281/turn/019ff2fa-c79e-73a0-8883-3e2f3e07eedd"
+  },
+  "baseline": {
+    "protected_ref": "origin/main",
+    "sha": "ecc8a01f58732ac04de4995cfc10b7840b87377c",
+    "retrieved_at_utc": "2026-08-11T22:40:00Z",
+    "protection_evidence": "Local main, origin/main, public main, and v0.1.1 were identical and independently CLOSED before this correction.",
+    "selection_reason": "Exact public predecessor and rollback target containing the reported selector and identity defect."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/__init__.py",
+      "plotkeeper/cli.py",
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/web/app.js",
+      "plotkeeper/web/styles.css",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "integrations/codex/bundled/skills/specswarm/scripts/plotkeeper_cli.py",
+      "tests/test_active_run_surface.py",
+      "tests/test_web_static.py",
+      "README.md",
+      "CHANGELOG.md",
+      "docs/INTEGRATION.md",
+      "docs/RELEASE.md",
+      "pyproject.toml",
+      ".github/workflows/release-verifier.yml",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface.json",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface-final.json",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface-subagent-fix.json",
+      "runtime/goal-reviews/",
+      "scripts/verify_public_release.py",
+      "tests/test_release_verifier.py",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface-verifier-phase-fix.json",
+      "integrations/codex/bundled/skills/production-goal-review/scripts/validate_review_receipt.py",
+      "integrations/codex/bundled/skills/production-goal-contract/scripts/validate_contract_receipt.py",
+      "integrations/codex/bundled/skills/production-goal-contract/references/contract-receipt.md",
+      "tests/test_codex_integration.py",
+      "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface-phase-sequencing-fix.json"
+    ],
+    "resources": [
+      "Local Plotkeeper service at 127.0.0.1:47831 and installed Codex integration",
+      "Read-only Codex state_5.sqlite and rollout files for identity/title/lifecycle/thread-source proof",
+      "GitHub EmergentKnowledgeGroup/PLOTKEEPER main, deploy receipt variable, Actions, next version tag, and release"
+    ],
+    "semantic_changes": [
+      "Preserve the exact active-run identity, active-only grouped picker, real task labels, full-width responsive chooser, and run-bound SpecSwarm launch implemented under the predecessor contract.",
+      "Keep invalid message-root history stored but excluded, reject future message-root enrollment, fail closed on missing, inactive, closed, conflicting, or ambiguous identity, and exclude every thread whose read-only catalog thread_source is subagent even when agent_path is null.",
+      "Make the changed web static regression test and all implementation paths contract-visible, then bump package/runtime version together, bind the release verifier and rollback documentation to the exact final candidate, and publish, install, restart, and attest it.",
+      "Make the server-side release verifier phase-aware: DEPLOY_READY requires only requirements due through DEPLOY_READY, while ATTESTED-only obligations remain mandatory only for post-deployment attestation.",
+      "Add explicit lifecycle phases to acceptance and proof obligations and enforce them consistently in the bundled canonical review validator, contract validator, and public release verifier."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      ".github/workflows/tests.yml",
+      "runtime/plotkeeper.sqlite3"
+    ],
+    "semantic_changes": [
+      "Do not delete, merge, close, re-key, rewrite, or otherwise mutate historical or active run data.",
+      "Do not use cwd, project label, row order, arbitrary recency, or agent_path presence as a substitute for exact active task identity or thread_source classification.",
+      "Do not expose inactive, closed, legacy, unproven, or subagent threads in the picker; weaken review/security/rollback; expose secrets; or message or wake any other Codex task.",
+      "Do not satisfy DEPLOY_READY by fabricating ATTESTED-only public, CI, tag, release, install, or live evidence.",
+      "Do not require ATTESTED-only user outcomes or proofs before deployment, and do not let an unknown or misspelled phase silently weaken an obligation."
+    ]
+  },
+  "invariants": [
+    "Ledger history remains byte-preserved and the repair changes only source/display/resolution behavior.",
+    "A bound dashboard URL renders exactly its active run or a truthful unavailable state without fallback.",
+    "Active same-project tasks remain distinct under one project group with real task labels and stable IDs.",
+    "Every catalog row with thread_source subagent is excluded from interactive discovery regardless of agent_path, while older schemas lacking that column retain prior non-subagent behavior.",
+    "Package metadata, runtime version, public SHA/tag/release, installed code, and live process all bind the same reviewed candidate.",
+    "No other Codex task is messaged or awakened.",
+    "The server release verifier may require an obligation only at or after that obligation's declared phase; post-deployment proof cannot be a precondition for deployment.",
+    "Acceptance, proof, review, and release obligations use the same ordered lifecycle; absent acceptance/proof phases default fail-safe to VALIDATED and invalid phases are rejected."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "promised_behavior": "An active Codex task opens only its exact run-bound Plotkeeper surface.",
+      "forbidden_behavior": "No different, inactive, historical, closed, invalid, subagent, cwd-guessed, or fallback run may render.",
+      "target_and_actor": "A Codex user opening Plotkeeper for the current task.",
+      "required_proof_ids": [
+        "PR-IDENTITY",
+        "PR-LIVE"
+      ],
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "AC-2",
+      "promised_behavior": "The full-width chooser shows only provably active non-subagent runs, grouped by project and labeled by real task name plus identity.",
+      "forbidden_behavior": "The historical inventory, project-name duplicates, ungrouped options, subagent rows with null agent_path, or overflow may not appear.",
+      "target_and_actor": "A desktop or mobile Plotkeeper user.",
+      "required_proof_ids": [
+        "PR-API",
+        "PR-BROWSER"
+      ],
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "AC-3",
+      "promised_behavior": "The exact correction is tested, independently reviewed, reversible, public, installed, and live.",
+      "forbidden_behavior": "No unsigned, stale, mismatched, dirty, or unverified candidate may be released or reported complete.",
+      "target_and_actor": "Plotkeeper repository and installed-app users.",
+      "required_proof_ids": [
+        "PR-REGRESSION",
+        "PR-RELEASE",
+        "PR-LIVE"
+      ],
+      "phase": "ATTESTED"
+    }
+  ],
+  "known_discrepancies": [
+    "The live ledger stores 255 non-closed rows: 243 invalid msg_ pseudo-roots and 12 UUID roots; this contract forbids destructive cleanup and requires read-only filtering.",
+    "The predecessor final contract omitted tests/test_web_static.py even though the candidate changed that file; this successor adds that exact regression path and its contract binding.",
+    "The real Codex state row for Task 21G has thread_source=subagent and agent_path=NULL; filtering only agent_path is insufficient and must be corrected.",
+    "Three MoonMarket-owned contract files were hash-preserved in Z:/MoonMarket/runtime/goal-contracts before implementation.",
+    "The exact server verifier currently treats every release requirement as DEPLOY_READY, so it incorrectly demands ATTESTED-only RL-2 before any lawful push/install can occur.",
+    "After release-requirement phasing was fixed, DEPLOY_READY still demanded unphased PR-LIVE and AC-3 even though their literal public/install claims can only be proven after deployment."
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-IDENTITY",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2"
+      ],
+      "claim": "Exact run/session resolution and categorical transcript/thread-source liveness fail closed for every invalid, ambiguous, or subagent case.",
+      "required_environment": "Synthetic multi-run fixtures, a real-shape thread catalog with thread_source=subagent and NULL agent_path, older catalog schema fixtures, and real read-only Codex state/rollout samples.",
+      "command_or_read_only_check": "Test explicit run/session match, locator conflict, missing/closed/inactive/invalid roots, same-cwd ambiguity, terminal state, future msg_ rejection, subagent exclusion with null agent_path, and fallback behavior when thread_source is absent.",
+      "expected_observation": "Only one proven active non-subagent bound run resolves and no request silently falls through.",
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "PR-API",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Interactive inventory excludes invalid, inactive, historical, and subagent rows and supplies project/title/session/run identity.",
+      "required_environment": "Candidate service over copied read-only-equivalent live ledger and Codex catalog fixtures.",
+      "command_or_read_only_check": "Compare stored totals with /api/runs and inspect every returned identity, state, thread_source classification, and null-agent-path subagent fixture.",
+      "expected_observation": "Only provably active non-subagent UUID-root runs are returned; historical and subagent rows remain stored and unchanged.",
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "PR-BROWSER",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Grouped chooser and run-bound surface are readable and usable on desktop and mobile.",
+      "required_environment": "Actual candidate dashboard in a browser.",
+      "command_or_read_only_check": "Inspect optgroups/options, selected run, full width, overflow, interaction, truthful unavailable state, and console at desktop and mobile viewports.",
+      "expected_observation": "Correct groups/labels/selection render without overflow or relevant console errors.",
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "PR-REGRESSION",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "All automated behavior, packaging, guards, startup, phase-aware verifier, web-static regression, and scope checks remain green.",
+      "required_environment": "Exact clean candidate and isolated install fixture.",
+      "command_or_read_only_check": "Run the full tests including tests/test_web_static.py, syntax/compile checks, diff-scope audit, isolated install, listener guard, and secret/cache scan. Exercise DEPLOY_READY with RL-1 MET and RL-2 absent, then prove ATTESTED/CLOSED still require RL-2.",
+      "expected_observation": "Every required check passes on only authorized paths, including the changed web-static test path. DEPLOY_READY passes without future-state evidence and post-deploy phases still fail closed when RL-2 is absent.",
+      "phase": "VALIDATED"
+    },
+    {
+      "id": "PR-RELEASE",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "Signed independent review, guarded push, Actions, tag, release, and rollback all bind the exact candidate and successor contract.",
+      "required_environment": "Canonical phase receipts, trusted guard, GitHub main/variable/secret-name/Actions/release.",
+      "command_or_read_only_check": "Validate signed receipt chain and exact bundle, guarded push, exact-SHA workflows, version tag/release, and rollback ancestry against this successor contract hash.",
+      "expected_observation": "All signed/public surfaces name one candidate and this successor contract with zero open items.",
+      "phase": "ATTESTED"
+    },
+    {
+      "id": "PR-LIVE",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-3"
+      ],
+      "claim": "Installed live Plotkeeper owns 47831 and serves the exact corrected active-run behavior with subagents excluded.",
+      "required_environment": "Installed integration, Plotkeeper-owned process, and live run-bound browser URL.",
+      "command_or_read_only_check": "Install/restart only after DEPLOY_READY; verify health, marker, version, process, API filtering, exact run-bound URL, and installed byte parity.",
+      "expected_observation": "The reviewed public candidate is the running code and renders only the requested active non-subagent run.",
+      "phase": "ATTESTED"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "DEPLOY_READY",
+      "required_role": "Independent production-goal-review verifier must inspect actual diff, tests/test_web_static.py authority, real identity/liveness/thread_source samples, browser proof, release binding, and rollback."
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Signed canonical VALIDATED, MERGE_READY, and DEPLOY_READY PASS chain for the exact candidate and successor contract."
+    },
+    {
+      "id": "RL-2",
+      "phase": "ATTESTED",
+      "required_receipt": "Exact public SHA/tag/release/Actions plus installed live process/API/browser attestation."
+    }
+  ],
+  "stop_conditions": [
+    "Any path can render a run other than the exact active binding or the picker contains invalid, inactive, historical, or subagent history.",
+    "Any thread_source=subagent row is exposed even when agent_path is null, or older schemas lose their backwards-compatible non-subagent behavior.",
+    "Any ledger row changes, forbidden/unrelated diff appears, or another Codex task is messaged or awakened.",
+    "Any required test including tests/test_web_static.py, browser proof, signed review, verifier, CI, release, install, live attestation, or rollback proof fails.",
+    "The server verifier accepts a DEPLOY_READY bundle that omits a due obligation, or rejects it solely because a later-phase ATTESTED obligation is truthfully pending.",
+    "Any validator requires a later-phase acceptance/proof before its phase, accepts an invalid phase label, or omits a due acceptance/proof."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "user_requirement": "Continue remediation so Plotkeeper opens the correct active task surface, not all historical SpecSwarm runs, and do not alert other tasks.",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    },
+    {
+      "user_requirement": "Exclude Codex subagent threads from the active picker even when agent_path is null, retain compatibility with older catalogs, and bind every changed test path to the successor contract.",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    },
+    {
+      "user_requirement": "Continue the authorized Plotkeeper correction through an honest release without inventing post-deployment evidence before deployment.",
+      "acceptance_case_ids": [
+        "AC-3"
+      ]
+    },
+    {
+      "user_requirement": "Complete the authorized release with truthful phase ordering: validate behavior before deployment and prove public/install/live outcomes only afterward.",
+      "acceptance_case_ids": [
+        "AC-1",
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260811-plotkeeper-active-run-surface-verifier-phase-fix.json",
+    "sha256": "ecd044bb3420733f3a2ad9f0cc4c67ebfc95a8040dd4a8295d42f23aa460bee2"
+  }
+}

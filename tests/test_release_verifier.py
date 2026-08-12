@@ -196,6 +196,28 @@ class ReleaseVerifierTests(unittest.TestCase):
         self.assertFalse(any(item["id"] == "RL-2" for item in deploy["obligation_results"]))
         self.assertEqual(self.verify(contract, bundle), [])
 
+    def test_deploy_ready_excludes_attested_only_acceptance_and_proof(self):
+        contract, bundle = self.documents()
+        contract["acceptance_cases"].append({"id": "AC-LIVE", "phase": "ATTESTED"})
+        contract["proof_requirements"].append({"id": "PR-LIVE", "phase": "ATTESTED"})
+        contract["contract_hash"] = VERIFIER.canonical_hash(contract, "contract_hash")
+        for receipt in (*bundle["predecessors"], bundle["deploy"]):
+            receipt["contract_hash"] = contract["contract_hash"]
+            for evidence in receipt["source_evidence"]:
+                evidence["binding"]["contract_hash"] = contract["contract_hash"]
+            receipt["review_receipt_hash"] = VERIFIER.canonical_hash(receipt, "review_receipt_hash")
+        validated, merge = bundle["predecessors"]
+        merge["predecessor_receipt_hashes"] = [validated["review_receipt_hash"]]
+        merge["review_receipt_hash"] = VERIFIER.canonical_hash(merge, "review_receipt_hash")
+        deploy = bundle["deploy"]
+        deploy["predecessor_receipt_hashes"] = [validated["review_receipt_hash"], merge["review_receipt_hash"]]
+        deploy["review_receipt_hash"] = VERIFIER.canonical_hash(deploy, "review_receipt_hash")
+        bundle["signatures"] = {
+            item["review_receipt_hash"]: VERIFIER.receipt_signature(item, self.review_key)
+            for item in (validated, merge, deploy)
+        }
+        self.assertEqual(self.verify(contract, bundle), [])
+
 
 if __name__ == "__main__":
     unittest.main()

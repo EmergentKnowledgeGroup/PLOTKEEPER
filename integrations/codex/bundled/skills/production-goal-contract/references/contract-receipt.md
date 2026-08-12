@@ -23,8 +23,8 @@ Use this JSON schema as the minimum immutable contract. `scripts/validate_contra
   "allowed": {"paths": [], "resources": [], "semantic_changes": []},
   "forbidden": {"paths": [], "semantic_changes": []},
   "invariants": [],
-  "acceptance_cases": [{"id": "AC-1", "promised_behavior": "", "forbidden_behavior": "", "target_and_actor": "", "required_proof_ids": ["PR-1"]}],
-  "proof_requirements": [{"id": "PR-1", "acceptance_case_ids": ["AC-1"], "claim": "", "required_environment": "", "command_or_read_only_check": "", "expected_observation": ""}],
+  "acceptance_cases": [{"id": "AC-1", "phase": "VALIDATED", "promised_behavior": "", "forbidden_behavior": "", "target_and_actor": "", "required_proof_ids": ["PR-1"]}],
+  "proof_requirements": [{"id": "PR-1", "phase": "VALIDATED", "acceptance_case_ids": ["AC-1"], "claim": "", "required_environment": "", "command_or_read_only_check": "", "expected_observation": ""}],
   "review_requirements": [{"id": "RR-1", "phase": "MERGE_READY", "required_role": "independent reviewer"}],
   "release_requirements": [{"id": "RL-1", "phase": "DEPLOY_READY", "required_receipt": "release attestation"}],
   "stop_conditions": [],
@@ -42,4 +42,5 @@ Rules:
 - The authority hash is the SHA-256 of the stored verbatim user text. The contract copy is not a substitute for independently reading its immutable source locator. Local schema validation proves consistency, not that an agent invented neither the user request nor a retained conversation export; that provenance must be independently checked by the app/CI gate.
 - A path allowance is not semantic permission to change every field in that path; an allowed and forbidden path/semantic value may not overlap.
 - `PLANNING_ONLY` plus `NOT_AUTHORIZED` may record a SpecSwarm contract but cannot authorize implementation, merge, or deployment.
+- Acceptance and proof `phase` values use the same lifecycle as review and release requirements. They are optional for backward compatibility and default to `VALIDATED`; use `ATTESTED` for outcomes or proofs that can only exist after deployment. Invalid phase names are rejected.
 - Phase receipts are separate JSON artifacts. They must reference this sealed contract hash and carry their own evidence hashes, candidate/target identity, verifier, and predecessor phase receipt IDs.

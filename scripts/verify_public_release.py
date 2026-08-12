@@ -107,8 +107,14 @@ def validate_receipt(
         "CLOSED": 4,
     }
     all_required = {
-        "acceptance": {x["id"] for x in contract.get("acceptance_cases", [])},
-        "proof": {x["id"] for x in contract.get("proof_requirements", [])},
+        "acceptance": {
+            x["id"] for x in contract.get("acceptance_cases", [])
+            if phase_rank.get(str(x.get("phase") or "VALIDATED"), -1) <= phase_rank[phase]
+        },
+        "proof": {
+            x["id"] for x in contract.get("proof_requirements", [])
+            if phase_rank.get(str(x.get("phase") or "VALIDATED"), -1) <= phase_rank[phase]
+        },
         "review": {
             x["id"] for x in contract.get("review_requirements", [])
             if phase_rank.get(str(x.get("phase") or "DEPLOY_READY"), 2) <= phase_rank[phase]
@@ -118,14 +124,7 @@ def validate_receipt(
             if phase_rank.get(str(x.get("phase") or "DEPLOY_READY"), 2) <= phase_rank[phase]
         },
     }
-    if phase in {"VALIDATED", "MERGE_READY"}:
-        required = {
-            "acceptance": {"AC-1"} & all_required["acceptance"],
-            "proof": {"PR-1", "PR-2"} & all_required["proof"],
-            "review": set(), "release": set(),
-        }
-    else:
-        required = all_required
+    required = all_required
     observed = {(x.get("kind"), x.get("id")) for x in receipt.get("obligation_results", []) if x.get("status") == "MET"}
     if any((kind, item) not in observed for kind, ids in required.items() for item in ids):
         errors.append(f"{label} required obligations are not all MET")

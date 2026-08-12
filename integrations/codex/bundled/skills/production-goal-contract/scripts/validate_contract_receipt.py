@@ -14,6 +14,7 @@ from typing import Any
 
 
 SHA = re.compile(r"^[0-9a-f]{40,64}$")
+PHASES = {"VALIDATED", "MERGE_READY", "DEPLOY_READY", "ATTESTED", "CLOSED"}
 
 
 def canonical_hash(value: dict[str, Any]) -> str:
@@ -105,6 +106,8 @@ def validate(data: dict[str, Any], repo_root: Path | None, require_locked_artifa
     for case in cases:
         case = object_with(errors, case, ["id", "promised_behavior", "forbidden_behavior", "target_and_actor", "required_proof_ids"], "acceptance_case")
         if case:
+            if case.get("phase", "VALIDATED") not in PHASES:
+                errors.append("acceptance_case.phase must be a valid lifecycle phase")
             if case["id"] in case_ids:
                 errors.append("acceptance case IDs must be unique")
             case_ids.add(case["id"])
@@ -113,6 +116,8 @@ def validate(data: dict[str, Any], repo_root: Path | None, require_locked_artifa
     for proof in proofs:
         proof = object_with(errors, proof, ["id", "acceptance_case_ids", "claim", "required_environment", "command_or_read_only_check", "expected_observation"], "proof_requirement")
         if proof:
+            if proof.get("phase", "VALIDATED") not in PHASES:
+                errors.append("proof_requirement.phase must be a valid lifecycle phase")
             if proof["id"] in proof_ids:
                 errors.append("proof requirement IDs must be unique")
             proof_ids.add(proof["id"])
