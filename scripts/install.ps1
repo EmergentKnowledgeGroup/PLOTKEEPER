@@ -11,13 +11,16 @@ $installTemp = Join-Path $Root "runtime\tmp\install"
 New-Item -ItemType Directory -Force -Path $installTemp | Out-Null
 $priorTemp = $env:TEMP
 $priorTmp = $env:TMP
+$priorPipCache = $env:PIP_CACHE_DIR
 try {
     $env:TEMP = $installTemp
     $env:TMP = $installTemp
+    $env:PIP_CACHE_DIR = $installTemp
     & $venvPython -m pip install --disable-pip-version-check --upgrade $Root
 } finally {
     $env:TEMP = $priorTemp
     $env:TMP = $priorTmp
+    $env:PIP_CACHE_DIR = $priorPipCache
     if (Test-Path -LiteralPath $installTemp) {
         Remove-Item -LiteralPath $installTemp -Recurse -Force
     }
