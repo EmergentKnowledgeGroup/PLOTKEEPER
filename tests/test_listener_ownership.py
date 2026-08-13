@@ -55,6 +55,21 @@ def listener_pid(port: int) -> int | None:
     return int(value) if value.isdigit() else None
 
 
+def process_command_line(pid: int) -> str:
+    result = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            f"(Get-CimInstance Win32_Process -Filter 'ProcessId={pid}').CommandLine",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout.strip()
+
+
 class ListenerOwnershipTests(unittest.TestCase):
     def setUp(self):
         self.port = free_port()
@@ -77,6 +92,7 @@ class ListenerOwnershipTests(unittest.TestCase):
         else:
             self.fail("controlled foreign listener did not become ready")
         self.assertEqual(listener_pid(self.port), self.foreign.pid)
+        self.assertIn("plotkeeper.cli", process_command_line(self.foreign.pid))
 
     def tearDown(self):
         if self.foreign.poll() is None:
