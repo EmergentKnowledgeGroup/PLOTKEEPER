@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-v017-review-remediation",
   "status": "ACTIVE",
-  "contract_hash": "c246b383d65b4d6079f819cff94b3cba78032663768df0f3bc2773a8639ca8ae",
+  "contract_hash": "febb5a6c430e103fb5f768371e8c77f90b3d2495693f3511efd1fee14dfd0a68",
   "origin": "DIRECT",
   "user_goal": "Remove cumulative release privacy leaks, finish accessibility, and resolve verified PR review state before release.",
   "authority": {
@@ -111,6 +111,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json",
-    "sha256": "320158000983957e1aa563d7455936c7ab6668be7f31974203db4eb554d5bc0e"
+    "sha256": "e47ef3abe2430fc23d8a254ebf09a8fa7b3b558e73ea8d3b51aa2856b24c2a09"
   }
 }
