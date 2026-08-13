@@ -81,6 +81,14 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertNotIn("[int]$Port = 47831", install)
         self.assertNotIn("[int]$Port = 47831", start)
 
+    def test_explicit_port_replacement_precedes_install_and_start_mutation(self):
+        install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")
+        start = (ROOT / "scripts" / "start.ps1").read_text(encoding="utf-8")
+        self.assertLess(install.index("$priorOwner = Read-OwnerRecord"), install.index("-m pip install"))
+        self.assertLess(install.index("Stop-OwnedListener $priorListener"), install.index("ensure_connector"))
+        self.assertLess(start.index("$priorOwner = Read-OwnerRecord"), start.index("$listener = Get-ListenerPid"))
+        self.assertIn("Stop-OwnedListener $priorListener ([int]$priorOwner.port)", start)
+
     def test_panel_receipt_instructions_require_html_proof(self):
         skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("non-empty body", skill)
