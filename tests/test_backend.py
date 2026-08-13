@@ -188,7 +188,7 @@ class BackendTests(unittest.TestCase):
 
             failed = FailedProcess()
             service2 = PlotkeeperService(ledger_path=Path(td) / "ledger-2.sqlite", sessions_root=td)
-            run2 = service2.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad4", str(root), service2.dashboard_url)
+            run2 = service2.ledger.enroll("22222222-3333-4444-8555-666666666666", str(root), service2.dashboard_url)
             first = service2.reconstruct_plan(run2.run_id, runner=lambda *_args, **_kwargs: failed)
             self.assertEqual(first["error"], "reconstruction_injection_failed")
             self.assertEqual(first["returncode"], 23)
