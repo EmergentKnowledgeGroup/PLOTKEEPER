@@ -4,6 +4,15 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER RESPONSIVE RUN PICKER
+
+- step: post-green-browser-qa
+- note: Native viewport-unbounded run select replaced by an accessible project-grouped listbox; long labels are compact and bounded, and Run Detail remains a full-width row below Workstreams at every supported width.
+- branch: main
+- head: 73c89e7d402a0c498207e07299685ac729ecfde7
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active contract `PROD-20260813-plotkeeper-responsive-run-picker` validates at `59593e7645aa3e2b7883b572d87cf63d868f6a3e3b6d7dac7da0fc10adf8205b`; focused static tests and Node syntax green; real browser geometry at 375/768/1024/1440 shows menu inside viewport, document scrollWidth equals clientWidth, and inspector top equals board bottom; keyboard open/Escape and project grouping green; zero browser warnings/errors
+
 ## PLOTKEEPER V0.1.6 COMBINED RELEASE
 
 - step: post-green-tests

@@ -47,6 +47,21 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
         self.assertIn("min-height: 2.75rem", self.css)
         self.assertIn("prefers-reduced-motion", self.css)
 
+    def test_run_picker_is_viewport_bounded_and_detail_stays_below_board(self):
+        self.assertIn('role="listbox"', self.index)
+        self.assertIn('aria-haspopup="listbox"', self.index)
+        self.assertIn("max-width: 100%", self.css)
+        self.assertIn("overflow-x: hidden", self.css)
+        self.assertIn("overflow-wrap: anywhere", self.css)
+        self.assertIn("-webkit-line-clamp: 2", self.css)
+        desktop_rule = re.search(r"@media \(min-width: 48rem\) \{([^}]|\}(?!\s*@media))*", self.css)
+        self.assertIsNotNone(desktop_rule)
+        self.assertNotIn("grid-template-columns", desktop_rule.group(0))
+        self.assertLess(self.index.index('id="board-shell"'), self.index.index('class="inspector"'))
+        self.assertIn("setPickerOpen", self.js)
+        self.assertIn("ArrowDown", self.js)
+        self.assertIn("Escape", self.js)
+
     def test_no_external_runtime_dependency(self):
         self.assertNotRegex(self.index, r"(?:https?:)?//[^\"']+(?:script|stylesheet)")
         self.assertNotIn("React", self.js)

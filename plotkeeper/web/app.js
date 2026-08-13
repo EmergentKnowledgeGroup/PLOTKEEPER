@@ -77,6 +77,7 @@
     let placeholder = selector.querySelector('option[value=""]');
     if (!placeholder) { placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Select an active run…'; placeholder.disabled = true; selector.prepend(placeholder); }
     selector.value = '';
+    setPickerValue(null);
     renderBoard([]); $('#board-message').hidden = false; $('#board-message').textContent = message;
     $('#run-goal').textContent = 'Select an active run'; $('#run-state').textContent = 'SELECTION REQUIRED'; $('#run-state').className = 'run-state state-unknown';
     $('#working-title').textContent = 'No run selected'; $('#working-meta').textContent = 'Plotkeeper will not guess between active tasks.'; $('#check-in').disabled = true;
@@ -84,15 +85,31 @@
   }
 
   function renderRunSelector() {
-    const selector = $('#run-selector'); selector.replaceChildren();
+    const selector = $('#run-selector'); const menu = $('#run-picker-menu'); selector.replaceChildren(); menu.replaceChildren();
     const groups = new Map();
     state.runs.forEach(run => { const key = run.projectName || 'Unknown project'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(run); });
     groups.forEach((runs, project) => {
       const group = document.createElement('optgroup'); group.label = project;
-      runs.forEach(run => { const option = document.createElement('option'); option.value = run.id; option.textContent = `${run.title} · ${run.taskId || run.id} · ${statusLabel(run.status)}`; group.appendChild(option); });
-      selector.appendChild(group);
+      const visibleGroup = document.createElement('div'); visibleGroup.className = 'run-picker-group'; visibleGroup.setAttribute('role', 'group'); visibleGroup.setAttribute('aria-label', project);
+      const heading = document.createElement('div'); heading.className = 'run-picker-project'; heading.textContent = project; visibleGroup.appendChild(heading);
+      runs.forEach(run => {
+        const option = document.createElement('option'); option.value = run.id; option.textContent = `${run.title} · ${run.taskId || run.id} · ${statusLabel(run.status)}`; group.appendChild(option);
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'run-picker-option'; button.setAttribute('role', 'option'); button.setAttribute('aria-selected', String(state.run?.id === run.id)); button.dataset.runId = run.id; button.title = `${run.title} · ${run.taskId || run.id} · ${statusLabel(run.status)}`;
+        const title = document.createElement('span'); title.textContent = run.title; const meta = document.createElement('small'); meta.textContent = `${run.taskId || run.id} · ${statusLabel(run.status)}`; button.append(title, meta); visibleGroup.appendChild(button);
+      });
+      selector.appendChild(group); menu.appendChild(visibleGroup);
     });
-    selector.disabled = !state.runs.length;
+    selector.disabled = !state.runs.length; $('#run-picker-button').disabled = !state.runs.length;
+  }
+
+  function setPickerValue(run) {
+    $('#run-picker-value').textContent = run ? `${run.projectName} — ${run.title}` : 'Select an active run…';
+    $$('.run-picker-option').forEach(option => option.setAttribute('aria-selected', String(option.dataset.runId === run?.id)));
+  }
+
+  function setPickerOpen(open, focusOption = false) {
+    const menu = $('#run-picker-menu'); const button = $('#run-picker-button'); menu.hidden = !open; button.setAttribute('aria-expanded', String(open));
+    if (open && focusOption) (menu.querySelector('[aria-selected="true"]') ?? menu.querySelector('.run-picker-option'))?.focus();
   }
 
   function boundLocator() {
@@ -120,10 +137,10 @@
           const resolved = await getJson(`/api/current?${query.toString()}`); const exact = normalizeRun(resolved?.run ?? resolved);
           if (!exact.id) throw new Error('locator did not resolve a run');
           if (!state.runs.some(run => run.id === exact.id)) state.runs.push(exact);
-          renderRunSelector(); $('#run-selector').value = exact.id; await loadRun(exact.id); return;
+          renderRunSelector(); $('#run-selector').value = exact.id; setPickerValue(exact); await loadRun(exact.id); return;
         } catch (error) { renderSelectionState(`The requested run is unavailable (${error.message}). Choose an active run from the selector.`); return; }
       }
-      if (state.runs.length === 1) { $('#run-selector').value = state.runs[0].id; setBoundUrl(state.runs[0]); await loadRun(state.runs[0].id); return; }
+      if (state.runs.length === 1) { $('#run-selector').value = state.runs[0].id; setPickerValue(state.runs[0]); setBoundUrl(state.runs[0]); await loadRun(state.runs[0].id); return; }
       renderSelectionState(state.runs.length ? 'Multiple active runs found. Choose the exact task above.' : 'No active run is available. Plotkeeper will not infer one.');
     } catch (error) {
       setConnection('error', 'API unavailable');
@@ -135,7 +152,7 @@
   async function loadRun(id) {
     const runFromList = state.runs.find(run => run.id === id);
     if (!runFromList) { renderSelectionState('That run is not in the active inventory. Choose an active run.'); return; }
-    state.selectionRequired = false; state.run = runFromList; setRunHeader(state.run); $('#check-in').disabled = false; setBoundUrl(state.run);
+    state.selectionRequired = false; state.run = runFromList; setRunHeader(state.run); setPickerValue(state.run); $('#check-in').disabled = false; setBoundUrl(state.run);
     try {
       const payload = await getJson(`/api/runs/${encodeURIComponent(id)}`);
       state.run = normalizeRun(payload?.run ?? payload);
@@ -203,6 +220,11 @@
   $('#collapse-all').addEventListener('click', () => { $$('.workstream').forEach(section => { section.classList.remove('is-open'); $('.workstream-head', section)?.setAttribute('aria-expanded', 'false'); }); $$('.task-row').forEach(row => { row.classList.remove('is-open'); $('.task-button', row)?.setAttribute('aria-expanded', 'false'); }); });
   $('#task-filter').addEventListener('input', event => { state.filter = event.target.value.trim().toLowerCase(); renderBoard(state.tasks); if (state.selected) selectTask(state.selected, false); });
   $('#run-selector').addEventListener('change', event => { if (event.target.value) loadRun(event.target.value); });
+  $('#run-picker-button').addEventListener('click', () => setPickerOpen($('#run-picker-menu').hidden, true));
+  $('#run-picker-button').addEventListener('keydown', event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); setPickerOpen(true, true); } });
+  $('#run-picker-menu').addEventListener('click', event => { const option = event.target.closest('.run-picker-option'); if (!option) return; setPickerOpen(false); $('#run-selector').value = option.dataset.runId; loadRun(option.dataset.runId); $('#run-picker-button').focus(); });
+  $('#run-picker-menu').addEventListener('keydown', event => { const options = $$('.run-picker-option'); const current = options.indexOf(document.activeElement); if (event.key === 'Escape') { event.preventDefault(); setPickerOpen(false); $('#run-picker-button').focus(); return; } if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); document.activeElement.click(); return; } if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : event.key === 'ArrowDown' ? Math.min(options.length - 1, current + 1) : Math.max(0, current - 1); options[next]?.focus(); });
+  document.addEventListener('click', event => { if (!event.target.closest('.run-combobox')) setPickerOpen(false); });
   $('#check-in').addEventListener('click', async event => { const button = event.currentTarget; if (!state.run?.id) return; button.disabled = true; button.textContent = 'Sending…'; try { await getJson(`/api/runs/${encodeURIComponent(state.run.id)}/check-in`, { method: 'POST' }); button.classList.add('is-requested'); button.textContent = 'Check-in requested'; } catch (error) { button.disabled = false; button.textContent = 'Request failed'; button.title = error.message; } });
   loadRuns();
 })();
