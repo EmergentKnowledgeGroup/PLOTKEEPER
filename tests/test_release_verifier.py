@@ -15,7 +15,7 @@ SPEC.loader.exec_module(VERIFIER)
 
 class ReleaseVerifierTests(unittest.TestCase):
     def test_release_authorization_and_pointer_shape_fail_closed(self):
-        for value in (None, "", "   ", 1, "RL-NONE"):
+        for value in (None, "", "   ", 1, "RL-NONE", " RL-NONE ", " RL-DEPLOY"):
             self.assertFalse(VERIFIER._release_authorized({"release_requirements": [{"id": value, "phase": "DEPLOY_READY"}]}))
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

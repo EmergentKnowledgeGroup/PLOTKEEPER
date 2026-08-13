@@ -65,6 +65,7 @@ def _release_authorized(document: dict) -> bool:
         and item.get("phase") == "DEPLOY_READY"
         and isinstance(item.get("id"), str)
         and bool(item["id"].strip())
+        and item["id"] == item["id"].strip()
         and item["id"] != "RL-NONE"
         for item in requirements
     )

@@ -1,14 +1,14 @@
 {
   "id": "PROD-20260813-plotkeeper-validating-release-evidence",
   "status": "ACTIVE",
-  "contract_hash": "8f0d4bd70a9c768e7b0ad322ba3266ddcb303825d26cd9281b1f07af34fab6da",
+  "contract_hash": "2e2572efc795c04a25f700154e6ed33b7c7aac17ca6577cc7f2e1fa561817a7c",
   "origin": "DIRECT",
   "user_goal": "Make the designated v0.1.7 release contract truthfully validatable and its evidence hashes platform-stable.",
   "authority": {
     "original_request_ref": "github-pr-authority:v0.1.7-validation-remediation",
     "original_request_hash": "e42b9b3fd6dd23410227f471f61e292adce0d10f20974570b868635077501f71",
     "verbatim_text": "Correct verified release validation blockers before merging Plotkeeper v0.1.7.",
-    "captured_at_utc": "2026-08-14T00:30:00Z",
+    "captured_at_utc": "2026-08-13T23:30:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
     "immutable_locator": "ignored-local-evidence:v0.1.7-validation-remediation"
@@ -16,7 +16,7 @@
   "baseline": {
     "protected_ref": "exact reviewed candidate before validation remediation",
     "sha": "77ad3b48f4760f4a3d5ffba687c97af16bb2029c",
-    "retrieved_at_utc": "2026-08-14T00:30:00Z",
+    "retrieved_at_utc": "2026-08-13T23:30:00Z",
     "protection_evidence": "clean pushed PR head independently reviewed",
     "selection_reason": "Canonical reviewer found missing VALIDATED obligation and newline-sensitive evidence hashing."
   },
