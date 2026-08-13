@@ -1,0 +1,116 @@
+{
+  "id": "PROD-20260813-plotkeeper-v017-review-remediation",
+  "status": "ACTIVE",
+  "contract_hash": "cce1bf4f929ccbe6c1eb75bf8538474fed17c76e098fd8d497c7e868f36e4a59",
+  "origin": "DIRECT",
+  "user_goal": "Remove cumulative release privacy leaks, finish accessibility, and resolve verified PR review state before release.",
+  "authority": {
+    "original_request_ref": "github-pr-authority:v0.1.7-review-remediation",
+    "original_request_hash": "2be734e1b7c62c2f137c88dbe19d46f0c48a1c8f1859b7a9ce3afe352c29ba5b",
+    "verbatim_text": "Correct every verified review blocker before merging and releasing Plotkeeper v0.1.7.",
+    "captured_at_utc": "2026-08-13T22:55:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:v0.1.7-review-remediation-authority"
+  },
+  "baseline": {
+    "protected_ref": "reviewed PR candidate before final remediation",
+    "sha": "04240b690492c744ba34090bed7f8eea3015e106",
+    "retrieved_at_utc": "2026-08-13T22:55:00Z",
+    "protection_evidence": "Exact clean pushed PR head independently reviewed",
+    "selection_reason": "The independent reviewer found three bounded release blockers on this exact candidate."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/web/index.html",
+      "tests/test_web_static.py",
+      "runtime/goal-contracts/",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "GitHub PR 1 review-thread resolution and exact-head checks"
+    ],
+    "semantic_changes": [
+      "Sanitize only the six newly added cumulative contracts, add the missing picker accessible name, resolve only the already-fixed installer review thread, and re-run review."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "user project repositories and data"
+    ],
+    "semantic_changes": [
+      "No unrelated code, merge, release, install, service restart, secret exposure, or historical behavior change."
+    ]
+  },
+  "invariants": [
+    "All prior behavior and proof remain intact.",
+    "No local session ID, account path, or raw user text remains in the cumulative v0.1.7 contract diff.",
+    "PR remains unmerged until fresh independent PASS."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-REMEDIATE",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "The cumulative candidate is privacy-clean, accessible, review-resolved, and independently approved.",
+      "forbidden_behavior": "Residual identifier leak, inaccessible picker, unresolved actionable thread, or unreviewed release.",
+      "target_and_actor": "Plotkeeper v0.1.7 PR candidate and release reviewer",
+      "required_proof_ids": [
+        "PR-REMEDIATE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-REMEDIATE",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-REMEDIATE"
+      ],
+      "claim": "Leak scan, accessibility regression, GitHub thread state, full tests, CI, and independent review prove remediation.",
+      "required_environment": "clean exact PR head and GitHub",
+      "command_or_read_only_check": "cumulative scan, tests, PR metadata, production-goal-review",
+      "expected_observation": "zero leaks, zero unresolved actionable threads, all checks and phase receipts PASS"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-REMEDIATE",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-REMEDIATE",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "signed phase chain accepted by verifier and trusted guard"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected diff, residual leak, unresolved review, failed test/CI, or non-PASS review receipt."
+  ],
+  "known_discrepancies": [
+    "CodeRabbit rate-limited the latest incremental request after reviewing the substantive corrections; exact-head CI remains required."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User-authorized review correction before merge/release",
+      "acceptance_cases": [
+        "AC-REMEDIATE"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json",
+    "sha256": "5d0ade652f20c48f6f2c47db481b25b41f1cb98001f7794151b79c3597cc763f"
+  }
+}

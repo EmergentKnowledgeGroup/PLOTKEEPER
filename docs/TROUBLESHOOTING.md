@@ -5,7 +5,8 @@
 Check the health endpoint:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:47831/health
+$connector = Get-Content .\runtime\plotkeeper-connector.json -Raw | ConvertFrom-Json
+Invoke-RestMethod "$($connector.url)/health"
 ```
 
 If the port is unavailable, start on another one:
@@ -50,3 +51,12 @@ Running the demo again recreates only `examples/.demo-runtime/`:
 ```
 
 It does not read or modify your real Codex sessions.
+### Pop out joins an existing browser session
+
+Current Plotkeeper versions first launch Edge or Chrome in app mode with `runtime/plotkeeper-browser-profile/`. This creates a standalone window isolated from the normal browser profile. If the machine has neither supported Chromium executable, Plotkeeper falls back to the registered default browser and that browser may choose a tab.
+
+### An active run has one Codex task instead of its checklist
+
+The run is enrolled, but SpecSwarm's checklist was never synchronized. The single row is a truthful thread-level fallback, not a fabricated plan. Re-run the documented `sync-plan` command with the locked spec/checklist/blockerboard to populate the real workstreams.
+
+Alternatively, choose **Reconstruct plan**. The enrolled Codex task—not Plotkeeper's filename matcher—will identify its original artifacts, synchronize them into the exact run, read the rows back, and report any correction. Missing or invalid enrolled directories fail closed.

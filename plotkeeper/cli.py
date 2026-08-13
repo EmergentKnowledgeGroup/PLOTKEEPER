@@ -5,15 +5,18 @@ import json
 import os
 from pathlib import Path
 
+from .connector import connector_path, ensure_connector
 from .service import PlotkeeperService
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="plotkeeper")
     parser.add_argument("--ledger", default=os.environ.get("PLOTKEEPER_LEDGER", "runtime/plotkeeper.sqlite3"))
+    parser.add_argument("--connector", default=os.environ.get("PLOTKEEPER_CONNECTOR"))
     parser.add_argument("--sessions", default=os.environ.get("PLOTKEEPER_SESSIONS", str(Path.home() / ".codex" / "sessions")))
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
+    sub.add_parser("connector")
     current = sub.add_parser("current")
     current.add_argument("--cwd", default=None)
     current.add_argument("--run-id", default=None)
@@ -29,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync.add_argument("--contract")
     serve = sub.add_parser("serve")
     serve.add_argument("--host", default="127.0.0.1")
-    serve.add_argument("--port", type=int, default=47831)
+    serve.add_argument("--port", type=int, default=None)
     poll = sub.add_parser("poll")
     poll.add_argument("--once", action="store_true")
     return parser
@@ -37,8 +40,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    service = PlotkeeperService(ledger_path=args.ledger, sessions_root=args.sessions)
-    if args.command == "status":
+    connector_file = Path(args.connector).resolve() if args.connector else connector_path(Path(args.ledger).resolve().parent.parent)
+    connector = ensure_connector(connector_file, args.port if args.command == "serve" else None)
+    service = PlotkeeperService(ledger_path=args.ledger, sessions_root=args.sessions,
+                                dashboard_url=str(connector["url"]), profile_root=connector_file.parent.parent)
+    if args.command == "connector":
+        print(json.dumps(connector, sort_keys=True))
+    elif args.command == "status":
         service.poll_once()
         print(json.dumps([r.to_dict() for r in service.ledger.list_runs()], sort_keys=True))
     elif args.command == "current":
@@ -55,17 +63,16 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "poll":
         print(json.dumps({"events": service.poll_once()}, sort_keys=True))
     elif args.command == "serve":
-        server = service.serve(args.host, args.port)
+        server = service.serve(args.host, int(connector["port"]))
         watcher = __import__("threading").Thread(target=service.watch_forever, daemon=True)
         watcher.start()
-        print(f"Plotkeeper listening on http://{args.host}:{args.port}", flush=True)
+        print(f"Plotkeeper listening on {connector['url']}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             pass
         finally:
             server.server_close()
-    return 0
     return 0
 
 

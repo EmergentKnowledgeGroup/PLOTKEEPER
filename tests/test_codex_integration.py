@@ -38,6 +38,8 @@ finally:
 
 
 class CodexIntegrationTests(unittest.TestCase):
+    def connector(self):
+        return mock.patch.object(INSTALLER, "load_connector", return_value={"host": "127.0.0.1", "port": 61234, "url": "http://127.0.0.1:61234", "path": "Z:/example/runtime/plotkeeper-connector.json"})
     def test_review_validator_allows_only_artifact_stable_attested_target_progression(self):
         isolated = {"environment": "isolated", "artifact_digest": "git:" + "a" * 40, "traffic_or_execution_path": "http://127.0.0.1:49100"}
         public = {"environment": "public", "artifact_digest": "git:" + "a" * 40, "traffic_or_execution_path": "https://github.com/o/r"}
@@ -108,7 +110,8 @@ class CodexIntegrationTests(unittest.TestCase):
             history = home / "skills" / "adaptive-execution" / "data" / "adaptive_execution.sqlite3"
             history.parent.mkdir(parents=True)
             history.write_bytes(b"calibration-history")
-            hooks_path = INSTALLER.install(home, skip_plugins=True)
+            with self.connector():
+                hooks_path = INSTALLER.install(home, skip_plugins=True)
             document = json.loads(hooks_path.read_text(encoding="utf-8"))
             self.assertEqual(document["preserve"], "yes")
             self.assertTrue((home / "skills" / "adaptive-execution" / "SKILL.md").is_file())
@@ -119,6 +122,7 @@ class CodexIntegrationTests(unittest.TestCase):
             self.assertNotIn("trust", document)
             config = json.loads((home / "plotkeeper.json").read_text(encoding="utf-8"))
             self.assertEqual(Path(config["repo_root"]), MODULE_PATH.parents[2])
+            self.assertEqual(config["dashboard_url"], "http://127.0.0.1:61234")
 
     def test_dependency_manifest_and_bundle_are_complete(self):
         integration = MODULE_PATH.parent
@@ -136,7 +140,8 @@ class CodexIntegrationTests(unittest.TestCase):
         repo_temp = Path(__file__).parents[1] / "runtime" / "qa"
         repo_temp.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=repo_temp) as folder, mock.patch.object(INSTALLER.subprocess, "run") as run:
-            INSTALLER.install(Path(folder) / ".codex", skip_plugins=True)
+            with self.connector():
+                INSTALLER.install(Path(folder) / ".codex", skip_plugins=True)
         run.assert_not_called()
 
     def test_isolated_install_matches_every_bundled_skill_file(self):
@@ -144,7 +149,8 @@ class CodexIntegrationTests(unittest.TestCase):
         repo_temp.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=repo_temp) as folder:
             home = Path(folder) / ".codex"
-            INSTALLER.install(home, skip_plugins=True)
+            with self.connector():
+                INSTALLER.install(home, skip_plugins=True)
             integration = MODULE_PATH.parent
             for relative, name in INSTALLER.BUNDLED_SKILLS:
                 source = integration / relative

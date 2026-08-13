@@ -4,6 +4,60 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER V0.1.7 LISTENER OWNERSHIP
+
+- step: post-green-tests
+- note: Lifecycle ownership now requires the persisted PID record's connector path/port, repository root, executable path, creation time, and command-line hash; real foreign subprocesses with spoofed plotkeeper.cli argv and dashboard HTML survive both start and install rejection paths.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: 972429e0413ea790c1b4cd576cece924b6dd4de7
+- next_cmd: `Independent production-goal review of the exact diff; no install/live-service mutation is authorized`
+- validations: active contract validates at d0a5e050f7e998ce635276c1bbb780d9e76611fd0777ac00cdb0a85c7a42b24e; focused ownership/docs tests 9 passed; full suite 85 passed; PowerShell parser passed for install.ps1/start.ps1; ownership scripts contain no -match/HTML inference; controlled fixture command line and spoof HTML were observed; git diff --check passed; controlled foreign PID remained unchanged; no install, live-service mutation, commit, or push
+
+## PLOTKEEPER V0.1.7 PR RELEASE
+
+- step: post-green-tests
+- note: PR 1 remains open and unmerged; CodeRabbit findings are corrected, CI is green, and final v0.1.7 version, changelog, release, rollback, and verifier surfaces are updated for final review.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: a0a0406 + final release surfaces
+- next_cmd: `git diff --check && py -3 -B -m unittest discover -s tests -v`
+- validations: sanitized release contract validates at `9ed96e422737d84ce29d0d573656d6c07326748c2c9d26635a40ef40a8687f1b`; 82 tests before final docs; Ruff E702; Node syntax; diff check; two CodeRabbit passes reconciled
+
+## PLOTKEEPER PLAN RECONSTRUCTION
+
+- step: post-green-tests
+- note: Fallback runs now offer one explicit, idempotent reconstruction request that resumes the exact enrolled Codex root at run.cwd, requires evidence-backed recovery of the original SpecSwarm artifacts, syncs the exact run, reads rows back, and reports corrections without filename guessing.
+- branch: main
+- head: a6db3162fd90cde039c112cab11ce023a2c78845
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: successor contract `PROD-20260813-plotkeeper-plan-reconstruction` validates at `080d26e7688c9b7032fae93113bfad24f57b6bfc89638d9286fccea519b380dc`; exact resume session/cwd/prompt/idempotence/synced-task guards pass; 76/76 tests, Node syntax, and diff check green
+
+## PLOTKEEPER CANONICAL TITLE TASK POPOUT
+
+- step: post-green-tests
+- note: Phase-start authority was sealed before mutation; Codex session-index titles now override prompt previews, empty active runs expose one truthful thread-level fallback task, headers clamp to two lines, and pop-out uses an isolated Chromium app profile.
+- branch: main
+- head: 31ab330a1f6f2ef959f782330a292a713acd99a9
+- next_cmd: `git diff --check && py -3 -B -m unittest discover -s tests -v`
+- validations: contract `PROD-20260813-plotkeeper-canonical-title-task-popout` validates at `022e73876c51b5b52e803a75a0b8ee2a7244c102cbe53d5430c46d769f6f09bc`; exact MoonMarket fixture resolves `Review core spec`; fallback/synced-task precedence tests pass; isolated launcher arguments prove app mode, dedicated profile, and exact URL; 75/75 tests plus Node/Python/diff checks green
+
+## PLOTKEEPER POPOUT PRIVATE CONNECTOR
+
+- step: post-green-tests
+- note: Exact run-bound external-browser pop-out and one persisted OS-assigned private loopback connector are implemented across service, installer, startup, CLI, Codex config, SpecSwarm, UI, tests, and docs; installed lifecycle and independent review remain.
+- branch: main
+- head: 58f3dee2bdca8109be78e26bf245275787ddf453
+- next_cmd: `.\scripts\install.ps1`
+- validations: final active contract `PROD-20260813-plotkeeper-popout-private-connector-final` validates at `a157f786d6291f287f4cc70f033536b2e1fc1dc83690dd145a412047001b2d2e`; 73/73 tests green; focused origin/path/browser-opener attacks green; Node/Python/PowerShell syntax and git diff check green; generated connector is exactly ignored
+
+## PLOTKEEPER RESPONSIVE RUN PICKER
+
+- step: post-green-browser-qa
+- note: Native viewport-unbounded run select replaced by an accessible project-grouped listbox; long labels are compact and bounded, and Run Detail remains a full-width row below Workstreams at every supported width.
+- branch: main
+- head: 73c89e7d402a0c498207e07299685ac729ecfde7
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active contract `PROD-20260813-plotkeeper-responsive-run-picker` validates at `59593e7645aa3e2b7883b572d87cf63d868f6a3e3b6d7dac7da0fc10adf8205b`; focused static tests and Node syntax green; real browser geometry at 375/768/1024/1440 shows menu inside viewport, document scrollWidth equals clientWidth, and inspector top equals board bottom; keyboard open/Escape and project grouping green; zero browser warnings/errors
+
 ## PLOTKEEPER V0.1.6 COMBINED RELEASE
 
 - step: post-green-tests
@@ -120,3 +174,21 @@ Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 - head: f7d5fb3
 - next_cmd: `Invoke-RestMethod http://127.0.0.1:47831/health`
 - validations: 14 unit/static tests green; sealed production contract validates; compileall and JS syntax green; live service and desktop/mobile empty-state browser QA green; independent review PARTIAL only because no real enrolled contract-bearing run exists yet
+
+## PLOTKEEPER RELEASE CONTRACT SELECTION FIX
+
+- step: post-green-tests
+- note: Tracked `RELEASE_CONTRACT.json` now deterministically binds guard and server verifier to the v0.1.7 PR release contract; mtime/reordering and RL-NONE successor attacks are covered. No commit, push, install, or live-service mutation.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: 9d0400f3c36c6615598222c5780b04488aeb86ad
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active successor contract validates at `f5859da6ca2145ccfbd805ee8ca44acf6a2d5775ef2e1c626d5f84c58320cc78`; focused guard/verifier/docs suite 30 passed; full unittest suite 90 passed; py_compile and git diff --check passed; no commit, push, install, restart, deployment, or live-service mutation
+
+## PLOTKEEPER POINTER HASH PARITY FIX
+
+- step: post-green-tests
+- note: Release pointer now stores a canonical JSON contract hash stable across LF and CRLF; guard and verifier parity regressions pass. No commit, push, install, or live mutation.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: 16c438044d36a9f1214e75dd8be9ecf33e0b047f
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active successor contract validates at `d74c64eab95ba61a98a58b34176e89fc12b1c0d2c41b8f6879bbaf3f6d1f6741`; canonical pointer hash `8c82f3735b58ecd18c8bfb1f5260972eca4dbd8c3a3d60af27622e5de0be0ca3`; focused guard/verifier parity suite 27 passed; full unittest suite 92 passed; py_compile and git diff --check passed; no commit, push, install, restart, deployment, or live-service mutation

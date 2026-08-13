@@ -1,6 +1,83 @@
-param([string]$Python = "python", [int]$Port = 47831)
+param([string]$Python = "python", [int]$Port = 0)
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+$connectorPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-connector.json"))
+$ownerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-owner.json"))
+
+function Get-ListenerPid([int]$TargetPort = $Port) {
+    try {
+        $connection = Get-NetTCPConnection -State Listen -LocalPort $TargetPort -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($connection) { return [int]$connection.OwningProcess }
+    } catch { }
+    return $null
+}
+
+function Get-ProcessIdentity([int]$ListenerProcessId) {
+    if (-not $ListenerProcessId) { return $null }
+    try { return Get-CimInstance Win32_Process -Filter "ProcessId=$ListenerProcessId" -ErrorAction Stop | Select-Object -First 1 } catch { return $null }
+}
+
+function Get-TextSha256([string]$Text) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes([string]$Text)
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-", "").ToLowerInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function Test-SamePath([string]$Left, [string]$Right) {
+    try { return [StringComparer]::OrdinalIgnoreCase.Equals([IO.Path]::GetFullPath($Left), [IO.Path]::GetFullPath($Right)) } catch { return $false }
+}
+
+function Read-OwnerRecord {
+    if (-not (Test-Path -LiteralPath $ownerPath)) { return $null }
+    try { return Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json } catch { return $null }
+}
+
+function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port) {
+    $record = Read-OwnerRecord
+    $identity = Get-ProcessIdentity $ListenerProcessId
+    if (-not $record -or -not $identity) { return $false }
+    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
+    if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
+    if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
+    if ([string]$identity.CreationDate -ne [string]$record.creation_time) { return $false }
+    if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    return $true
+}
+
+function Remove-OwnerRecord([int]$ListenerProcessId) {
+    $record = Read-OwnerRecord
+    if ($record -and [int]$record.pid -eq $ListenerProcessId -and (Test-SamePath ([string]$record.root) $Root)) {
+        Remove-Item -LiteralPath $ownerPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Stop-OwnedListener([int]$ListenerProcessId, [int]$TargetPort = $Port) {
+    if (-not (Test-PlotkeeperOwner $ListenerProcessId $TargetPort)) { throw "Port $TargetPort is occupied by an unknown or foreign listener; refusing to stop or reuse it." }
+    Stop-Process -Id $ListenerProcessId -Force -ErrorAction Stop
+    for ($attempt = 0; $attempt -lt 20; $attempt++) {
+        if (-not (Get-ListenerPid $TargetPort)) { break }
+        Start-Sleep -Milliseconds 100
+    }
+    if (Get-ListenerPid $TargetPort) { throw "Stale Plotkeeper listener on port $TargetPort did not stop." }
+    Remove-OwnerRecord $ListenerProcessId
+}
+
+# An explicit port lets us reject a foreign listener before venv, pip, registry,
+# connector, or service work can mutate anything. This is also the test seam.
+if ($Port -gt 0) {
+    $earlyListener = Get-ListenerPid $Port
+    if ($earlyListener -and -not (Test-PlotkeeperOwner $earlyListener $Port)) {
+        throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it."
+    }
+    $priorOwner = Read-OwnerRecord
+    if ($priorOwner -and [int]$priorOwner.port -ne $Port) {
+        $priorListener = Get-ListenerPid ([int]$priorOwner.port)
+        if ($priorListener) { Stop-OwnedListener $priorListener ([int]$priorOwner.port) }
+    }
+}
+
 New-Item -ItemType Directory -Force -Path (Join-Path $Root "runtime") | Out-Null
 $venv = Join-Path $Root ".venv"
 if (-not (Test-Path (Join-Path $venv "Scripts\python.exe"))) {
@@ -25,48 +102,33 @@ try {
         Remove-Item -LiteralPath $installTemp -Recurse -Force
     }
 }
+$explicitPort = if ($Port -gt 0) { "$Port" } else { "" }
+$connectorJson = & $venvPython -c "import json,sys; from plotkeeper.connector import ensure_connector; print(json.dumps(ensure_connector(sys.argv[1], int(sys.argv[2]) if sys.argv[2] else None)))" $connectorPath $explicitPort
+if ($LASTEXITCODE -ne 0) { throw "Plotkeeper connector selection failed." }
+$connector = $connectorJson | ConvertFrom-Json
+$Port = [int]$connector.port
+$HostAddress = [string]$connector.host
+if ($HostAddress -ne "127.0.0.1") { throw "Plotkeeper connector must remain loopback-only." }
+$listener = Get-ListenerPid $Port
+if ($listener) {
+    Stop-OwnedListener $listener $Port
+}
 $start = Join-Path $PSScriptRoot "start.ps1"
 $run = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port $Port"
 New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
 New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
-function Test-Dashboard {
+function Test-Health {
     try {
-        $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/" -TimeoutSec 2
-        return $response.StatusCode -eq 200 -and $response.Content -match '(?is)<html(?:\s|>)' -and $response.Content -match 'data-testid=["'']plotkeeper-app["'']'
+        $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 2
+        $payload = $response.Content | ConvertFrom-Json
+        return $response.StatusCode -eq 200 -and $payload.ok -eq $true -and $payload.service -eq "plotkeeper"
     } catch { return $false }
 }
-function Get-ListenerPid {
-    try {
-        $connection = Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($connection) { return [int]$connection.OwningProcess }
-    } catch { }
-    return $null
-}
-function Get-OwnerCommandLine([int]$ListenerProcessId) {
-    if (-not $ListenerProcessId) { return "" }
-    try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ListenerProcessId" -ErrorAction Stop).CommandLine } catch { return "" }
-}
-function Test-PlotkeeperOwner([int]$ListenerProcessId) {
-    $commandLine = Get-OwnerCommandLine $ListenerProcessId
-    return $commandLine -match '(?i)(plotkeeper\.cli|plotkeeper[\\/]scripts[\\/]start\.ps1)'
-}
-$listener = Get-ListenerPid
-if ($listener) {
-    if (-not (Test-PlotkeeperOwner $listener)) {
-        throw "Port $Port is occupied by a non-Plotkeeper listener; refusing to stop it."
-    }
-    Stop-Process -Id $listener -Force -ErrorAction Stop
-    for ($attempt = 0; $attempt -lt 20; $attempt++) {
-        if (-not (Get-ListenerPid)) { break }
-        Start-Sleep -Milliseconds 100
-    }
-    if (Get-ListenerPid) { throw "Stale Plotkeeper listener on port $Port did not stop." }
-}
-$healthy = $false
 Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $start, "-Python", $venvPython, "-Port", "$Port")
+$healthy = $false
 for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
     Start-Sleep -Milliseconds 250
-    $healthy = Test-Dashboard
+    $healthy = Test-Health
 }
 if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
-Write-Output "Plotkeeper installed, running, and registered for user startup."
+Write-Output "Plotkeeper installed, running, and registered for user startup at $($connector.url)."

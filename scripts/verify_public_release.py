@@ -11,6 +11,69 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+RELEASE_CONTRACT_POINTER = Path("runtime/goal-contracts/RELEASE_CONTRACT.json")
+
+
+def canonical_json_hash(document: object) -> str:
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _safe_repo_path(repo_root: Path, value: object) -> Path | None:
+    if not isinstance(value, str) or not value or Path(value).is_absolute():
+        return None
+    relative = Path(value)
+    if ".." in relative.parts:
+        return None
+    candidate = (repo_root / relative).resolve()
+    try:
+        candidate.relative_to(repo_root.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def _release_authorized(contract: dict) -> bool:
+    requirements = contract.get("release_requirements")
+    return isinstance(requirements, list) and any(
+        isinstance(item, dict)
+        and item.get("phase") == "DEPLOY_READY"
+        and isinstance(item.get("id"), str)
+        and bool(item["id"].strip())
+        and item["id"] == item["id"].strip()
+        and item["id"] != "RL-NONE"
+        for item in requirements
+    )
+
+
+def designated_release_contract(repo_root: Path, pointer_value: object = RELEASE_CONTRACT_POINTER) -> tuple[Path, dict]:
+    """Resolve the one tracked release contract named by the pointer and hash it."""
+    pointer_path = _safe_repo_path(repo_root, str(pointer_value))
+    if pointer_path is None:
+        raise ValueError("release contract pointer must be repository-relative")
+    pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    if not isinstance(pointer, dict):
+        raise ValueError("release contract pointer must be a JSON object")
+    if pointer.get("schema_version") != 1 or pointer.get("purpose") != "PLOTKEEPER_PUBLIC_RELEASE":
+        raise ValueError("release contract pointer schema or purpose is invalid")
+    contract_path = _safe_repo_path(repo_root, pointer.get("contract_path"))
+    if contract_path is None or not contract_path.is_file():
+        raise ValueError("release contract pointer target is invalid")
+    contract_bytes = contract_path.read_bytes()
+    expected_sha = str(pointer.get("contract_sha256", "")).lower()
+    contract = json.loads(contract_bytes.decode("utf-8"))
+    if not expected_sha or not hmac.compare_digest(canonical_json_hash(contract), expected_sha):
+        raise ValueError("release contract pointer hash mismatch")
+    if (
+        not isinstance(contract, dict)
+        or contract.get("status") != "ACTIVE"
+        or not contract.get("contract_hash")
+        or contract.get("id") != pointer.get("contract_id")
+        or not _release_authorized(contract)
+    ):
+        raise ValueError("designated contract is not an ACTIVE release contract")
+    return contract_path, contract
+
 
 def canonical_hash(document: dict, field: str) -> str:
     payload = dict(document)
@@ -174,14 +237,22 @@ def verify(contract: dict, bundle: dict, candidate: str, changed_paths: list[str
 
 def main() -> int:
     candidate = os.environ.get("GITHUB_SHA", "").lower()
-    contract_path = Path(os.environ.get("PLOTKEEPER_CONTRACT", ""))
+    configured_contract = os.environ.get("PLOTKEEPER_CONTRACT")
+    contract_path = Path(configured_contract) if configured_contract else Path()
+    pointer_value = os.environ.get("PLOTKEEPER_CONTRACT_POINTER", str(RELEASE_CONTRACT_POINTER))
     receipt_text = os.environ.get("PLOTKEEPER_DEPLOY_RECEIPT", "")
     review_key = os.environ.get("PLOTKEEPER_REVIEW_KEY", "")
-    if not candidate or not contract_path.is_file() or not receipt_text or not review_key:
+    if not candidate or (configured_contract and not contract_path.is_file()) or not receipt_text or not review_key:
         print("missing candidate, contract, deploy receipt, or review key", file=sys.stderr)
         return 2
     try:
-        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        designated_path, contract = designated_release_contract(Path.cwd(), pointer_value)
+        if configured_contract:
+            configured_path = _safe_repo_path(Path.cwd(), configured_contract)
+            if configured_path is None or configured_path != designated_path:
+                raise ValueError("PLOTKEEPER_CONTRACT disagrees with tracked release pointer")
+        else:
+            contract_path = designated_path
         bundle = json.loads(receipt_text)
         baseline = contract["baseline"]["sha"]
         changed = git("diff", "--name-only", f"{baseline}..{candidate}").splitlines()
@@ -201,7 +272,7 @@ def main() -> int:
             blob = subprocess.run(["git", "show", f"{candidate}:{path}"], check=True, capture_output=True).stdout
             evidence_hashes[path] = hashlib.sha256(blob).hexdigest()
         candidate_timestamp = int(git("show", "-s", "--format=%ct", candidate))
-    except (json.JSONDecodeError, KeyError, OSError, subprocess.CalledProcessError) as exc:
+    except (json.JSONDecodeError, KeyError, OSError, ValueError, TypeError, subprocess.CalledProcessError) as exc:
         print(f"invalid verification input: {exc}", file=sys.stderr)
         return 2
     errors = verify(contract, bundle, candidate, changed, diff_sha256, review_key, evidence_hashes, evidence_policy, candidate_timestamp)

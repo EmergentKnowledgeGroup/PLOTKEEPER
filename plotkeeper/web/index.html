@@ -14,7 +14,7 @@
     <header class="topbar">
       <div class="topbar-line">
         <a class="brand" href="/" aria-label="Plotkeeper home"><span class="brand-mark" aria-hidden="true">⌁</span><span>PLOTKEEPER</span></a>
-        <div class="connection" id="connection-status" role="status" aria-live="polite"><span class="connection-dot" aria-hidden="true"></span><span>Connecting…</span></div>
+        <div class="topbar-actions"><button class="button button-quiet popout-button" id="pop-out" type="button" aria-label="Open this exact Plotkeeper surface in a standalone window" title="Open this exact Plotkeeper surface in a standalone window">↗ <span>Pop out</span></button><div class="connection" id="connection-status" role="status" aria-live="polite"><span class="connection-dot" aria-hidden="true"></span><span>Connecting…</span></div></div>
       </div>
       <div class="goal-row">
         <div class="goal-copy">
@@ -27,7 +27,14 @@
         <div class="progress-track"><span id="run-progress-bar" style="width:0%"></span></div>
         <strong id="run-progress-value">—</strong>
       </div>
-      <label class="run-picker"><span>Run</span><select id="run-selector" aria-label="Select run"><option value="">Loading runs…</option></select></label>
+      <div class="run-picker">
+        <span id="run-picker-label">Run</span>
+        <div class="run-combobox">
+          <button id="run-picker-button" class="run-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="run-picker-menu" aria-labelledby="run-picker-label run-picker-value" disabled><span id="run-picker-value">Loading runs…</span><span aria-hidden="true">⌄</span></button>
+          <div id="run-picker-menu" class="run-picker-menu" role="listbox" aria-label="Active runs grouped by project" hidden></div>
+          <select id="run-selector" class="sr-only" aria-hidden="true" tabindex="-1"><option value="">Loading runs…</option></select>
+        </div>
+      </div>
     </header>
 
     <section class="working-strip" aria-label="Current work">
@@ -58,6 +65,7 @@
           <div class="toolbar-actions">
             <label class="search-wrap"><span class="sr-only">Filter tasks</span><input id="task-filter" type="search" placeholder="Filter tasks" autocomplete="off"></label>
             <button class="button button-quiet" id="collapse-all" type="button">Collapse all</button>
+            <button class="button button-outline" id="reconstruct-plan" type="button" hidden>Reconstruct plan</button>
           </div>
         </div>
         <div class="board-meta"><span id="board-count">Loading tasks…</span><span id="board-updated">—</span></div>

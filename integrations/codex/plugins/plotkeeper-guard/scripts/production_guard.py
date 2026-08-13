@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
 import os
 import re
 import subprocess
@@ -15,6 +17,12 @@ RELEASE_PATTERN = re.compile(
     r"npm\s+publish|twine\s+upload)\b",
     re.IGNORECASE | re.DOTALL,
 )
+RELEASE_CONTRACT_POINTER = Path("runtime/goal-contracts/RELEASE_CONTRACT.json")
+
+
+def canonical_json_hash(document: object) -> str:
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def deny(reason: str) -> int:
@@ -36,18 +44,65 @@ def git_head(cwd: Path) -> str | None:
     return result.stdout.strip().lower() if result.returncode == 0 else None
 
 
+def _safe_contract_path(cwd: Path, value: object) -> Path | None:
+    if not isinstance(value, str) or not value or Path(value).is_absolute():
+        return None
+    relative = Path(value)
+    if ".." in relative.parts:
+        return None
+    candidate = (cwd / relative).resolve()
+    try:
+        candidate.relative_to(cwd.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def _release_authorized(document: dict) -> bool:
+    requirements = document.get("release_requirements")
+    return isinstance(requirements, list) and any(
+        isinstance(item, dict)
+        and item.get("phase") == "DEPLOY_READY"
+        and isinstance(item.get("id"), str)
+        and bool(item["id"].strip())
+        and item["id"] == item["id"].strip()
+        and item["id"] != "RL-NONE"
+        for item in requirements
+    )
+
+
+def designated_release_contract(cwd: Path) -> dict | None:
+    """Load only the tracked release contract named by the explicit pointer."""
+    pointer_path = (cwd / RELEASE_CONTRACT_POINTER).resolve()
+    try:
+        pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+        if not isinstance(pointer, dict) or pointer.get("schema_version") != 1 or pointer.get("purpose") != "PLOTKEEPER_PUBLIC_RELEASE":
+            return None
+        contract_path = _safe_contract_path(cwd, pointer.get("contract_path"))
+        if contract_path is None or not contract_path.is_file():
+            return None
+        contract_bytes = contract_path.read_bytes()
+        contract = json.loads(contract_bytes.decode("utf-8"))
+        if not hmac.compare_digest(canonical_json_hash(contract), str(pointer.get("contract_sha256", "")).lower()):
+            return None
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if (
+        not isinstance(contract, dict)
+        or contract.get("status") != "ACTIVE"
+        or not contract.get("contract_hash")
+        or contract.get("id") != pointer.get("contract_id")
+        or not _release_authorized(contract)
+    ):
+        return None
+    contract["_path"] = contract_path.relative_to(cwd.resolve()).as_posix()
+    contract["_pointer_path"] = str(pointer_path)
+    return contract
+
+
 def latest_active_contract(cwd: Path) -> dict | None:
-    folder = cwd / "runtime" / "goal-contracts"
-    candidates = sorted(folder.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True) if folder.is_dir() else []
-    for path in candidates:
-        try:
-            document = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if document.get("status") == "ACTIVE" and document.get("contract_hash"):
-            document["_path"] = str(path)
-            return document
-    return None
+    # Kept as the hook's compatibility name; release authority is never mtime-selected.
+    return designated_release_contract(cwd)
 
 
 def matching_receipt(cwd: Path, contract: dict, candidate: str) -> bool:

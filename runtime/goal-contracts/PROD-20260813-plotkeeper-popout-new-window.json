@@ -1,0 +1,122 @@
+{
+  "id": "PROD-20260813-plotkeeper-popout-new-window",
+  "status": "ACTIVE",
+  "contract_hash": "8ac5e80ca1751f1d657535e06871d5f093a1236564bd69a691ee28c795e53936",
+  "origin": "DIRECT",
+  "user_goal": "Require Plotkeeper pop-out to request a brand-new Windows default-browser window, not merely another tab.",
+  "authority": {
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-new-window",
+    "original_request_hash": "41a74e9a439f0ee02d1e8e73dd2e55f424f2d10974da26e9c90c8decced3231f",
+    "verbatim_text": "Authorized Plotkeeper change: Require Plotkeeper pop-out to request a brand-new Windows default-browser window, not merely another tab.",
+    "captured_at_utc": "2026-08-13T21:05:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-new-window-authority"
+  },
+  "baseline": {
+    "protected_ref": "committed pop-out and private-connector candidate before new-window clarification",
+    "sha": "e708393b60c3268f8b0308a035d449784d31d4e7",
+    "retrieved_at_utc": "2026-08-13T21:05:00Z",
+    "protection_evidence": "clean single main worktree and green 73-test installed candidate",
+    "selection_reason": "Preserve all prior behavior while tightening only the external-browser launch mode."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/service.py",
+      "tests/test_backend.py",
+      "docs/USAGE.md",
+      "docs/TROUBLESHOOTING.md",
+      "README.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-new-window.json"
+    ],
+    "resources": [
+      "Windows default browser"
+    ],
+    "semantic_changes": [
+      "Invoke the default-browser controller with a new-window request for the exact validated Plotkeeper URL."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/sessions.py",
+      ".github/**",
+      "runtime/plotkeeper.sqlite3",
+      "pyproject.toml"
+    ],
+    "semantic_changes": [
+      "No arbitrary URL launch, browser-specific executable selection, non-loopback bind, connector change, release, version bump, or publication."
+    ]
+  },
+  "invariants": [
+    "Every prior connector and pop-out invariant remains binding.",
+    "The launch target remains the exact same-origin current Plotkeeper surface.",
+    "Browser or OS policy may override a standards-compliant new-window request and must not be misrepresented as technically forceable."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-NEW-WINDOW",
+      "phase": "VALIDATED",
+      "promised_behavior": "Pop out requests a brand-new window from the Windows default browser for the exact current Plotkeeper path and query.",
+      "forbidden_behavior": "Calling the generic default-browser opener without new-window intent, opening an arbitrary URL, or claiming control over browser policy.",
+      "target_and_actor": "Plotkeeper user and Windows default browser",
+      "required_proof_ids": [
+        "PR-NEW-WINDOW"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-NEW-WINDOW",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-NEW-WINDOW"
+      ],
+      "claim": "A regression captures the opener call and proves new=1 with the exact same-origin URL; live UI reports successful handoff.",
+      "required_environment": "unit HTTP harness plus installed live Plotkeeper and Windows default browser",
+      "command_or_read_only_check": "focused regression, full suite, and one live pop-out click",
+      "expected_observation": "exact URL, new-window mode 1, successful handoff, and no unrelated behavior change"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-NEW-WINDOW",
+      "phase": "VALIDATED",
+      "required_role": "independent UI and security reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-NEW-WINDOW",
+      "phase": "VALIDATED",
+      "required_receipt": "validated local installed behavior only; publication requires separate authority"
+    }
+  ],
+  "stop_conditions": [
+    "Missing new-window invocation proof, URL/origin regression, independent non-PASS, or unexpected diff."
+  ],
+  "known_discrepancies": [
+    "The parent implementation used webbrowser.open(url), whose default new=0 permits reuse of an existing browser surface."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User clarification requiring a brand-new browser window",
+      "acceptance_cases": [
+        "AC-NEW-WINDOW"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector-final.json",
+    "sha256": "0b71a07e5112d48832e460c522ced0e63eeca13737ebbe0eeeda10c42bb37939"
+  }
+}

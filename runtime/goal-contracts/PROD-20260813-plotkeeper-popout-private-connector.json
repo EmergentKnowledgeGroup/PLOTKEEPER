@@ -1,0 +1,201 @@
+{
+  "id": "PROD-20260813-plotkeeper-popout-private-connector",
+  "status": "ACTIVE",
+  "contract_hash": "730ead7f1e14117e42db5ce0a3d6d612dfa189f4605f1288d3e43239f1879014",
+  "origin": "DIRECT",
+  "user_goal": "Let users pop the exact Plotkeeper surface into their default browser and avoid fixed-port collisions by persisting one private loopback connector shared by every Plotkeeper entry point.",
+  "authority": {
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-private-connector",
+    "original_request_hash": "42854bf6a96976e3de2a8ac6aab25ba5ab654aba819d4181cf3364ea2540af53",
+    "verbatim_text": "Authorized Plotkeeper change: Let users pop the exact Plotkeeper surface into their default browser and avoid fixed-port collisions by persisting one private loopback connector shared by every Plotkeeper entry point.",
+    "captured_at_utc": "2026-08-13T20:20:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-private-connector-authority"
+  },
+  "baseline": {
+    "protected_ref": "local validated responsive-picker successor of public v0.1.6",
+    "sha": "58f3dee2bdca8109be78e26bf245275787ddf453",
+    "retrieved_at_utc": "2026-08-13T20:20:00Z",
+    "protection_evidence": "clean single main worktree; local candidate has independent VALIDATED PASS and is one commit ahead of origin/main",
+    "selection_reason": "Current exact source and live dashboard onto which the authorized pop-out and connector behavior must be added."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/connector.py",
+      "plotkeeper/cli.py",
+      "plotkeeper/service.py",
+      "plotkeeper/web/index.html",
+      "plotkeeper/web/styles.css",
+      "plotkeeper/web/app.js",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      "scripts/pk.ps1",
+      "integrations/codex/install.py",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "tests/test_backend.py",
+      "tests/test_codex_integration.py",
+      "tests/test_repository_docs.py",
+      "tests/test_web_static.py",
+      "README.md",
+      "docs/INSTALLATION.md",
+      "docs/USAGE.md",
+      "docs/TROUBLESHOOTING.md",
+      "docs/ARCHITECTURE.md",
+      "docs/INTEGRATION.md",
+      "integrations/codex/README.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector.json"
+    ],
+    "resources": [
+      "runtime/plotkeeper-connector.json local generated connector state",
+      "HKCU current-user Plotkeeper startup registration",
+      "installed Codex Plotkeeper config and bundled SpecSwarm skill",
+      "owned local Plotkeeper listener and Windows default-browser launch path"
+    ],
+    "semantic_changes": [
+      "Choose an available OS-assigned high dynamic/private loopback port on first install, persist it atomically, and reuse it across reinstall, startup, CLI, service URLs, SpecSwarm health/panel checks, and documentation.",
+      "Preserve an explicit user-supplied port override by validating and persisting that connector without taking over foreign listeners.",
+      "Add an accessible dashboard button whose loopback-only POST asks Plotkeeper to open the exact current run URL in the Windows default browser.",
+      "Reject non-loopback, cross-origin, malformed, missing, stale, or mismatched pop-out requests without launching a browser."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/sessions.py",
+      "integrations/codex/bundled/upstream/**",
+      "integrations/codex/plugins/**",
+      ".github/**",
+      "runtime/plotkeeper.sqlite3",
+      "pyproject.toml",
+      "plotkeeper/__init__.py"
+    ],
+    "semantic_changes": [
+      "No binding beyond 127.0.0.1, remote browser-launch API, fixed replacement magic port, silent foreign-process termination, port stealing, broad firewall rule, authentication weakening, run identity change, ledger mutation, release, version bump, or GitHub publication.",
+      "No arbitrary URL or executable accepted by the pop-out endpoint; it may open only the service's own loopback origin with the request's existing path/query locator.",
+      "No loss of existing explicit -Port/--port support or migration break for the currently installed 47831 connector."
+    ]
+  },
+  "invariants": [
+    "Plotkeeper binds only to 127.0.0.1 and never stops a listener it cannot prove it owns.",
+    "One valid connector record is the source of truth for every automatically constructed Plotkeeper URL and startup command.",
+    "Existing installations retain their healthy owned connector during upgrade; new installations avoid a fixed default and reuse their persisted connector.",
+    "Pop-out opens the exact current pathname and query on the same connector, never an arbitrary URL, and reports success or failure truthfully.",
+    "Run enrollment, active filtering, successor history, review/check-in behavior, responsive picker behavior, and ledger data remain unchanged."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-1",
+      "phase": "VALIDATED",
+      "promised_behavior": "The Pop out button launches the exact bound Plotkeeper URL in the Windows default browser from the sidebar surface.",
+      "forbidden_behavior": "It opens only another embedded panel, drops the run locator, launches an arbitrary URL, or claims success without a browser-launch call.",
+      "target_and_actor": "A user viewing a run-bound Plotkeeper dashboard in Codex.",
+      "required_proof_ids": [
+        "PR-1"
+      ]
+    },
+    {
+      "id": "AC-2",
+      "phase": "VALIDATED",
+      "promised_behavior": "A new install chooses and persists one available high private loopback port and every automatic entry point uses it across restart/reinstall.",
+      "forbidden_behavior": "A fixed default collides, entry points disagree, or the connector changes on routine restart/reinstall.",
+      "target_and_actor": "Plotkeeper installer, startup, CLI, service, SpecSwarm, and dashboard URL generation.",
+      "required_proof_ids": [
+        "PR-2"
+      ]
+    },
+    {
+      "id": "AC-3",
+      "phase": "VALIDATED",
+      "promised_behavior": "Foreign listeners and invalid connector records fail closed without process termination, fallback takeover, or browser launch.",
+      "forbidden_behavior": "Plotkeeper kills, replaces, binds over, or silently bypasses a foreign listener or malformed connector.",
+      "target_and_actor": "Installer/startup and pop-out endpoint under adversarial local conditions.",
+      "required_proof_ids": [
+        "PR-3"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-1",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-1"
+      ],
+      "claim": "A real loopback request from the live dashboard calls a captured default-browser launcher exactly once with the exact same-origin run-bound URL, while adversarial origins/URLs launch zero times.",
+      "required_environment": "isolated server plus live local browser",
+      "command_or_read_only_check": "backend route tests and browser interaction with exact URL/response assertions",
+      "expected_observation": "one truthful launch and visible success state; invalid requests fail with no launch"
+    },
+    {
+      "id": "PR-2",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-2"
+      ],
+      "claim": "Fresh isolated install, restart, and reinstall use one persisted OS-assigned port in the dynamic/private range across connector JSON, startup registration, CLI URLs, service health, and installed SpecSwarm instructions.",
+      "required_environment": "isolated Z-drive installation and Codex home",
+      "command_or_read_only_check": "real install/reinstall harness with connector and byte-parity assertions",
+      "expected_observation": "same available high port everywhere and healthy exact dashboard after each lifecycle step"
+    },
+    {
+      "id": "PR-3",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-3"
+      ],
+      "claim": "A real foreign listener remains the same PID/content and startup/install exits nonzero; malformed connector and cross-origin pop-out attacks are rejected.",
+      "required_environment": "isolated ports, connector files, and disposable server",
+      "command_or_read_only_check": "foreign-listener, malformed-record, origin, host, and arbitrary-path adversarial fixtures",
+      "expected_observation": "foreign process survives unchanged and every invalid path fails closed"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "VALIDATED",
+      "required_role": "independent security and lifecycle reviewer of connector selection, ownership, origin checks, and browser launch"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "VALIDATED",
+      "required_receipt": "validated local implementation and installed-live proof; publication requires a separate release contract"
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected diff, non-loopback bind, arbitrary browser URL, origin bypass, port disagreement, foreign process mutation, unstable reinstall connector, stale sidebar URL, failed lifecycle/full/browser test, dirty candidate, or ledger/project-repository mutation."
+  ],
+  "known_discrepancies": [
+    "The current installed connector is fixed at 127.0.0.1:47831; ownership checks prevent takeover but a foreign listener can block startup.",
+    "SpecSwarm health and surface checks currently hardcode 47831 even though run dashboard URLs are already stored per run.",
+    "The dashboard has no host-side mechanism to ask Windows to open the exact current surface in the default external browser.",
+    "Local main includes the independently validated responsive-picker commit 58f3dee and is one commit ahead of public main."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "Add a pop-out into a separate browser window",
+      "acceptance_cases": [
+        "AC-1"
+      ]
+    },
+    {
+      "authority": "Avoid an internal fixed port overlapping other processes",
+      "acceptance_cases": [
+        "AC-2",
+        "AC-3"
+      ]
+    }
+  ],
+  "previous_contract": null
+}

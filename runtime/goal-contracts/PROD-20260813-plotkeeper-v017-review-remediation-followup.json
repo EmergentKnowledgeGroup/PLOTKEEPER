@@ -1,0 +1,149 @@
+{
+  "id": "PROD-20260813-plotkeeper-v017-review-remediation-followup",
+  "status": "ACTIVE",
+  "contract_hash": "1f0b729cad8659c25eaba2b5bab9eafbc0f0059af77693a3dc56cfc9843f5a87",
+  "origin": "DIRECT",
+  "user_goal": "Resolve exactly the six currently unresolved CodeRabbit findings on the Plotkeeper v0.1.7 candidate, with narrow regressions and local validation only.",
+  "authority": {
+    "original_request_ref": "codex-parent-delegation:plotkeeper-v017-six-review-findings",
+    "original_request_hash": "38790a5885dd9e89d8c05c1162a7a191ac43f415464b330a59ecccbf20aa836a",
+    "verbatim_text": "Fix exactly the 6 unresolved CodeRabbit findings in Z:\\Plotkeeper at 7655318/now shared clean except none. Findings: docs canonical hash wording; guard+server _release_authorized require nonempty nonwhitespace string != RL-NONE + regressions; non-object pointer fail closed + regression; wildcard listener conflicts by port in install/start + controlled same-PID survival regression; explicit port change must validate/stop prior authoritative owned listener before replacing connector/start, with regression; contract previous raw hash concern must be resolved via existing validators/cascade if actually stale. Create append-only narrow contract if needed. Resolve all 6 GitHub threads only after tests. No commit/push/install/live mutation. Full tests/PS parse/diff. Return exact files/evidence. No children.",
+    "captured_at_utc": "2026-08-13T23:55:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-parent-delegation:plotkeeper-v017-six-review-findings"
+  },
+  "baseline": {
+    "protected_ref": "release/v0.1.7-plotkeeper-surface",
+    "sha": "7655318c3a0ab0b573ea57a4eb5518dab4fb2b31",
+    "retrieved_at_utc": "2026-08-13T23:55:00Z",
+    "protection_evidence": "Clean exact PR head with one worktree and no tracked or untracked changes before this follow-up contract.",
+    "selection_reason": "The delegated repair names 7655318 as the exact candidate and limits behavior changes to six review findings."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "docs/RELEASE.md",
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      "scripts/verify_public_release.py",
+      "tests/test_listener_ownership.py",
+      "tests/test_production_guard.py",
+      "tests/test_release_verifier.py",
+      "tests/test_repository_docs.py",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-review-remediation-followup.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "Disposable listener subprocesses and temporary connector/owner fixtures only; GitHub PR 1 review-thread resolution after local proof."
+    ],
+    "semantic_changes": [
+      "Describe the release pointer hash as canonical JSON content SHA-256.",
+      "Require nonempty nonwhitespace string release requirement IDs other than RL-NONE in guard and server verifier, with equivalent regressions.",
+      "Reject non-object release pointers as ValueError and verify the invalid-input exit path.",
+      "Reject conflicting wildcard listeners by port before lifecycle mutation while preserving same-PID owned listener handling.",
+      "When an explicit port changes the connector, validate and stop the prior authoritative owned listener before replacing metadata or starting the replacement.",
+      "Prove the existing contract predecessor raw-byte hash chain and change it only if the current validator/cascade demonstrates staleness."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "runtime/plotkeeper-browser-profile/",
+      "any path not explicitly listed under allowed.paths"
+    ],
+    "semantic_changes": [
+      "No unrelated feature, UI, connector allocation, ledger, dependency, release, merge, commit, push, install, restart, deployment, or live-service mutation.",
+      "No lifecycle action may authorize a listener from generic command-line text, HTML, PID alone, or a non-authoritative record.",
+      "No test may stop, kill, replace, or reuse a listener outside a disposable test-owned subprocess."
+    ]
+  },
+  "invariants": [
+    "Guard and server verifier reject empty, whitespace-only, non-string, and RL-NONE release requirement IDs while accepting valid nonempty string IDs.",
+    "Malformed or non-object release pointers fail closed through the existing invalid-input handling without a traceback.",
+    "Foreign wildcard listeners remain alive and same-PID owned listeners retain existing lifecycle behavior.",
+    "Explicit port replacement cannot orphan an authoritative owned listener on the former connector port.",
+    "The predecessor contract hash is raw-byte accurate under the existing contract validator and successor cascade.",
+    "No commit, push, install, restart, deployment, or live-service mutation occurs."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-REVIEW-FINDINGS",
+      "phase": "VALIDATED",
+      "promised_behavior": "All six current CodeRabbit findings are corrected or, where already correct on the exact head, independently proven by the existing validator/cascade.",
+      "forbidden_behavior": "Any unresolved finding, weakened fail-closed behavior, stale contract predecessor hash, or unrelated diff remains.",
+      "target_and_actor": "Plotkeeper v0.1.7 exact PR candidate, local guard/verifier, lifecycle scripts, and disposable regression harness",
+      "required_proof_ids": [
+        "PR-REVIEW-FINDINGS",
+        "PR-SCOPE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-REVIEW-FINDINGS",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-REVIEW-FINDINGS"
+      ],
+      "claim": "Focused regressions prove canonical wording, release authorization ID validation parity, non-object pointer fail-closed handling, wildcard conflict rejection, explicit-port owned-listener replacement, and predecessor hash-chain correctness.",
+      "required_environment": "Protected 7655318 checkout with disposable temporary fixtures only",
+      "command_or_read_only_check": "Focused unittest modules, contract validator/cascade, and GitHub thread inspection",
+      "expected_observation": "All focused tests pass; predecessor raw hash matches; each thread is resolved only after proof."
+    },
+    {
+      "id": "PR-SCOPE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-REVIEW-FINDINGS"
+      ],
+      "claim": "The exact allowed diff is regression-free and no operational mutation occurred.",
+      "required_environment": "Protected 7655318 checkout",
+      "command_or_read_only_check": "PowerShell parser, full unittest suite, py_compile, and git diff --check",
+      "expected_observation": "All commands pass and no forbidden path or operation appears."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-FOLLOWUP",
+      "phase": "MERGE_READY",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-FOLLOWUP",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "No release or deployment is authorized in this bounded review-remediation lane."
+    }
+  ],
+  "stop_conditions": [
+    "Unexpected diff, failed parser/test/diff check, stale predecessor hash, unresolved thread, or any live/installed service mutation.",
+    "Any request to commit, push, install, restart, deploy, or broaden scope without a new append-only contract."
+  ],
+  "known_discrepancies": [
+    "The CodeRabbit predecessor-hash finding was emitted against an older contract snapshot; the exact current head must be checked against the current predecessor raw bytes before deciding whether a value change is necessary.",
+    "CodeRabbit may rate-limit a fresh review; local proof and explicit thread resolution remain separate from an independent production review."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "codex-parent-delegation:plotkeeper-v017-six-review-findings",
+      "acceptance_cases": [
+        "AC-REVIEW-FINDINGS"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-review-remediation.json",
+    "sha256": "7aff20a7f076069c68fd04093e5c95d4c82068533aa2ef8dfc325fd7cc739418"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "id": "PROD-20260813-plotkeeper-plan-reconstruction",
+  "status": "ACTIVE",
+  "contract_hash": "3d23eda125b652a9f33c727945358753c97d1eec34621e6fa47d5443c023b4d1",
+  "origin": "DIRECT",
+  "user_goal": "Let a fallback Plotkeeper run ask its exact Codex task to reconstruct and verify the original SpecSwarm task surface without guessing artifacts.",
+  "authority": {
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-plan-reconstruction",
+    "original_request_hash": "6876a2ad29525f01832c9f249c28940c69cf967a0cd9eb61324de86109154b17",
+    "verbatim_text": "Authorized Plotkeeper change: Let a fallback Plotkeeper run ask its exact Codex task to reconstruct and verify the original SpecSwarm task surface without guessing artifacts.",
+    "captured_at_utc": "2026-08-13T21:45:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-plan-reconstruction-authority"
+  },
+  "baseline": {
+    "protected_ref": "canonical-title/task/isolated-window candidate",
+    "sha": "a6db3162fd90cde039c112cab11ce023a2c78845",
+    "retrieved_at_utc": "2026-08-13T21:45:00Z",
+    "protection_evidence": "clean single main worktree and live MoonMarket proof",
+    "selection_reason": "Append the explicitly authorized recovery control without widening title, task, or browser behavior."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/service.py",
+      "plotkeeper/web/index.html",
+      "plotkeeper/web/app.js",
+      "plotkeeper/web/styles.css",
+      "tests/test_backend.py",
+      "tests/test_web_static.py",
+      "README.md",
+      "docs/USAGE.md",
+      "docs/TROUBLESHOOTING.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-plan-reconstruction.json"
+    ],
+    "resources": [
+      "exact enrolled Codex root task",
+      "read-only original task transcript and repository artifacts",
+      "Plotkeeper sync-plan API via resumed agent"
+    ],
+    "semantic_changes": [
+      "Expose recovery only when the API is serving a thread-level fallback task.",
+      "Resume the exact enrolled root task at run.cwd with instructions to identify original locked SpecSwarm artifacts, sync them, verify rows and contract, and report corrections."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/sessions.py",
+      ".github/**",
+      "runtime/plotkeeper.sqlite3",
+      "pyproject.toml"
+    ],
+    "semantic_changes": [
+      "No filename-based artifact guessing, direct Codex state writes, automatic injection merely from page load, wrong-session resume, cwd fallback, fabricated tasks, release, push, or publication."
+    ]
+  },
+  "invariants": [
+    "Recovery is explicit and idempotently queued once per run.",
+    "Runs with real synchronized tasks do not expose recovery.",
+    "Closed, missing, or invalid-cwd runs fail closed.",
+    "The exact root session and enrolled cwd are used.",
+    "The resumed agent must verify artifacts and resulting rows rather than accepting filename matches."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-REPAIR",
+      "phase": "VALIDATED",
+      "promised_behavior": "A fallback run offers one recovery action that resumes its exact Codex task at the enrolled repository and requests evidence-backed reconstruction/sync/verification.",
+      "forbidden_behavior": "Guessing artifacts, repeated injection, wrong task/cwd, or exposing repair for a synchronized run.",
+      "target_and_actor": "Plotkeeper user and enrolled Codex root task",
+      "required_proof_ids": [
+        "PR-REPAIR"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-REPAIR",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-REPAIR"
+      ],
+      "claim": "Regression captures exact resume ID, cwd, prompt obligations, idempotence, state guards, and UI availability; full tests and live MoonMarket button are green.",
+      "required_environment": "unit runner plus installed live Plotkeeper",
+      "command_or_read_only_check": "focused endpoint tests, full suite, browser QA",
+      "expected_observation": "one exact queued repair; synchronized/missing/closed/invalid runs reject or hide it"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-REPAIR",
+      "phase": "VALIDATED",
+      "required_role": "independent lifecycle, identity, and UX reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-REPAIR",
+      "phase": "VALIDATED",
+      "required_receipt": "validated local installed behavior only; publication requires separate authority"
+    }
+  ],
+  "stop_conditions": [
+    "Wrong resume identity/cwd, guessed artifacts, repeated injection, missing full proof, unexpected diff, or independent non-PASS."
+  ],
+  "known_discrepancies": [
+    "The MoonMarket run is enrolled but has no persisted task rows or synced goal contract."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User-authorized agent-assisted reconstruction and verification",
+      "acceptance_cases": [
+        "AC-REPAIR"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-canonical-title-task-popout.json",
+    "sha256": "d2f149618acc14fb92270c2ef5435f0a720cae5e089d4a1e691d4b3892bf4c7d"
+  }
+}

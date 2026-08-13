@@ -50,8 +50,9 @@ authorize it—the production goal-contract workflow owns that decision.
 Health and data endpoints:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:47831/health
-Invoke-RestMethod http://127.0.0.1:47831/api/runs
+$connector = Get-Content .\runtime\plotkeeper-connector.json -Raw | ConvertFrom-Json
+Invoke-RestMethod "$($connector.url)/health"
+Invoke-RestMethod "$($connector.url)/api/runs"
 ```
 
 ## Stop behavior
@@ -60,3 +61,10 @@ The foreground server stops with `Ctrl+C`. The current installer starts a
 hidden process but does not install a Windows service. To stop that instance,
 identify the process whose command line includes `plotkeeper.cli serve` using
 normal Windows process tools, then stop that exact process.
+### Pop out and task identity
+
+**Pop out** launches the exact run/session URL in a standalone Chromium app window with Plotkeeper's own local profile. The profile contains no Plotkeeper run authority and is ignored by Git. Codex task names come from the local task index; prompt previews are only a compatibility fallback when no explicit task name exists.
+
+An active run with no synchronized checklist displays one `Codex task` fallback row using that exact task name. This means “active” never renders as a mysterious empty board, while still avoiding invented subtasks. Run `sync-plan` to replace the fallback with the locked checklist's real tasks.
+
+Use **Reconstruct plan** when the original sync was missed. Plotkeeper resumes the exact enrolled task at its recorded repository and requests evidence-backed recovery of that task's locked SpecSwarm artifacts. The action is offered only for a fallback run and is queued at most once.

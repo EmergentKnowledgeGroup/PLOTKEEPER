@@ -1,0 +1,227 @@
+{
+  "id": "PROD-20260813-plotkeeper-v017-pr-release",
+  "status": "ACTIVE",
+  "contract_hash": "e8cfeb1da78be0710b3e6d0bbe608a974ace3ea5f13412456ed0702337b619cd",
+  "origin": "DIRECT",
+  "user_goal": "Publish the validated Plotkeeper UI, identity, connector, isolated-window, fallback-task, and reconstruction slice through a CodeRabbit-reviewed PR, merge only when green, then release and attest it.",
+  "authority": {
+    "original_request_ref": "github-pr-authority:v0.1.7-release-request",
+    "original_request_hash": "c28af2d30444bb5a9494af39816143a4b9ff08379c659c202e8f112b3fac3cbc",
+    "verbatim_text": "Open a pull request for the validated Plotkeeper slice, require CodeRabbit and CI review before merge, update affected documentation and release notes, then merge, publish a release, and verify the result.",
+    "captured_at_utc": "2026-08-13T22:05:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:original-v0.1.7-release-authority"
+  },
+  "baseline": {
+    "protected_ref": "public main and v0.1.6",
+    "sha": "73c89e7d402a0c498207e07299685ac729ecfde7",
+    "retrieved_at_utc": "2026-08-13T22:05:00Z",
+    "protection_evidence": "origin/main fetched and exact public v0.1.6 baseline previously attested",
+    "selection_reason": "The requested release publishes the seven validated commits currently ahead of the public baseline."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "CHANGELOG.md",
+      ".gitignore",
+      ".gitattributes",
+      "README.md",
+      "docs/",
+      "integrations/codex/",
+      "pyproject.toml",
+      "plotkeeper/__init__.py",
+      "plotkeeper/",
+      "tests/",
+      "scripts/",
+      ".github/workflows/",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json"
+    ],
+    "resources": [
+      "feature branch",
+      "GitHub pull request",
+      "CodeRabbit review comments",
+      "GitHub Actions",
+      "main branch",
+      "v0.1.7 tag and GitHub release",
+      "GitHub deploy receipt variable and review secret name",
+      "owned local Plotkeeper installation and listener"
+    ],
+    "semantic_changes": [
+      "Publish only the already validated slice plus review-required corrections.",
+      "Update version, changelog, release notes, installation and usage documentation to v0.1.7 truth.",
+      "Open a PR without merging, resolve every actionable CodeRabbit/CI item, obtain independent phase receipts, merge non-interactively, tag/release, install, and attest exact live behavior."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "runtime/plotkeeper-browser-profile/",
+      "user project repositories and data"
+    ],
+    "semantic_changes": [
+      "No unrelated product feature, ledger history rewrite, user-project mutation, secret exposure, force push, merge before CodeRabbit/CI green, release before DEPLOY_READY PASS, or success claim without public/install/live attestation."
+    ]
+  },
+  "invariants": [
+    "The exact seven-commit slice remains behaviorally intact unless a verified review finding requires correction.",
+    "All CodeRabbit comments and generated walkthroughs are read and reconciled with the diff.",
+    "PR remains open until review and CI are green and final docs/version changes are rechecked.",
+    "Every changed file is contract-authorized and frontend shared surfaces receive real browser verification.",
+    "Release tag, GitHub release, public main, installed package, and live listener resolve to the same candidate.",
+    "Rollback remains documented to the protected v0.1.6 baseline.",
+    "No secrets or personal/runtime data enter Git."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-VALIDATE",
+      "phase": "VALIDATED",
+      "promised_behavior": "The exact candidate, cumulative scope, contracts, tests, and review evidence are independently validated before merge readiness.",
+      "forbidden_behavior": "Advancing an unvalidated candidate or omitting cumulative scope and contract-chain checks.",
+      "target_and_actor": "Exact Plotkeeper candidate and independent production reviewer",
+      "required_proof_ids": [
+        "PR-VALIDATE"
+      ]
+    },
+    {
+      "id": "AC-PR",
+      "phase": "MERGE_READY",
+      "promised_behavior": "A PR to main contains the exact reviewed slice, CodeRabbit feedback is fully triaged/resolved, and required CI is green.",
+      "forbidden_behavior": "Merging early, ignoring walkthrough contradictions, or leaving actionable/nit feedback unresolved.",
+      "target_and_actor": "GitHub PR, CodeRabbit, CI, and maintainer",
+      "required_proof_ids": [
+        "PR-PR"
+      ]
+    },
+    {
+      "id": "AC-RELEASE",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "Final docs, changelog, version, rollback, tests, and release artifacts are internally consistent and independently approved for merge/release.",
+      "forbidden_behavior": "Stale docs/version/workflow pointer or unreviewed post-review delta.",
+      "target_and_actor": "Plotkeeper source and release pipeline",
+      "required_proof_ids": [
+        "PR-RELEASE"
+      ]
+    },
+    {
+      "id": "AC-LIVE",
+      "phase": "ATTESTED",
+      "promised_behavior": "Public main, v0.1.7 tag/release, Actions, installed package, connector, isolated pop-out, title/task/reconstruction UI, and rollback evidence match the approved candidate.",
+      "forbidden_behavior": "Artifact drift, failed live behavior, stale install, or unverifiable deployment receipt.",
+      "target_and_actor": "GitHub public repository and installed local Plotkeeper user",
+      "required_proof_ids": [
+        "PR-LIVE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-VALIDATE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-VALIDATE"
+      ],
+      "claim": "Independent exact-candidate validation proves cumulative scope, contract chain, tests, and review evidence before release progression.",
+      "required_environment": "clean exact candidate checkout",
+      "command_or_read_only_check": "production-goal-review cumulative diff, contract validation, full tests, and adversarial evidence",
+      "expected_observation": "VALIDATED PASS with exact candidate binding and zero open items"
+    },
+    {
+      "id": "PR-PR",
+      "phase": "MERGE_READY",
+      "acceptance_case_ids": [
+        "AC-PR"
+      ],
+      "claim": "Raw PR metadata, every review thread/comment/walkthrough, and exact-SHA checks prove merge readiness.",
+      "required_environment": "GitHub PR and Actions",
+      "command_or_read_only_check": "gh PR/check/review/comment inspection plus local exact suite",
+      "expected_observation": "zero unresolved actionable feedback and all required checks success"
+    },
+    {
+      "id": "PR-RELEASE",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-RELEASE"
+      ],
+      "claim": "Independent review, full suite, browser QA, diff/scope, version/docs/changelog/rollback, and signed release verifier prove deploy readiness.",
+      "required_environment": "clean exact candidate checkout and live local pre-release service",
+      "command_or_read_only_check": "production-goal-review plus repository verifier/guard",
+      "expected_observation": "phase-matched PASS with zero open items"
+    },
+    {
+      "id": "PR-LIVE",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-LIVE"
+      ],
+      "claim": "Public SHA/tag/release/Actions and installed/live behavior are exact and independently attested.",
+      "required_environment": "GitHub public repository and installed owned service",
+      "command_or_read_only_check": "raw GitHub/API/Actions, package/source parity, health/UI/browser/process, rollback checks",
+      "expected_observation": "one exact candidate everywhere and all promised live paths green"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-CR",
+      "phase": "MERGE_READY",
+      "required_role": "CodeRabbit plus independent production reviewer"
+    },
+    {
+      "id": "RR-DEPLOY",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent release reviewer"
+    },
+    {
+      "id": "RR-LIVE",
+      "phase": "ATTESTED",
+      "required_role": "independent public/install/live attestor"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-PR",
+      "phase": "MERGE_READY",
+      "required_receipt": "open PR, CodeRabbit review, and exact-SHA CI success"
+    },
+    {
+      "id": "RL-DEPLOY",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "signed VALIDATED to MERGE_READY to DEPLOY_READY bundle accepted by verifier and trusted guard"
+    },
+    {
+      "id": "RL-LIVE",
+      "phase": "ATTESTED",
+      "required_receipt": "signed ATTESTED and CLOSED receipts after public/install/live proof"
+    }
+  ],
+  "stop_conditions": [
+    "Confidence at or below 95 percent, dirty or multi-worktree state, unexpected diff, unresolved CodeRabbit/CI finding, phase receipt non-PASS, GitHub SHA mismatch, install/live failure, secret/runtime-data exposure, or rollback failure."
+  ],
+  "known_discrepancies": [
+    "Local main is seven commits ahead of origin/main and already includes user-authorized local installation; it is not yet public.",
+    "The MoonMarket reconstruction request is queued but reconstructed rows are not part of this release claim."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User-authorized CodeRabbit-reviewed PR, conditional merge, release, and check-in",
+      "acceptance_cases": [
+        "AC-PR",
+        "AC-RELEASE",
+        "AC-LIVE"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-plan-reconstruction.json",
+    "sha256": "7b07f64646bf5f05c50d9d69f834f6ae21c485d85d07441efe053c7d5e1486c8"
+  }
+}

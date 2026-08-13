@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.7 - 2026-08-13
+
+- Group active runs by project in a viewport-bounded accessible picker and keep
+  Run Detail below the execution board at every supported width.
+- Use Codex's explicit task title as the run label, with one truthful fallback
+  task when a legacy active run has not synchronized its SpecSwarm checklist.
+- Add evidence-gated plan reconstruction that resumes the exact enrolled Codex
+  task from its own repository, avoids duplicate requests, preserves retries
+  after immediate launch failure, and reaps asynchronous child processes.
+- Open the exact run/session surface in an isolated Chromium app window with a
+  dedicated local profile, while retaining a default-browser fallback.
+- Persist one dynamically selected private loopback connector, create it
+  atomically across processes, reject unsupported filesystems and foreign
+  listeners without takeover, and keep connector/profile locations independent
+  from custom ledger paths.
+- Harden connector parsing, accessibility, responsive CSS, static regression
+  coverage, and release-contract privacy/path validation following CodeRabbit
+  review.
+
 ## 0.1.6 - 2026-08-12
 
 - Validate closeout receipts atomically at the ledger boundary so direct callers

@@ -1,0 +1,149 @@
+{
+  "id": "PROD-20260813-plotkeeper-popout-private-connector-final",
+  "status": "ACTIVE",
+  "contract_hash": "5060b3d91097c01e64b2f5e47d530c0c2728ce7a8b131ac0379035b71f18cd22",
+  "origin": "DIRECT",
+  "user_goal": "Complete the authorized browser pop-out and persistent private connector while keeping its generated machine-local record out of Git.",
+  "authority": {
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-private-connector-final",
+    "original_request_hash": "b765d12de14e61e807d17e965997963e59bf3504d95049b924f595a5dab0b7fc",
+    "verbatim_text": "Authorized Plotkeeper change: Complete the authorized browser pop-out and persistent private connector while keeping its generated machine-local record out of Git.",
+    "captured_at_utc": "2026-08-13T20:35:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-private-connector-final-authority"
+  },
+  "baseline": {
+    "protected_ref": "validated responsive-picker candidate before connector implementation",
+    "sha": "58f3dee2bdca8109be78e26bf245275787ddf453",
+    "retrieved_at_utc": "2026-08-13T20:35:00Z",
+    "protection_evidence": "clean single main worktree at parent contract activation",
+    "selection_reason": "Preserves the exact preimplementation baseline while adding only the generated-state ignore path omitted from the parent contract."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".gitignore",
+      "plotkeeper/connector.py",
+      "plotkeeper/cli.py",
+      "plotkeeper/service.py",
+      "plotkeeper/web/index.html",
+      "plotkeeper/web/styles.css",
+      "plotkeeper/web/app.js",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      "scripts/pk.ps1",
+      "integrations/codex/install.py",
+      "integrations/codex/bundled/skills/specswarm/SKILL.md",
+      "tests/test_backend.py",
+      "tests/test_codex_integration.py",
+      "tests/test_repository_docs.py",
+      "tests/test_web_static.py",
+      "README.md",
+      "docs/INSTALLATION.md",
+      "docs/USAGE.md",
+      "docs/TROUBLESHOOTING.md",
+      "docs/ARCHITECTURE.md",
+      "docs/INTEGRATION.md",
+      "integrations/codex/README.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector-final.json"
+    ],
+    "resources": [
+      "machine-local runtime/plotkeeper-connector.json",
+      "HKCU Plotkeeper startup registration",
+      "installed Codex Plotkeeper configuration",
+      "owned loopback listener",
+      "Windows default browser"
+    ],
+    "semantic_changes": [
+      "Implement the parent contract's exact pop-out, private connector, lifecycle, ownership, origin, and parity behavior.",
+      "Ignore only runtime/plotkeeper-connector.json so generated machine-local connector state never enters source control."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "plotkeeper/sessions.py",
+      "integrations/codex/bundled/upstream/**",
+      "integrations/codex/plugins/**",
+      ".github/**",
+      "runtime/plotkeeper.sqlite3",
+      "pyproject.toml",
+      "plotkeeper/__init__.py"
+    ],
+    "semantic_changes": [
+      "No non-loopback bind, arbitrary URL launch, foreign-process termination, fixed replacement port, run/ledger behavior change, broad ignore rule, release, version bump, or publication."
+    ]
+  },
+  "invariants": [
+    "Every parent-contract invariant remains binding.",
+    "The ignore addition names only the generated connector record and hides no source, evidence, ledger, contract, or checkpoint file.",
+    "One connector remains stable across install/reinstall and every automatic entry point uses it."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-FINAL",
+      "phase": "VALIDATED",
+      "promised_behavior": "The exact run-bound surface pops into the Windows default browser and one persisted high private loopback connector is used safely everywhere without dirtying Git.",
+      "forbidden_behavior": "Any parent-contract failure, connector-state commit, broad ignore, fixed-port collision, foreign takeover, URL injection, or entry-point disagreement.",
+      "target_and_actor": "Plotkeeper users, installer, startup, CLI, SpecSwarm, Codex sidebar, local service, and source repository.",
+      "required_proof_ids": [
+        "PR-FINAL"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-FINAL",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-FINAL"
+      ],
+      "claim": "Real browser, isolated lifecycle, foreign-listener, origin/path attack, connector parity, Git-ignore, full-suite, and live-installed checks prove the complete behavior.",
+      "required_environment": "isolated Z-drive installation plus installed local Plotkeeper and real browser",
+      "command_or_read_only_check": "parent proof commands plus git check-ignore and exact diff audit",
+      "expected_observation": "all parent acceptance behavior passes, generated connector is ignored, and no unrelated file or process changes"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-FINAL",
+      "phase": "VALIDATED",
+      "required_role": "independent security, lifecycle, UI, and scope reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-FINAL",
+      "phase": "VALIDATED",
+      "required_receipt": "validated local installed behavior only; publication requires a separate release contract"
+    }
+  ],
+  "stop_conditions": [
+    "Any parent stop condition, broad ignore match, connector record tracked/unignored, failed exact-diff review, or missing independent PASS."
+  ],
+  "known_discrepancies": [
+    "The parent sealed contract omitted .gitignore even though its required generated runtime/plotkeeper-connector.json record must remain machine-local."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User-authorized external pop-out and non-colliding obscure connector",
+      "acceptance_cases": [
+        "AC-FINAL"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector.json",
+    "sha256": "87a032036101589c170fbecf8d3b23b25847ccff101a7f189aaa571dc93f3525"
+  }
+}

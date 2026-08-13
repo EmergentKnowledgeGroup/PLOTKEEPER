@@ -13,6 +13,7 @@ from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
 from .ledger import Ledger
+from .browser_launcher import IsolatedBrowserLauncher
 from .models import RunState, SessionObservation
 from .sessions import SessionScanner, ThreadCatalog
 
@@ -22,17 +23,24 @@ class PlotkeeperService:
                  sessions_root: str | os.PathLike[str] = Path.home() / ".codex" / "sessions",
                  dashboard_url: str = "http://127.0.0.1:47831",
                  codex_state_path: str | os.PathLike[str] | None = None,
-                 thread_catalog: ThreadCatalog | None = None):
+                 session_index_path: str | os.PathLike[str] | None = None,
+                 thread_catalog: ThreadCatalog | None = None,
+                 browser_opener: Callable[..., bool] | None = None,
+                 profile_root: str | os.PathLike[str] | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
+        repo_root = Path(profile_root).resolve() if profile_root is not None else Path(ledger_path).resolve().parent.parent
+        self.browser_opener = browser_opener or IsolatedBrowserLauncher(repo_root / "runtime" / "plotkeeper-browser-profile")
         self.scanner = SessionScanner(sessions_root, self.ledger.watermark, self.ledger.set_watermark)
-        self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root)
+        self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root, session_index_path)
         self._session_identity: dict[str, dict[str, Any]] = {}
         if self.ledger.get_meta("activation_at") is None:
             self.ledger.set_meta("activation_at", self._now())
             self.scanner.initialize()
         self._events: list[dict[str, Any]] = []
         self._event_lock = threading.Lock()
+        self._repair_lock = threading.Lock()
+        self._repair_inflight: set[str] = set()
         self._stop = threading.Event()
 
     @staticmethod
@@ -167,7 +175,27 @@ class PlotkeeperService:
         catalog = self.thread_catalog.metadata(bound_session_id)
         if catalog and catalog.get("thread_source"):
             payload["thread_source"] = str(catalog["thread_source"])
+        if not self.ledger.tasks(run.run_id):
+            payload["current_task_id"] = "THREAD"
         return payload
+
+    def _tasks_payload(self, run) -> list[dict[str, Any]]:
+        tasks = self.ledger.tasks(run.run_id)
+        if tasks:
+            return tasks
+        identity = self._identity(run)
+        return [{
+            "task_id": "THREAD",
+            "title": str(identity.get("task_label") or identity.get("task_id") or run.root_session_id),
+            "status": "review_pending" if run.state == RunState.REVIEW_PENDING else "working",
+            "owner": "Codex root task",
+            "parent_task_id": None,
+            "workstream": "Codex task",
+            "source": "codex:thread-title",
+            "purpose": "Current Codex task; no synchronized SpecSwarm checklist is attached.",
+            "summary": "Thread-level fallback only. Sync the locked checklist to show its real workstreams.",
+            "ordinal": 0,
+        }]
 
     def _interactive_runs(self) -> list[Any]:
         runs: list[Any] = []
@@ -283,6 +311,49 @@ class PlotkeeperService:
     def _run_codex(args: list[str], *, cwd: str):
         return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
 
+    @staticmethod
+    def _spawn_codex(args: list[str], *, cwd: str):
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        return subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                creationflags=flags, close_fds=True)
+
+    @staticmethod
+    def _daemon_reap(result: Any) -> None:
+        try:
+            result.wait()
+        except (OSError, ValueError, subprocess.SubprocessError):
+            pass
+
+    @staticmethod
+    def _runner_returncode(result: Any) -> int | None:
+        """Observe and reap an immediately failed child without blocking."""
+        if isinstance(result, int):
+            return result
+        code = getattr(result, "returncode", 0)
+        if code is None:
+            poll = getattr(result, "poll", None)
+            if callable(poll):
+                code = poll()
+        if code is None:
+            wait = getattr(result, "wait", None)
+            if callable(wait):
+                threading.Thread(
+                    target=PlotkeeperService._daemon_reap,
+                    args=(result,),
+                    daemon=True,
+                    name="plotkeeper-codex-reaper",
+                ).start()
+            return None
+        if code not in (0, None):
+            wait = getattr(result, "wait", None)
+            if callable(wait):
+                try:
+                    wait(timeout=0)
+                except (OSError, TimeoutError, TypeError, subprocess.TimeoutExpired):
+                    pass
+        return code
+
     def review_prompt(self, run_id: str) -> str:
         contract = self.ledger.goal_contract(run_id)
         contract_ref = (f"contract {contract['contract_id']} at {contract['path']}" if contract else
@@ -339,6 +410,46 @@ class PlotkeeperService:
             return {"ok": True, "already_requested": True}
         self.ledger.add_report(run_id, "check-in-request", "Human requested: complete the current objective, report status, and end the turn.")
         return {"ok": True, "queued": True}
+
+    def reconstruct_plan(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
+        """Ask the exact root task to recover its own SpecSwarm artifacts."""
+        with self._repair_lock:
+            run = self.ledger.get(run_id)
+            if not run or run.state == RunState.CLOSED:
+                return {"ok": False, "error": "run_closed_or_missing"}
+            if self.ledger.tasks(run_id):
+                return {"ok": False, "error": "plan_already_synced"}
+            if self.ledger.has_report_kind(run_id, "plan-repair-injected"):
+                return {"ok": True, "already_requested": True}
+            if run_id in self._repair_inflight:
+                return {"ok": True, "already_requested": True}
+            run_cwd = self._validated_run_cwd(run.cwd)
+            if run_cwd is None:
+                return {"ok": False, "error": "run_cwd_invalid"}
+            prompt = (
+                f"PLOTKEEPER PLAN RECONSTRUCTION for run {run_id}. Recover this exact task's original SpecSwarm "
+                "locked spec, execution checklist, blockerboard, and production goal contract from this task's "
+                "own conversation history and repository evidence. Do not guess by filename and do not use artifacts "
+                "from another phase or task. Verify artifact identity and hashes where available, then run the installed "
+                "Plotkeeper sync-plan command for this exact run with the verified files and contract. Read back the "
+                "Plotkeeper task rows and goal contract, correct any mapping errors, and report the exact files, counts, "
+                "and verification evidence to the user. Do not implement unrelated application code."
+            )
+            args = ["codex.exe", "exec", "resume", run.root_session_id, prompt, "--json", "--skip-git-repo-check"]
+            runner = runner or self._spawn_codex
+            self._repair_inflight.add(run_id)
+        try:
+            result = runner(args, cwd=str(run_cwd))
+            code = self._runner_returncode(result)
+            if code not in (0, None):
+                return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
+            self.ledger.add_report(run_id, "plan-repair-injected", "Exact root task was asked to reconstruct, sync, and verify its original SpecSwarm task surface.")
+            return {"ok": True, "queued": True, "run_id": run_id}
+        except Exception as exc:
+            return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
+        finally:
+            with self._repair_lock:
+                self._repair_inflight.discard(run_id)
 
     def inject_check_in(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -465,7 +576,12 @@ class PlotkeeperService:
                         return
                     raw = target.read_bytes()
                     content_type = "text/html; charset=utf-8" if target.suffix == ".html" else ("text/css; charset=utf-8" if target.suffix == ".css" else "text/javascript; charset=utf-8")
-                    self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
                 elif parsed.path == "/api/runs":
                     # Interactive inventory is intentionally active-only. The
                     # ledger remains the source of historical detail, but
@@ -493,7 +609,7 @@ class PlotkeeperService:
                         sessions.extend({"session_id": sid, "status": "observed", "task_id": sid,
                                          "task_label": sid} for sid in run.children)
                         events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"], "evidence": json.loads(item["evidence"] or "[]")} for item in reports]
-                        self._json({"run": service._run_payload(run), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
+                        self._json({"run": service._run_payload(run), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service._tasks_payload(run), "events": events, "sessions": sessions})
                     elif run and run.state == RunState.CLOSED:
                         self._json({"error": "run_closed"}, 410)
                     else:
@@ -517,6 +633,21 @@ class PlotkeeperService:
             def _do_POST(self) -> None:
                 parsed = urlparse(self.path)
                 body = self._body()
+                if parsed.path == "/api/open-browser":
+                    host = self.headers.get("Host", "")
+                    origin = self.headers.get("Origin")
+                    if not re.fullmatch(r"127\.0\.0\.1:\d+", host) or (origin and origin != f"http://{host}"):
+                        self._json({"ok": False, "error": "untrusted_origin"}, HTTPStatus.FORBIDDEN)
+                        return
+                    relative = str(body.get("path", ""))
+                    target = urlparse(relative)
+                    if target.scheme or target.netloc or target.path not in {"/", "/dashboard"} or not relative.startswith("/"):
+                        self._json({"ok": False, "error": "invalid_dashboard_path"}, HTTPStatus.BAD_REQUEST)
+                        return
+                    url = f"http://{host}{relative}"
+                    opened = bool(service.browser_opener(url, new=1))
+                    self._json({"ok": opened, "url": url} if opened else {"ok": False, "error": "browser_launch_failed"}, 200 if opened else 502)
+                    return
                 if parsed.path == "/api/poll":
                     self._json({"events": service.poll_once()})
                     return
@@ -529,6 +660,9 @@ class PlotkeeperService:
                     self._json(service.report(parts[2], str(body.get("kind", "report")), str(body.get("text", "")), evidence=body.get("evidence", [])), 200)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "check-in":
                     self._json(service.request_check_in(parts[2]), 200)
+                elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "reconstruct-plan":
+                    result = service.reconstruct_plan(parts[2])
+                    self._json(result, 200 if result.get("ok") else 409)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "receipt":
                     self._json(service.record_review_receipt(parts[2], body), 200)
                 else:

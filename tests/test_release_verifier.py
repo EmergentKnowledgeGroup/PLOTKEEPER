@@ -1,5 +1,8 @@
 import copy
 import importlib.util
+import json
+import os
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,6 +14,22 @@ SPEC.loader.exec_module(VERIFIER)
 
 
 class ReleaseVerifierTests(unittest.TestCase):
+    def test_release_authorization_and_pointer_shape_fail_closed(self):
+        for value in (None, "", "   ", 1, "RL-NONE", " RL-NONE ", " RL-DEPLOY"):
+            self.assertFalse(VERIFIER._release_authorized({"release_requirements": [{"id": value, "phase": "DEPLOY_READY"}]}))
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pointer = root / "pointer.json"
+            pointer.write_text("[]", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "JSON object"):
+                VERIFIER.designated_release_contract(root, "pointer.json")
+
+    def test_repository_release_pointer_matches_live_designated_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        pointer = json.loads((root / "runtime/goal-contracts/RELEASE_CONTRACT.json").read_text(encoding="utf-8"))
+        contract = json.loads((root / pointer["contract_path"]).read_text(encoding="utf-8"))
+        self.assertEqual(pointer["contract_sha256"], VERIFIER.canonical_json_hash(contract))
+
     candidate = "a" * 40
     diff_hash = "d" * 64
     review_key = "test-review-key"
@@ -217,6 +236,101 @@ class ReleaseVerifierTests(unittest.TestCase):
             for item in (validated, merge, deploy)
         }
         self.assertEqual(self.verify(contract, bundle), [])
+
+    def test_designated_pointer_is_stable_when_newer_nonrelease_contract_exists(self):
+        base = Path(__file__).parents[1] / "runtime" / "qa"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as folder:
+            root = Path(folder)
+            contracts = root / "runtime" / "goal-contracts"
+            contracts.mkdir(parents=True)
+            release = contracts / "release.json"
+            release.write_text(json.dumps({
+                "id": "release",
+                "status": "ACTIVE",
+                "contract_hash": "abc",
+                "release_requirements": [{"id": "RL-DEPLOY", "phase": "DEPLOY_READY"}],
+            }), encoding="utf-8")
+            successor = contracts / "listener.json"
+            successor.write_text(json.dumps({
+                "id": "listener-ownership",
+                "status": "ACTIVE",
+                "contract_hash": "successor",
+                "release_requirements": [{"id": "RL-NONE", "phase": "DEPLOY_READY"}],
+            }), encoding="utf-8")
+            os.utime(successor, (release.stat().st_atime + 100, release.stat().st_mtime + 100))
+            pointer = {
+                "schema_version": 1,
+                "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
+                "contract_id": "release",
+                "contract_path": "runtime/goal-contracts/release.json",
+                "contract_sha256": VERIFIER.canonical_json_hash(json.loads(release.read_text(encoding="utf-8"))),
+            }
+            (contracts / "RELEASE_CONTRACT.json").write_text(json.dumps(pointer), encoding="utf-8")
+            selected_path, selected = VERIFIER.designated_release_contract(root)
+            self.assertEqual(selected_path, release.resolve())
+            self.assertEqual(selected["id"], "release")
+
+    def test_designated_pointer_rejects_nonrelease_and_tampered_targets(self):
+        base = Path(__file__).parents[1] / "runtime" / "qa"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as folder:
+            root = Path(folder)
+            contracts = root / "runtime" / "goal-contracts"
+            contracts.mkdir(parents=True)
+            target = contracts / "listener.json"
+            target.write_text(json.dumps({
+                "id": "listener-ownership",
+                "status": "ACTIVE",
+                "contract_hash": "successor",
+                "release_requirements": [{"id": "RL-NONE", "phase": "DEPLOY_READY"}],
+            }), encoding="utf-8")
+            pointer = {
+                "schema_version": 1,
+                "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
+                "contract_id": "listener-ownership",
+                "contract_path": "runtime/goal-contracts/listener.json",
+                "contract_sha256": VERIFIER.canonical_json_hash(json.loads(target.read_text(encoding="utf-8"))),
+            }
+            pointer_path = contracts / "RELEASE_CONTRACT.json"
+            pointer_path.write_text(json.dumps(pointer), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "ACTIVE release contract"):
+                VERIFIER.designated_release_contract(root)
+            pointer["contract_id"] = "release"
+            pointer["contract_sha256"] = "0" * 64
+            pointer_path.write_text(json.dumps(pointer), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                VERIFIER.designated_release_contract(root)
+
+    def test_lf_and_crlf_contract_bytes_have_same_verifier_hash(self):
+        base = Path(__file__).parents[1] / "runtime" / "qa"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as folder:
+            root = Path(folder)
+            contracts = root / "runtime" / "goal-contracts"
+            contracts.mkdir(parents=True)
+            document = {
+                "id": "release",
+                "status": "ACTIVE",
+                "contract_hash": "abc",
+                "release_requirements": [{"id": "RL-DEPLOY", "phase": "DEPLOY_READY"}],
+            }
+            contract_path = contracts / "release.json"
+            text = json.dumps(document, indent=2)
+            pointer = {
+                "schema_version": 1,
+                "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
+                "contract_id": "release",
+                "contract_path": "runtime/goal-contracts/release.json",
+                "contract_sha256": VERIFIER.canonical_json_hash(document),
+            }
+            (contracts / "RELEASE_CONTRACT.json").write_text(json.dumps(pointer), encoding="utf-8")
+            contract_path.write_text(text, encoding="utf-8", newline="\n")
+            lf_path, lf = VERIFIER.designated_release_contract(root)
+            contract_path.write_bytes(text.replace("\n", "\r\n").encode("utf-8"))
+            crlf_path, crlf = VERIFIER.designated_release_contract(root)
+            self.assertEqual(lf_path, crlf_path)
+            self.assertEqual(lf["contract_hash"], crlf["contract_hash"])
 
 
 if __name__ == "__main__":

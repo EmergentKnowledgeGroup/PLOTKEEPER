@@ -268,21 +268,28 @@ class ThreadCatalog:
     TERMINAL_TYPES = {"task_complete", "turn_complete", "turn_aborted"}
 
     def __init__(self, path: str | os.PathLike[str] | None = None,
-                 sessions_root: str | os.PathLike[str] | None = None):
+                 sessions_root: str | os.PathLike[str] | None = None,
+                 session_index_path: str | os.PathLike[str] | None = None):
         self.path = Path(path) if path is not None else Path.home() / ".codex" / "state_5.sqlite"
         self.sessions_root = Path(sessions_root) if sessions_root is not None else Path.home() / ".codex" / "sessions"
+        self.session_index_path = Path(session_index_path) if session_index_path is not None else Path.home() / ".codex" / "session_index.jsonl"
         self._metadata_cache: dict[str, dict[str, Any] | None] = {}
         self._active_cache: dict[str, tuple[int, bool]] = {}
+        self._title_cache: tuple[str, dict[str, str]] | None = None
 
     @property
     def available(self) -> bool:
         return self.path.is_file()
 
     def metadata(self, session_id: str) -> dict[str, Any] | None:
-        if session_id in self._metadata_cache:
-            return self._metadata_cache[session_id]
+        titles = self._thread_titles()
+        cached = self._metadata_cache.get(session_id)
+        if cached is not None:
+            result = dict(cached)
+            result["task_label"] = titles.get(session_id) or self._label(result)
+            self._metadata_cache[session_id] = result
+            return result
         if not self.available:
-            self._metadata_cache[session_id] = None
             return None
         try:
             db = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True)
@@ -307,14 +314,52 @@ class ThreadCatalog:
         except (OSError, sqlite3.Error):
             row = None
         if row is None:
-            result = None
-        else:
-            result = dict(row)
-            result.setdefault("thread_source", None)
-            result["task_label"] = self._label(result)
-            result["project_name"] = self._project_name(result.get("cwd"))
+            title = titles.get(session_id)
+            if not title:
+                return None
+            return {
+                "id": session_id,
+                "title": title,
+                "name": None,
+                "first_user_message": None,
+                "preview": None,
+                "agent_path": None,
+                "cwd": None,
+                "rollout_path": None,
+                "thread_source": None,
+                "task_label": title,
+                "project_name": "Unknown project",
+            }
+        result = dict(row)
+        result.setdefault("thread_source", None)
+        result["task_label"] = titles.get(session_id) or self._label(result)
+        result["project_name"] = self._project_name(result.get("cwd"))
         self._metadata_cache[session_id] = result
         return result
+
+    def _thread_titles(self) -> dict[str, str]:
+        try:
+            contents = self.session_index_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            self._title_cache = None
+            return {}
+        if self._title_cache and self._title_cache[0] == contents:
+            return self._title_cache[1]
+        titles: dict[str, str] = {}
+        try:
+            for line in contents.splitlines():
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                session_id = row.get("id")
+                title = row.get("thread_name")
+                if isinstance(session_id, str) and isinstance(title, str) and title.strip():
+                    titles[session_id] = " ".join(title.split())
+        except OSError:
+            return {}
+        self._title_cache = (contents, titles)
+        return titles
 
     @staticmethod
     def _project_name(cwd: str | None) -> str:

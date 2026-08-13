@@ -84,9 +84,13 @@ Replace `high` with the selected effort. Put `$outFile` under a project-local ig
 SpecSwarm is the sole automatic Plotkeeper enrollment gate. Before launching
 reviewers:
 
-1. Verify `http://127.0.0.1:47831/health` returns healthy. If it does not, stop
+1. Resolve the installed connector with
+   `py -3 "$codexHome\skills\specswarm\scripts\plotkeeper_cli.py" connector`.
+   Require a valid JSON result with `host` exactly `127.0.0.1` and use its
+   returned `url` for every health, dashboard, and panel check. Verify
+   `<url>/health` returns healthy. If it does not, stop
    and report `PLOTKEEPER_UNAVAILABLE`; do not continue an untracked SpecSwarm.
-2. Fetch `http://127.0.0.1:47831/` and require HTTP 200, a non-empty body, an
+2. Fetch `<url>/` and require HTTP 200, a non-empty body, an
    `<html` element, and the exact `data-testid="plotkeeper-app"` dashboard
    marker. If any check fails,
    stop and report `PLOTKEEPER_UNAVAILABLE`; do not open the panel or emit its

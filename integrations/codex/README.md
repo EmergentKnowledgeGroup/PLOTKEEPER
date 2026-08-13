@@ -41,6 +41,10 @@ To make the policy available in every repository, merge
 [`AGENTS.snippet.md`](AGENTS.snippet.md) into your user-level Codex instructions.
 The hooks still enforce the loop when an agent overlooks the prose policy.
 
+SpecSwarm resolves the current connector through Plotkeeper's CLI instead of
+assuming a fixed port, so the sidebar and run-bound dashboard URLs use the same
+persisted loopback origin.
+
 ## Timing behavior
 
 The first task of a kind is an untimed calibration. Its measured result enters
