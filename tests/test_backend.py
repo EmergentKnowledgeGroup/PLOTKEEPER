@@ -37,7 +37,11 @@ class BackendTests(unittest.TestCase):
     def test_popout_opens_only_exact_same_origin_dashboard_path(self):
         with tempfile.TemporaryDirectory() as td:
             opened = []
-            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td, browser_opener=lambda url: opened.append(url) or True)
+            service = PlotkeeperService(
+                ledger_path=Path(td) / "ledger.sqlite",
+                sessions_root=td,
+                browser_opener=lambda url, *, new=0: opened.append((url, new)) or True,
+            )
             server = service.serve("127.0.0.1", 0)
             thread = __import__("threading").Thread(target=server.serve_forever, daemon=True); thread.start()
             origin = f"http://127.0.0.1:{server.server_port}"
@@ -47,7 +51,7 @@ class BackendTests(unittest.TestCase):
                 with urlopen(request, timeout=2) as response:
                     result = json.load(response)
                 self.assertTrue(result["ok"])
-                self.assertEqual(opened, [origin + "/?run_id=exact&session_id=root"])
+                self.assertEqual(opened, [(origin + "/?run_id=exact&session_id=root", 1)])
                 attacks = [
                     ({"path": "https://example.com/"}, origin),
                     ({"path": "/api/runs"}, origin),

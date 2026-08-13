@@ -24,7 +24,7 @@ class PlotkeeperService:
                  dashboard_url: str = "http://127.0.0.1:47831",
                  codex_state_path: str | os.PathLike[str] | None = None,
                  thread_catalog: ThreadCatalog | None = None,
-                 browser_opener: Callable[[str], bool] | None = None):
+                 browser_opener: Callable[..., bool] | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
         self.browser_opener = browser_opener or webbrowser.open
@@ -532,7 +532,7 @@ class PlotkeeperService:
                         self._json({"ok": False, "error": "invalid_dashboard_path"}, HTTPStatus.BAD_REQUEST)
                         return
                     url = f"http://{host}{relative}"
-                    opened = bool(service.browser_opener(url))
+                    opened = bool(service.browser_opener(url, new=1))
                     self._json({"ok": opened, "url": url} if opened else {"ok": False, "error": "browser_launch_failed"}, 200 if opened else 502)
                     return
                 if parsed.path == "/api/poll":
