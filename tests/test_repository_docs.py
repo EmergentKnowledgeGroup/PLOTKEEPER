@@ -60,6 +60,7 @@ class RepositoryDocumentationTests(unittest.TestCase):
         start = (ROOT / "scripts" / "start.ps1").read_text(encoding="utf-8")
         for source in (install, start):
             self.assertIn("Get-NetTCPConnection", source)
+            self.assertNotIn("-LocalAddress 127.0.0.1", source)
             self.assertIn("Get-CimInstance Win32_Process", source)
             self.assertIn("plotkeeper-owner.json", source)
             self.assertIn("command_line_sha256", source)

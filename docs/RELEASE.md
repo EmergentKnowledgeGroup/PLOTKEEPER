@@ -21,7 +21,7 @@ ledger before any executable rollback.
 
 Release authority is selected by the tracked pointer at
 `runtime/goal-contracts/RELEASE_CONTRACT.json`. It names one contract path,
-contract ID, and exact contract-file SHA-256. The host guard and
+contract ID, and SHA-256 of the canonical JSON contract content. The host guard and
 `scripts/verify_public_release.py` both resolve and validate this pointer;
 filesystem mtime and contract filename ordering are never release authority.
 The GitHub workflow passes the same pointer through

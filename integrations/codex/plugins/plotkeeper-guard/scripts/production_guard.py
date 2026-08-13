@@ -63,7 +63,9 @@ def _release_authorized(document: dict) -> bool:
     return isinstance(requirements, list) and any(
         isinstance(item, dict)
         and item.get("phase") == "DEPLOY_READY"
-        and item.get("id") not in {None, "RL-NONE"}
+        and isinstance(item.get("id"), str)
+        and bool(item["id"].strip())
+        and item["id"] != "RL-NONE"
         for item in requirements
     )
 

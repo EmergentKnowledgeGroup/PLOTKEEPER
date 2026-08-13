@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-popout-new-window",
   "status": "ACTIVE",
-  "contract_hash": "943a1c5b14ee23b757039e9b356dc51188fda1ff7b67fc32a13e11fa62727643",
+  "contract_hash": "8ac5e80ca1751f1d657535e06871d5f093a1236564bd69a691ee28c795e53936",
   "origin": "DIRECT",
   "user_goal": "Require Plotkeeper pop-out to request a brand-new Windows default-browser window, not merely another tab.",
   "authority": {
@@ -117,6 +117,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector-final.json",
-    "sha256": "a628fb7240546f721707d24de7c331c69b400c45f49e2ca16cb4b30af4d73fff"
+    "sha256": "0b71a07e5112d48832e460c522ced0e63eeca13737ebbe0eeeda10c42bb37939"
   }
 }

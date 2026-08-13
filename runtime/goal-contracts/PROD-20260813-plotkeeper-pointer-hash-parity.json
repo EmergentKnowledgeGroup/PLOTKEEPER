@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-pointer-hash-parity",
   "status": "ACTIVE",
-  "contract_hash": "fb1cdc6a2caa633e3e6455e8177833198f65c9119376256c0a9e0393590f8e2c",
+  "contract_hash": "421cd5a604216648b4c20fb7a0effc0e6b2ee903647d252839e54090fc6835fc",
   "origin": "DIRECT",
   "user_goal": "Make the tracked Plotkeeper release-contract pointer hash platform-stable across CRLF and LF working trees, with guard and server verifier parity proof, without changing release scope or performing any operational mutation.",
   "authority": {
@@ -169,6 +169,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-release-contract-selection.json",
-    "sha256": "fe1508e27c180843e7fbb9c4d34b7c003f17adecb7d8cde9be99b3c233572287"
+    "sha256": "fc3170e42eefa1d704c9bbda1245a5ec8392af987f651f55a547fab5db57f336"
   }
 }

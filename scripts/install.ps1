@@ -6,7 +6,7 @@ $ownerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-owner.j
 
 function Get-ListenerPid([int]$TargetPort = $Port) {
     try {
-        $connection = Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $TargetPort -ErrorAction SilentlyContinue | Select-Object -First 1
+        $connection = Get-NetTCPConnection -State Listen -LocalPort $TargetPort -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($connection) { return [int]$connection.OwningProcess }
     } catch { }
     return $null
@@ -70,6 +70,11 @@ if ($Port -gt 0) {
     $earlyListener = Get-ListenerPid $Port
     if ($earlyListener -and -not (Test-PlotkeeperOwner $earlyListener $Port)) {
         throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it."
+    }
+    $priorOwner = Read-OwnerRecord
+    if ($priorOwner -and [int]$priorOwner.port -ne $Port) {
+        $priorListener = Get-ListenerPid ([int]$priorOwner.port)
+        if ($priorListener) { Stop-OwnedListener $priorListener ([int]$priorOwner.port) }
     }
 }
 

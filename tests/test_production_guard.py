@@ -14,6 +14,11 @@ SPEC.loader.exec_module(GUARD)
 
 
 class ProductionGuardTests(unittest.TestCase):
+    def test_release_authorization_rejects_placeholder_ids(self):
+        for value in (None, "", "   ", 1, "RL-NONE"):
+            self.assertFalse(GUARD._release_authorized({"release_requirements": [{"id": value, "phase": "DEPLOY_READY"}]}))
+        self.assertTrue(GUARD._release_authorized({"release_requirements": [{"id": "RL-DEPLOY", "phase": "DEPLOY_READY"}]}))
+
     def payload(self, cwd, command):
         return {"cwd": str(cwd), "tool_name": "Bash", "tool_input": {"command": command}}
 

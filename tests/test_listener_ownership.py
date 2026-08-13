@@ -30,7 +30,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_args):
         pass
 
-http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), Handler).serve_forever()
+http.server.ThreadingHTTPServer(("0.0.0.0", int(sys.argv[1])), Handler).serve_forever()
 '''
 
 
@@ -42,7 +42,7 @@ def free_port() -> int:
 
 def listener_pid(port: int) -> int | None:
     command = (
-        "(Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 "
+        "(Get-NetTCPConnection -State Listen "
         f"-LocalPort {port} -ErrorAction SilentlyContinue | Select-Object -First 1).OwningProcess"
     )
     result = subprocess.run(

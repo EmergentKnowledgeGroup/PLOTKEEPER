@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-v017-pr-release",
   "status": "ACTIVE",
-  "contract_hash": "69f45274d32f4765187c8e3e02910a52ec7763e1110fd7cd67415fd60d752646",
+  "contract_hash": "e8cfeb1da78be0710b3e6d0bbe608a974ace3ea5f13412456ed0702337b619cd",
   "origin": "DIRECT",
   "user_goal": "Publish the validated Plotkeeper UI, identity, connector, isolated-window, fallback-task, and reconstruction slice through a CodeRabbit-reviewed PR, merge only when green, then release and attest it.",
   "authority": {
@@ -222,6 +222,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-plan-reconstruction.json",
-    "sha256": "782a4a5590360ad99ef34c0933a3c7eda0cf3a41c8271f3ba107819510a5f65d"
+    "sha256": "7b07f64646bf5f05c50d9d69f834f6ae21c485d85d07441efe053c7d5e1486c8"
   }
 }

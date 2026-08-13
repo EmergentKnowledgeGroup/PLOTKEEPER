@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-popout-private-connector-final",
   "status": "ACTIVE",
-  "contract_hash": "608b4364a997a9ae45d254bdd71e6fc0fe20d145aa735418fe031a7ea9063e58",
+  "contract_hash": "5060b3d91097c01e64b2f5e47d530c0c2728ce7a8b131ac0379035b71f18cd22",
   "origin": "DIRECT",
   "user_goal": "Complete the authorized browser pop-out and persistent private connector while keeping its generated machine-local record out of Git.",
   "authority": {
@@ -144,6 +144,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-private-connector.json",
-    "sha256": "98099e0b54b2a177d4b9c498ef015c8a2d9e681ba86b14de9a2f1372f8bc2ba8"
+    "sha256": "87a032036101589c170fbecf8d3b23b25847ccff101a7f189aaa571dc93f3525"
   }
 }

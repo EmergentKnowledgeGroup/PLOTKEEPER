@@ -14,6 +14,16 @@ SPEC.loader.exec_module(VERIFIER)
 
 
 class ReleaseVerifierTests(unittest.TestCase):
+    def test_release_authorization_and_pointer_shape_fail_closed(self):
+        for value in (None, "", "   ", 1, "RL-NONE"):
+            self.assertFalse(VERIFIER._release_authorized({"release_requirements": [{"id": value, "phase": "DEPLOY_READY"}]}))
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pointer = root / "pointer.json"
+            pointer.write_text("[]", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "JSON object"):
+                VERIFIER.designated_release_contract(root, "pointer.json")
+
     def test_repository_release_pointer_matches_live_designated_contract(self):
         root = Path(__file__).resolve().parents[1]
         pointer = json.loads((root / "runtime/goal-contracts/RELEASE_CONTRACT.json").read_text(encoding="utf-8"))

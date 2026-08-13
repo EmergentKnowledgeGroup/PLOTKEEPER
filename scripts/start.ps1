@@ -19,9 +19,9 @@ if ($Port -le 0) {
     $Port = [int]$connector.port
 }
 
-function Get-ListenerPid {
+function Get-ListenerPid([int]$TargetPort = $Port) {
     try {
-        $connection = Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -First 1
+        $connection = Get-NetTCPConnection -State Listen -LocalPort $TargetPort -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($connection) { return [int]$connection.OwningProcess }
     } catch { }
     return $null
@@ -49,11 +49,11 @@ function Read-OwnerRecord {
     try { return Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json } catch { return $null }
 }
 
-function Test-PlotkeeperOwner([int]$ListenerProcessId) {
+function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port) {
     $record = Read-OwnerRecord
     $identity = Get-ProcessIdentity $ListenerProcessId
     if (-not $record -or -not $identity) { return $false }
-    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $Port) { return $false }
+    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
     if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
     if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
     if ([string]$identity.CreationDate -ne [string]$record.creation_time) { return $false }
@@ -68,14 +68,14 @@ function Remove-OwnerRecord([int]$ListenerProcessId) {
     }
 }
 
-function Stop-OwnedListener([int]$ListenerProcessId) {
-    if (-not (Test-PlotkeeperOwner $ListenerProcessId)) { throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it." }
+function Stop-OwnedListener([int]$ListenerProcessId, [int]$TargetPort = $Port) {
+    if (-not (Test-PlotkeeperOwner $ListenerProcessId $TargetPort)) { throw "Port $TargetPort is occupied by an unknown or foreign listener; refusing to stop or reuse it." }
     Stop-Process -Id $ListenerProcessId -Force -ErrorAction Stop
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
-        if (-not (Get-ListenerPid)) { break }
+        if (-not (Get-ListenerPid $TargetPort)) { break }
         Start-Sleep -Milliseconds 100
     }
-    if (Get-ListenerPid) { throw "Stale Plotkeeper listener on port $Port did not stop." }
+    if (Get-ListenerPid $TargetPort) { throw "Stale Plotkeeper listener on port $TargetPort did not stop." }
     Remove-OwnerRecord $ListenerProcessId
 }
 
@@ -87,6 +87,11 @@ function Test-Health {
     } catch { return $false }
 }
 
+$priorOwner = Read-OwnerRecord
+if ($priorOwner -and [int]$priorOwner.port -ne $Port) {
+    $priorListener = Get-ListenerPid ([int]$priorOwner.port)
+    if ($priorListener) { Stop-OwnedListener $priorListener ([int]$priorOwner.port) }
+}
 $listener = Get-ListenerPid
 if ($listener) {
     if (Test-PlotkeeperOwner $listener) {

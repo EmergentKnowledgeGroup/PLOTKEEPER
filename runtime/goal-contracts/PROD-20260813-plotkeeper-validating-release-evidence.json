@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-validating-release-evidence",
   "status": "ACTIVE",
-  "contract_hash": "39bba8b6b5c06c227f783bbc1ffb25be4588c520772deca39a15c7082af71ae7",
+  "contract_hash": "8f0d4bd70a9c768e7b0ad322ba3266ddcb303825d26cd9281b1f07af34fab6da",
   "origin": "DIRECT",
   "user_goal": "Make the designated v0.1.7 release contract truthfully validatable and its evidence hashes platform-stable.",
   "authority": {
@@ -110,6 +110,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-pointer-hash-parity.json",
-    "sha256": "3e60c47cdbc83a86ece36fab747c5e5cd8d2ad8276fa26fccdd24a263cd521c4"
+    "sha256": "a5afae1700df7841a51313e6a5167877c39322dcd3f360dbf669e296b8e78001"
   }
 }

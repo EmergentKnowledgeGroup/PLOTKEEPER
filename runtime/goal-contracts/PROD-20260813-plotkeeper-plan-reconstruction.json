@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-plan-reconstruction",
   "status": "ACTIVE",
-  "contract_hash": "a2b451e1966359e997d509b0ff77c5a4a9753cf33857f20333d911e8599dd047",
+  "contract_hash": "3d23eda125b652a9f33c727945358753c97d1eec34621e6fa47d5443c023b4d1",
   "origin": "DIRECT",
   "user_goal": "Let a fallback Plotkeeper run ask its exact Codex task to reconstruct and verify the original SpecSwarm task surface without guessing artifacts.",
   "authority": {
@@ -126,6 +126,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-canonical-title-task-popout.json",
-    "sha256": "d211ae08b83db762037d4edc96ba7c287f1061b41c1de088d53d65f02cc84626"
+    "sha256": "d2f149618acc14fb92270c2ef5435f0a720cae5e089d4a1e691d4b3892bf4c7d"
   }
 }

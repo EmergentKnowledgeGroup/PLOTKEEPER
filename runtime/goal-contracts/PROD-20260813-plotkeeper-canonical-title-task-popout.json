@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-canonical-title-task-popout",
   "status": "ACTIVE",
-  "contract_hash": "9c37598f3fcb1dccb18f480d089a0b70cf18d290d3db597ca31afcf41c5f5521",
+  "contract_hash": "837213e73c847deb225c0d60608c50835537761284369eec68c1e1e279d1fd7e",
   "origin": "DIRECT",
   "user_goal": "Use Codex task titles, keep run titles bounded, ensure active runs expose a truthful task, and open Plotkeeper in an isolated standalone browser window.",
   "authority": {
@@ -180,6 +180,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-new-window.json",
-    "sha256": "9319dd6b48f181997fe51376671a4941b4fafa9e306acdea388f3a990fd8f936"
+    "sha256": "2bd985759f379e66bbaa367ec7180d7cbb74bce061d47994e5fb6a969b657b10"
   }
 }

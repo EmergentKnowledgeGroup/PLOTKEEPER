@@ -38,7 +38,9 @@ def _release_authorized(contract: dict) -> bool:
     return isinstance(requirements, list) and any(
         isinstance(item, dict)
         and item.get("phase") == "DEPLOY_READY"
-        and item.get("id") not in {None, "RL-NONE"}
+        and isinstance(item.get("id"), str)
+        and bool(item["id"].strip())
+        and item["id"] != "RL-NONE"
         for item in requirements
     )
 
@@ -49,6 +51,8 @@ def designated_release_contract(repo_root: Path, pointer_value: object = RELEASE
     if pointer_path is None:
         raise ValueError("release contract pointer must be repository-relative")
     pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    if not isinstance(pointer, dict):
+        raise ValueError("release contract pointer must be a JSON object")
     if pointer.get("schema_version") != 1 or pointer.get("purpose") != "PLOTKEEPER_PUBLIC_RELEASE":
         raise ValueError("release contract pointer schema or purpose is invalid")
     contract_path = _safe_repo_path(repo_root, pointer.get("contract_path"))

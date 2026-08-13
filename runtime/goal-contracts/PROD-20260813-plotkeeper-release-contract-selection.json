@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-release-contract-selection",
   "status": "ACTIVE",
-  "contract_hash": "54f92ab494633dbf08b65b5ee828fa0091279d0d26accafff3b9e1329b33e82c",
+  "contract_hash": "7c7ba76bece1ce79b38ec3e0d83bfe48c0b4e0b7691df150e5b2669840e41ab4",
   "origin": "DIRECT",
   "user_goal": "Make Plotkeeper release-contract selection explicit, deterministic, and fail closed across the trusted host guard and server-side verifier, so non-release successor contracts can never unlock or supersede the designated public-release contract.",
   "authority": {
@@ -174,6 +174,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-listener-ownership.json",
-    "sha256": "9e57c998d3a9fda5e5b6bc55cd2283c991ffc621d2a34aa346064e27d38ac958"
+    "sha256": "d50a76c8c2c14e7a949cb77a86571b23f85dd4309ea7885a7c4d75277e6caf4a"
   }
 }

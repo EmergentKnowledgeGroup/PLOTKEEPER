@@ -171,7 +171,7 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-review-remediation.json",
-    "sha256": "c76e1c030939d66c427a696f17c798f5a54e67f70498687b7eacc576a10e922d"
+    "sha256": "7aff20a7f076069c68fd04093e5c95d4c82068533aa2ef8dfc325fd7cc739418"
   },
-  "contract_hash": "472897b5ba6d936d6475cfe114b9e09ca9999ccec07f763ba77dbee63f762e77"
+  "contract_hash": "72f282c99b1620ffec99094b0b018e93f528338e6bf148353e91b7c75f6e514b"
 }
