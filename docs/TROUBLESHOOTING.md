@@ -58,3 +58,5 @@ Current Plotkeeper versions first launch Edge or Chrome in app mode with `runtim
 ### An active run has one Codex task instead of its checklist
 
 The run is enrolled, but SpecSwarm's checklist was never synchronized. The single row is a truthful thread-level fallback, not a fabricated plan. Re-run the documented `sync-plan` command with the locked spec/checklist/blockerboard to populate the real workstreams.
+
+Alternatively, choose **Reconstruct plan**. The enrolled Codex task—not Plotkeeper's filename matcher—will identify its original artifacts, synchronize them into the exact run, read the rows back, and report any correction. Missing or invalid enrolled directories fail closed.

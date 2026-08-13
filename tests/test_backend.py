@@ -22,6 +22,24 @@ def line(timestamp, typ, payload):
 
 
 class BackendTests(unittest.TestCase):
+    def test_plan_reconstruction_resumes_exact_root_in_enrolled_cwd_once_and_hides_after_sync(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "project"; root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
+            run = service.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad3", str(root), service.dashboard_url)
+            calls = []
+            result = service.reconstruct_plan(run.run_id, runner=lambda args, **kwargs: calls.append((args, kwargs)) or mock.Mock(returncode=0))
+            self.assertTrue(result["ok"])
+            self.assertEqual(calls[0][0][2:4], ["resume", run.root_session_id])
+            self.assertEqual(calls[0][1]["cwd"], str(root.resolve()))
+            prompt = calls[0][0][4]
+            for phrase in ("Do not guess by filename", "Verify artifact identity", "sync-plan", "Read back"):
+                self.assertIn(phrase, prompt)
+            self.assertTrue(service.reconstruct_plan(run.run_id, runner=lambda *_a, **_k: self.fail("must be idempotent"))["already_requested"])
+            service.ledger.replace_tasks(run.run_id, [{"task_id": "T001", "title": "Synced", "status": "pending"}])
+            self.assertEqual(service.reconstruct_plan(run.run_id)["error"], "plan_already_synced")
+            service.close_db()
+
     def test_isolated_browser_launcher_uses_dedicated_profile_and_app_window(self):
         with tempfile.TemporaryDirectory() as td:
             calls = []

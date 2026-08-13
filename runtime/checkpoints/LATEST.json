@@ -1,6 +1,18 @@
 {
   "current_track": "STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW",
   "tracks": {
+    "PLOTKEEPER PLAN RECONSTRUCTION": {
+      "step": "post-green-tests",
+      "note": "Fallback runs now offer one explicit, idempotent reconstruction request that resumes the exact enrolled Codex root at run.cwd, requires evidence-backed recovery of the original SpecSwarm artifacts, syncs the exact run, reads rows back, and reports corrections without filename guessing.",
+      "branch": "main",
+      "head": "a6db3162fd90cde039c112cab11ce023a2c78845",
+      "next_cmd": "py -3 -B -m unittest discover -s tests -v",
+      "validations": [
+        "successor contract PROD-20260813-plotkeeper-plan-reconstruction validates at 080d26e7688c9b7032fae93113bfad24f57b6bfc89638d9286fccea519b380dc",
+        "exact resume session, cwd, prompt, idempotence, and synchronized-task guards pass",
+        "76 of 76 tests, Node syntax, and diff check green"
+      ]
+    },
     "PLOTKEEPER CANONICAL TITLE TASK POPOUT": {
       "step": "post-green-tests",
       "note": "Phase-start authority was sealed before mutation; Codex session-index titles now override prompt previews, empty active runs expose one truthful thread-level fallback task, headers clamp to two lines, and pop-out uses an isolated Chromium app profile.",

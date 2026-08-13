@@ -60,6 +60,8 @@ Use **Pop out** to open the exact current surface as a standalone Edge or Chrome
 
 Run names come from Codex's user-visible task title, not the first prompt. If an active run predates checklist synchronization, Plotkeeper shows one explicitly labeled Codex thread task instead of an empty execution board; a synchronized SpecSwarm checklist always replaces that fallback.
 
+For that fallback state, **Reconstruct plan** resumes the exact enrolled Codex task in its enrolled repository and asks it to recover, synchronize, read back, and verify the original SpecSwarm artifacts. Plotkeeper does not guess among similarly named historical checklists.
+
 For an evaluation that does not touch your Codex sessions:
 
 ```powershell

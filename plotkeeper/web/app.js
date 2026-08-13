@@ -79,6 +79,7 @@
     selector.value = '';
     setPickerValue(null);
     renderBoard([]); $('#board-message').hidden = false; $('#board-message').textContent = message;
+    $('#reconstruct-plan').hidden = true;
     $('#run-goal').textContent = 'Select an active run'; $('#run-state').textContent = 'SELECTION REQUIRED'; $('#run-state').className = 'run-state state-unknown';
     $('#working-title').textContent = 'No run selected'; $('#working-meta').textContent = 'Plotkeeper will not guess between active tasks.'; $('#check-in').disabled = true;
     renderContract(null); clearDetail();
@@ -162,6 +163,8 @@
       state.events = asArray(payload?.events ?? payload?.run?.events);
       state.reports = asArray(payload?.reports ?? payload?.run?.reports);
       state.sessions = asArray(payload?.sessions ?? payload?.run?.sessions);
+      const fallback = state.tasks.length === 1 && state.tasks[0].source === 'codex:thread-title';
+      $('#reconstruct-plan').hidden = !fallback;
       setRunHeader(state.run); renderBoard(state.tasks); selectTask(state.run.currentTaskId || state.tasks[0]?.id, false);
       $('#board-updated').textContent = state.run.updatedAt ? `Updated ${formatDate(state.run.updatedAt)}` : 'Updated time unknown';
     } catch (error) {
@@ -234,5 +237,6 @@
   $('#run-picker-menu').addEventListener('keydown', event => { const options = $$('.run-picker-option'); const current = options.indexOf(document.activeElement); if (event.key === 'Escape') { event.preventDefault(); setPickerOpen(false); $('#run-picker-button').focus(); return; } if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); document.activeElement.click(); return; } if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : event.key === 'ArrowDown' ? Math.min(options.length - 1, current + 1) : Math.max(0, current - 1); options[next]?.focus(); });
   document.addEventListener('click', event => { if (!event.target.closest('.run-combobox')) setPickerOpen(false); });
   $('#check-in').addEventListener('click', async event => { const button = event.currentTarget; if (!state.run?.id) return; button.disabled = true; button.textContent = 'Sending…'; try { await getJson(`/api/runs/${encodeURIComponent(state.run.id)}/check-in`, { method: 'POST' }); button.classList.add('is-requested'); button.textContent = 'Check-in requested'; } catch (error) { button.disabled = false; button.textContent = 'Request failed'; button.title = error.message; } });
+  $('#reconstruct-plan').addEventListener('click', async event => { const button = event.currentTarget; if (!state.run?.id) return; button.disabled = true; button.textContent = 'Requesting…'; try { const result = await getJson(`/api/runs/${encodeURIComponent(state.run.id)}/reconstruct-plan`, { method: 'POST' }); button.textContent = result.already_requested ? 'Reconstruction already requested' : 'Reconstruction requested'; } catch (error) { button.disabled = false; button.textContent = 'Reconstruction failed'; button.title = error.message; } });
   loadRuns();
 })();

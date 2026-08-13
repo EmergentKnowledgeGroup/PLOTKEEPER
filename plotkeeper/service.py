@@ -38,6 +38,7 @@ class PlotkeeperService:
             self.scanner.initialize()
         self._events: list[dict[str, Any]] = []
         self._event_lock = threading.Lock()
+        self._repair_lock = threading.Lock()
         self._stop = threading.Event()
 
     @staticmethod
@@ -365,6 +366,40 @@ class PlotkeeperService:
         self.ledger.add_report(run_id, "check-in-request", "Human requested: complete the current objective, report status, and end the turn.")
         return {"ok": True, "queued": True}
 
+    def reconstruct_plan(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
+        """Ask the exact root task to recover its own SpecSwarm artifacts."""
+        with self._repair_lock:
+            run = self.ledger.get(run_id)
+            if not run or run.state == RunState.CLOSED:
+                return {"ok": False, "error": "run_closed_or_missing"}
+            if self.ledger.tasks(run_id):
+                return {"ok": False, "error": "plan_already_synced"}
+            if self.ledger.has_report_kind(run_id, "plan-repair-injected"):
+                return {"ok": True, "already_requested": True}
+            run_cwd = self._validated_run_cwd(run.cwd)
+            if run_cwd is None:
+                return {"ok": False, "error": "run_cwd_invalid"}
+            prompt = (
+                f"PLOTKEEPER PLAN RECONSTRUCTION for run {run_id}. Recover this exact task's original SpecSwarm "
+                "locked spec, execution checklist, blockerboard, and production goal contract from this task's "
+                "own conversation history and repository evidence. Do not guess by filename and do not use artifacts "
+                "from another phase or task. Verify artifact identity and hashes where available, then run the installed "
+                "Plotkeeper sync-plan command for this exact run with the verified files and contract. Read back the "
+                "Plotkeeper task rows and goal contract, correct any mapping errors, and report the exact files, counts, "
+                "and verification evidence to the user. Do not implement unrelated application code."
+            )
+            args = ["codex.exe", "exec", "resume", run.root_session_id, prompt, "--json", "--skip-git-repo-check"]
+            runner = runner or self._run_codex
+            try:
+                result = runner(args, cwd=str(run_cwd))
+                code = getattr(result, "returncode", result if isinstance(result, int) else 0)
+            except Exception as exc:
+                return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
+            if code != 0:
+                return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
+            self.ledger.add_report(run_id, "plan-repair-injected", "Exact root task was asked to reconstruct, sync, and verify its original SpecSwarm task surface.")
+            return {"ok": True, "queued": True, "run_id": run_id}
+
     def inject_check_in(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
@@ -569,6 +604,9 @@ class PlotkeeperService:
                     self._json(service.report(parts[2], str(body.get("kind", "report")), str(body.get("text", "")), evidence=body.get("evidence", [])), 200)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "check-in":
                     self._json(service.request_check_in(parts[2]), 200)
+                elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "reconstruct-plan":
+                    result = service.reconstruct_plan(parts[2])
+                    self._json(result, 200 if result.get("ok") else 409)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "receipt":
                     self._json(service.record_review_receipt(parts[2], body), 200)
                 else:

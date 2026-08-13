@@ -66,3 +66,5 @@ normal Windows process tools, then stop that exact process.
 **Pop out** launches the exact run/session URL in a standalone Chromium app window with Plotkeeper's own local profile. The profile contains no Plotkeeper run authority and is ignored by Git. Codex task names come from the local task index; prompt previews are only a compatibility fallback when no explicit task name exists.
 
 An active run with no synchronized checklist displays one `Codex task` fallback row using that exact task name. This means “active” never renders as a mysterious empty board, while still avoiding invented subtasks. Run `sync-plan` to replace the fallback with the locked checklist's real tasks.
+
+Use **Reconstruct plan** when the original sync was missed. Plotkeeper resumes the exact enrolled task at its recorded repository and requests evidence-backed recovery of that task's locked SpecSwarm artifacts. The action is offered only for a fallback run and is queued at most once.
