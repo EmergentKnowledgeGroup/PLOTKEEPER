@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-v017-pr-release",
   "status": "ACTIVE",
-  "contract_hash": "7b727e67a05884c9e1ac9d1fc2b58fbd5dc3af7229829819b9a692311c85aacb",
+  "contract_hash": "69f45274d32f4765187c8e3e02910a52ec7763e1110fd7cd67415fd60d752646",
   "origin": "DIRECT",
   "user_goal": "Publish the validated Plotkeeper UI, identity, connector, isolated-window, fallback-task, and reconstruction slice through a CodeRabbit-reviewed PR, merge only when green, then release and attest it.",
   "authority": {
@@ -25,6 +25,7 @@
     "paths": [
       "CHANGELOG.md",
       ".gitignore",
+      ".gitattributes",
       "README.md",
       "docs/",
       "integrations/codex/",
