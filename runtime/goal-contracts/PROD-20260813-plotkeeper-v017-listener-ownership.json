@@ -1,0 +1,177 @@
+{
+  "id": "PROD-20260813-plotkeeper-v017-listener-ownership",
+  "status": "ACTIVE",
+  "origin": "DIRECT",
+  "user_goal": "Replace Plotkeeper installer and startup listener ownership inference with an authoritative persisted owned PID record bound to connector, repository root, and executable identity; never stop or reuse an unknown listener; prove the foreign-listener spoof cases through real controlled subprocess tests without installation, live-service mutation, commit, or push.",
+  "authority": {
+    "original_request_ref": "codex-parent-delegation:listener-ownership-fix",
+    "original_request_hash": "358f20d98cfc2f5df8559b6a6cd8dc557904272ff26ba1b9a43d52d8145b2cd6",
+    "verbatim_text": "Implement bounded listener ownership hardening in Z:\\Plotkeeper for PR v0.1.7. First create/validate append-only production contract successor to runtime/goal-contracts/PROD-20260813-plotkeeper-v017-review-remediation.json (current hash 090b8286b32bcad2eba239ada8bec1cbe531bf72917f6183c7edf3db340c0165, baseline 972429e), allowed exact scripts/install.ps1, scripts/start.ps1, tests/test_repository_docs.py or new focused test, runtime/goal-contracts successor, checkpoints. Goal: replace regex/HTML ownership inference with authoritative persisted owned PID record bound to connector/root/executable or equally strong. Never stop/reuse unknown listener. Add real controlled foreign listener tests proving same PID survives spoof argv containing plotkeeper.cli and spoof HTML marker, for install and start paths as applicable. Preserve current shared clean worktree, no commit/push/install/live-service mutation. Run PowerShell parse, focused/full tests, diff check. Return exact paths and evidence. No children.",
+    "captured_at_utc": "2026-08-13T23:00:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-parent-delegation:listener-ownership-fix"
+  },
+  "baseline": {
+    "protected_ref": "release/v0.1.7-plotkeeper-surface",
+    "sha": "972429e0413ea790c1b4cd576cece924b6dd4de7",
+    "retrieved_at_utc": "2026-08-13T22:59:00Z",
+    "protection_evidence": "Clean exact PR worktree at the current v0.1.7 candidate before this successor contract or implementation mutation.",
+    "selection_reason": "The delegated repair explicitly names 972429e as the protected baseline and limits the behavior change to lifecycle listener ownership."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      "tests/test_repository_docs.py",
+      "tests/test_listener_ownership.py",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-listener-ownership.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "Disposable local foreign-listener subprocesses and temporary connector/root fixtures only; no installed service, registry, live listener, or user project data."
+    ],
+    "semantic_changes": [
+      "Persist an authoritative owned PID record containing connector identity, repository root, and executable identity, and require an exact live-process match before lifecycle stop or reuse.",
+      "Fail closed when the record is missing, malformed, stale, mismatched, or unverifiable; retain foreign listeners even when argv or HTML is spoofed.",
+      "Add real controlled subprocess regression tests exercising install and startup decision paths without mutating installation or live service state."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/**",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "pyproject.toml",
+      "README.md",
+      "docs/**",
+      ".github/**",
+      "any path not explicitly listed under allowed.paths"
+    ],
+    "semantic_changes": [
+      "No unrelated release, UI, ledger, connector allocation, registry, dependency, database, service, installation, deployment, commit, push, or live-process behavior change.",
+      "No regex, HTML marker, prompt text, or generic command-line substring may authorize stopping or reusing a listener.",
+      "No test may stop, kill, replace, or reuse a listener outside a disposable test-owned subprocess."
+    ]
+  },
+  "invariants": [
+    "Known foreign listeners remain alive and their PID remains unchanged when argv contains plotkeeper.cli or the served HTML contains the Plotkeeper marker.",
+    "A lifecycle script may stop or reuse a listener only when the persisted ownership record and live process identity match connector, repository root, and executable identity exactly.",
+    "Missing, malformed, stale, or mismatched ownership records fail closed without stopping any listener.",
+    "The connector remains loopback-only and the existing v0.1.7 behavior outside listener ownership remains intact.",
+    "The shared worktree remains clean except for the explicitly allowed successor artifacts and no live installation or service is mutated."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-OWNER-RECORD",
+      "phase": "VALIDATED",
+      "promised_behavior": "The lifecycle scripts use a persisted exact ownership record bound to connector, root, and executable identity before stopping or reusing a listener.",
+      "forbidden_behavior": "Regex argv, HTML markers, a PID alone, or an unverifiable record authorizes lifecycle action.",
+      "target_and_actor": "Plotkeeper install/start scripts acting on a loopback listener",
+      "required_proof_ids": [
+        "PR-OWNER-STATIC",
+        "PR-OWNER-REAL"
+      ]
+    },
+    {
+      "id": "AC-FOREIGN-SPOOF",
+      "phase": "VALIDATED",
+      "promised_behavior": "A real controlled foreign listener survives both install and start ownership checks when its argv includes plotkeeper.cli and its HTML includes the Plotkeeper marker.",
+      "forbidden_behavior": "The scripts stop, replace, or reuse that foreign listener, or report it as owned without the exact persisted record.",
+      "target_and_actor": "Disposable foreign subprocess and lifecycle-script test harness",
+      "required_proof_ids": [
+        "PR-OWNER-REAL"
+      ]
+    },
+    {
+      "id": "AC-SCOPE",
+      "phase": "VALIDATED",
+      "promised_behavior": "Only the contract-listed files change and requested static/focused/full validation passes.",
+      "forbidden_behavior": "Unlisted file changes, installation, service mutation, commit, push, or skipped validation.",
+      "target_and_actor": "Shared v0.1.7 worktree and local validation commands",
+      "required_proof_ids": [
+        "PR-SCOPE-VALIDATION"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-OWNER-STATIC",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-OWNER-RECORD"
+      ],
+      "claim": "Both lifecycle scripts contain no regex/HTML ownership authorization and require the persisted exact identity record.",
+      "required_environment": "Protected v0.1.7 checkout with no live service mutation",
+      "command_or_read_only_check": "Focused ownership static tests plus PowerShell parser",
+      "expected_observation": "Static tests pass and both scripts parse successfully."
+    },
+    {
+      "id": "PR-OWNER-REAL",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-OWNER-RECORD",
+        "AC-FOREIGN-SPOOF"
+      ],
+      "claim": "Real controlled foreign-listener subprocess tests prove the same PID survives spoof argv and spoof HTML for install and start paths as applicable.",
+      "required_environment": "Disposable temporary root/connector and test-owned loopback subprocess only",
+      "command_or_read_only_check": "Focused listener ownership unittest module",
+      "expected_observation": "Foreign PID remains alive and unchanged after each lifecycle decision; no live or installed listener is touched."
+    },
+    {
+      "id": "PR-SCOPE-VALIDATION",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-SCOPE"
+      ],
+      "claim": "The allowed diff is bounded and the repository remains regression-free.",
+      "required_environment": "Protected v0.1.7 checkout",
+      "command_or_read_only_check": "git diff --check; focused tests; py -3 -B -m unittest discover -s tests -v; PowerShell parser",
+      "expected_observation": "All commands pass and no forbidden path or operation appears."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-OWNER",
+      "phase": "VALIDATED",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-NONE",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "No release or deployment is authorized in this lane; parent release review remains required."
+    }
+  ],
+  "stop_conditions": [
+    "Any unexpected diff, live service or installation mutation, failed parser/test/diff check, inability to prove exact ownership, or foreign PID change.",
+    "Any request to broaden paths, alter connector/ledger behavior, commit, push, install, restart, or deploy without a new append-only contract."
+  ],
+  "known_discrepancies": [
+    "The predecessor remediation contract covers privacy/accessibility/review blockers; this successor is a narrower listener-ownership amendment and does not reopen those surfaces.",
+    "No live listener is an authority source; all lifecycle proof in this lane must use disposable subprocesses."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "codex-parent-delegation:listener-ownership-fix",
+      "acceptance_cases": [
+        "AC-OWNER-RECORD",
+        "AC-FOREIGN-SPOOF",
+        "AC-SCOPE"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-review-remediation.json",
+    "sha256": "aaa13c201da3e16897836a6019e6c30eb2d92aa39ec5c3dd81f9739dc28ce6ee"
+  },
+  "contract_hash": "d0a5e050f7e998ce635276c1bbb780d9e76611fd0777ac00cdb0a85c7a42b24e"
+}

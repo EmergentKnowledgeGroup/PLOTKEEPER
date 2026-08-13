@@ -1,12 +1,13 @@
 param([string]$Python = "", [int]$Port = 0)
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 Set-Location -LiteralPath $Root
 $localPython = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not $Python) {
     $Python = if (Test-Path $localPython) { $localPython } else { "python" }
 }
-$connectorPath = Join-Path $Root "runtime\plotkeeper-connector.json"
+$connectorPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-connector.json"))
+$ownerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-owner.json"))
 if ($Port -le 0) {
     if (-not (Test-Path -LiteralPath $connectorPath)) {
         $connectorJson = & $Python -m plotkeeper.cli --ledger (Join-Path $Root "runtime\plotkeeper.sqlite3") connector
@@ -26,35 +27,109 @@ function Get-ListenerPid {
     return $null
 }
 
-function Get-OwnerCommandLine([int]$ListenerProcessId) {
-    if (-not $ListenerProcessId) { return "" }
-    try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ListenerProcessId" -ErrorAction Stop).CommandLine } catch { return "" }
+function Get-ProcessIdentity([int]$ListenerProcessId) {
+    if (-not $ListenerProcessId) { return $null }
+    try { return Get-CimInstance Win32_Process -Filter "ProcessId=$ListenerProcessId" -ErrorAction Stop | Select-Object -First 1 } catch { return $null }
+}
+
+function Get-TextSha256([string]$Text) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes([string]$Text)
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-", "").ToLowerInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function Test-SamePath([string]$Left, [string]$Right) {
+    try { return [StringComparer]::OrdinalIgnoreCase.Equals([IO.Path]::GetFullPath($Left), [IO.Path]::GetFullPath($Right)) } catch { return $false }
+}
+
+function Read-OwnerRecord {
+    if (-not (Test-Path -LiteralPath $ownerPath)) { return $null }
+    try { return Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json } catch { return $null }
 }
 
 function Test-PlotkeeperOwner([int]$ListenerProcessId) {
-    $commandLine = Get-OwnerCommandLine $ListenerProcessId
-    return $commandLine -match '(?i)(plotkeeper\.cli|plotkeeper[\\/]scripts[\\/]start\.ps1)'
+    $record = Read-OwnerRecord
+    $identity = Get-ProcessIdentity $ListenerProcessId
+    if (-not $record -or -not $identity) { return $false }
+    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $Port) { return $false }
+    if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
+    if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
+    if ([string]$identity.CreationDate -ne [string]$record.creation_time) { return $false }
+    if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    return $true
 }
 
-function Test-Dashboard {
-    try {
-        $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/" -TimeoutSec 2
-        return $response.StatusCode -eq 200 -and $response.Content -match '(?is)<html(?:\s|>)' -and $response.Content -match 'data-testid=["'']plotkeeper-app["'']'
-    } catch { return $false }
-}
-
-$listener = Get-ListenerPid
-if ($listener) {
-    if (Test-Dashboard) { return }
-    if (-not (Test-PlotkeeperOwner $listener)) {
-        throw "Port $Port is occupied by a non-Plotkeeper listener; refusing to stop it."
+function Remove-OwnerRecord([int]$ListenerProcessId) {
+    $record = Read-OwnerRecord
+    if ($record -and [int]$record.pid -eq $ListenerProcessId -and (Test-SamePath ([string]$record.root) $Root)) {
+        Remove-Item -LiteralPath $ownerPath -Force -ErrorAction SilentlyContinue
     }
-    Stop-Process -Id $listener -Force -ErrorAction Stop
+}
+
+function Stop-OwnedListener([int]$ListenerProcessId) {
+    if (-not (Test-PlotkeeperOwner $ListenerProcessId)) { throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it." }
+    Stop-Process -Id $ListenerProcessId -Force -ErrorAction Stop
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         if (-not (Get-ListenerPid)) { break }
         Start-Sleep -Milliseconds 100
     }
     if (Get-ListenerPid) { throw "Stale Plotkeeper listener on port $Port did not stop." }
+    Remove-OwnerRecord $ListenerProcessId
 }
 
-& $Python -m plotkeeper.cli serve --host 127.0.0.1 --port $Port
+function Test-Health {
+    try {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 2
+        $payload = $response.Content | ConvertFrom-Json
+        return $response.StatusCode -eq 200 -and $payload.ok -eq $true -and $payload.service -eq "plotkeeper"
+    } catch { return $false }
+}
+
+$listener = Get-ListenerPid
+if ($listener) {
+    if (Test-PlotkeeperOwner $listener) {
+        if (Test-Health) { return }
+        Stop-OwnedListener $listener
+    } else {
+        throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it."
+    }
+}
+
+$ledgerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper.sqlite3"))
+$argumentList = @("-m", "plotkeeper.cli", "--ledger", $ledgerPath, "--connector", $connectorPath, "serve", "--host", "127.0.0.1", "--port", "$Port")
+$quotedArguments = ($argumentList | ForEach-Object { $value = [string]$_; if ($value -match '[\s"]') { '"' + $value.Replace('"', '\"') + '"' } else { $value } }) -join ' '
+$process = Start-Process -FilePath $Python -WorkingDirectory $Root -WindowStyle Hidden -ArgumentList $quotedArguments -PassThru
+$identity = $null
+for ($attempt = 0; $attempt -lt 20 -and -not $identity; $attempt++) {
+    Start-Sleep -Milliseconds 100
+    $identity = Get-ProcessIdentity $process.Id
+}
+if (-not $identity) { throw "Plotkeeper process identity could not be recorded." }
+$owner = [ordered]@{
+    version = 1
+    pid = [int]$process.Id
+    host = "127.0.0.1"
+    port = [int]$Port
+    root = $Root
+    connector_path = $connectorPath
+    executable = [string]$identity.ExecutablePath
+    creation_time = [string]$identity.CreationDate
+    command_line_sha256 = Get-TextSha256 ([string]$identity.CommandLine)
+}
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ownerPath) | Out-Null
+$ownerTemp = "$ownerPath.$PID.tmp"
+$owner | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ownerTemp -Encoding UTF8
+Move-Item -LiteralPath $ownerTemp -Destination $ownerPath -Force
+try {
+    $healthy = $false
+    for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
+        Start-Sleep -Milliseconds 250
+        $healthy = Test-Health
+    }
+    if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
+    $process.WaitForExit()
+} finally {
+    Remove-OwnerRecord $process.Id
+}

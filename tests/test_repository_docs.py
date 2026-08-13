@@ -42,18 +42,21 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertNotIn("adds the `transcendr/slopware-skills` marketplace", integration)
         self.assertTrue((ROOT / "integrations" / "codex" / "bundled" / "dependencies.json").is_file())
 
-    def test_startup_scripts_gate_on_owned_listener_and_valid_html(self):
+    def test_startup_scripts_gate_on_persisted_exact_listener_owner(self):
         install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")
         start = (ROOT / "scripts" / "start.ps1").read_text(encoding="utf-8")
         for source in (install, start):
             self.assertIn("Get-NetTCPConnection", source)
             self.assertIn("Get-CimInstance Win32_Process", source)
-            self.assertIn("non-Plotkeeper listener", source)
-            self.assertIn("<html", source)
-            self.assertIn("plotkeeper-app", source)
+            self.assertIn("plotkeeper-owner.json", source)
+            self.assertIn("command_line_sha256", source)
+            self.assertIn("creation_time", source)
+            self.assertIn("unknown or foreign listener", source)
+            self.assertNotIn("Test-Dashboard", source)
+            self.assertNotIn("plotkeeper-app", source)
+            self.assertNotIn("plotkeeper\\.cli", source)
         self.assertIn("if ($listener) {", install)
-        self.assertNotIn("$listener -and -not (Test-Dashboard)", install)
-        self.assertIn("Stop-Process -Id $listener", install)
+        self.assertIn("Stop-OwnedListener $listener", install)
         self.assertIn("runtime\\tmp\\install", install)
         self.assertIn("PIP_CACHE_DIR", install)
         self.assertIn("plotkeeper-connector.json", install)
