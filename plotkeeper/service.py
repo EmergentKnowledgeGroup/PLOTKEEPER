@@ -532,7 +532,7 @@ class PlotkeeperService:
                         return
                     raw = target.read_bytes()
                     content_type = "text/html; charset=utf-8" if target.suffix == ".html" else ("text/css; charset=utf-8" if target.suffix == ".css" else "text/javascript; charset=utf-8")
-                    self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+                    self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
                 elif parsed.path == "/api/runs":
                     # Interactive inventory is intentionally active-only. The
                     # ledger remains the source of historical detail, but

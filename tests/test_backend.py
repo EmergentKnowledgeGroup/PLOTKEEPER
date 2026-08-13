@@ -195,6 +195,7 @@ class BackendTests(unittest.TestCase):
                 with urlopen(f"http://127.0.0.1:{server.server_port}/", timeout=2) as response:
                     body = response.read().decode("utf-8")
                 self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers.get("Cache-Control"), "no-store")
                 self.assertIn("PLOTKEEPER", body)
             finally:
                 server.shutdown()
