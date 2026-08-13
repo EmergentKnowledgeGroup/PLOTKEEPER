@@ -99,7 +99,7 @@ if ($listener) {
 
 $ledgerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper.sqlite3"))
 $argumentList = @("-m", "plotkeeper.cli", "--ledger", $ledgerPath, "--connector", $connectorPath, "serve", "--host", "127.0.0.1", "--port", "$Port")
-$quotedArguments = ($argumentList | ForEach-Object { $value = [string]$_; if ($value -match '[\s"]') { '"' + $value.Replace('"', '\"') + '"' } else { $value } }) -join ' '
+$quotedArguments = ($argumentList | ForEach-Object { $value = [string]$_; if ($value.IndexOf(' ') -ge 0 -or $value.IndexOf('"') -ge 0) { '"' + $value.Replace('"', '\"') + '"' } else { $value } }) -join ' '
 $process = Start-Process -FilePath $Python -WorkingDirectory $Root -WindowStyle Hidden -ArgumentList $quotedArguments -PassThru
 $identity = $null
 for ($attempt = 0; $attempt -lt 20 -and -not $identity; $attempt++) {

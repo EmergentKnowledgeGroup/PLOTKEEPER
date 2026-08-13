@@ -12,6 +12,7 @@
         "focused ownership/docs tests: 9 passed",
         "full suite: 85 passed",
         "PowerShell parser passed for install.ps1/start.ps1",
+        "ownership scripts contain no -match or HTML inference",
         "git diff --check passed",
         "controlled foreign PID remained unchanged",
         "no install, live-service mutation, commit, or push"

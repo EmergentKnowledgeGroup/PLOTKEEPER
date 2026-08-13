@@ -55,6 +55,7 @@ class RepositoryDocumentationTests(unittest.TestCase):
             self.assertNotIn("Test-Dashboard", source)
             self.assertNotIn("plotkeeper-app", source)
             self.assertNotIn("plotkeeper\\.cli", source)
+            self.assertNotIn("-match", source)
         self.assertIn("if ($listener) {", install)
         self.assertIn("Stop-OwnedListener $listener", install)
         self.assertIn("runtime\\tmp\\install", install)

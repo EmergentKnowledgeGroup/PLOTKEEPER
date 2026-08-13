@@ -11,7 +11,7 @@ Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 - branch: release/v0.1.7-plotkeeper-surface
 - head: 972429e0413ea790c1b4cd576cece924b6dd4de7
 - next_cmd: `Independent production-goal review of the exact diff; no install/live-service mutation is authorized`
-- validations: active contract validates at d0a5e050f7e998ce635276c1bbb780d9e76611fd0777ac00cdb0a85c7a42b24e; focused ownership/docs tests 9 passed; full suite 85 passed; PowerShell parser passed for install.ps1/start.ps1; git diff --check passed; controlled foreign PID remained unchanged; no install, live-service mutation, commit, or push
+- validations: active contract validates at d0a5e050f7e998ce635276c1bbb780d9e76611fd0777ac00cdb0a85c7a42b24e; focused ownership/docs tests 9 passed; full suite 85 passed; PowerShell parser passed for install.ps1/start.ps1; ownership scripts contain no -match/HTML inference; git diff --check passed; controlled foreign PID remained unchanged; no install, live-service mutation, commit, or push
 
 ## PLOTKEEPER V0.1.7 PR RELEASE
 
