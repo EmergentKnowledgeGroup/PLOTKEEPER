@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import tempfile
 from pathlib import Path
 
 LOOPBACK_HOST = "127.0.0.1"
@@ -45,9 +46,18 @@ def write_connector(path: str | os.PathLike[str], port: int, host: str = LOOPBAC
         raise ValueError("Plotkeeper connectors must use a valid 127.0.0.1 port")
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    temporary = target.with_suffix(target.suffix + ".tmp")
-    temporary.write_text(json.dumps({"host": host, "port": port, "url": f"http://{host}:{port}"}, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(target)
+    temporary_fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(temporary_fd, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps({"host": host, "port": port, "url": f"http://{host}:{port}"}, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
     return read_connector(target)
 
 
@@ -55,6 +65,27 @@ def ensure_connector(path: str | os.PathLike[str], explicit_port: int | None = N
     target = Path(path)
     if explicit_port is not None:
         return write_connector(target, explicit_port)
-    if target.is_file():
+    if target.exists():
         return read_connector(target)
-    return write_connector(target, choose_private_port())
+
+    # Hard-linking a fully written temporary file is an atomic create-only
+    # operation on the target directory. If another installer wins the race,
+    # its connector is the single shared result and this process reads it back.
+    target.parent.mkdir(parents=True, exist_ok=True)
+    port = choose_private_port()
+    temporary_fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(temporary_fd, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps({"host": LOOPBACK_HOST, "port": port, "url": f"http://{LOOPBACK_HOST}:{port}"}, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, target)
+        except FileExistsError:
+            return read_connector(target)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return read_connector(target)

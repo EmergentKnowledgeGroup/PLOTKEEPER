@@ -49,14 +49,18 @@ class ActiveRunSurfaceTests(unittest.TestCase):
 
     def test_session_index_title_precedes_original_prompt_and_empty_run_gets_truthful_thread_task(self):
         with self._temp_root() as folder:
-            folder = Path(folder); sessions = folder / "sessions"; sessions.mkdir()
+            folder = Path(folder)
+            sessions = folder / "sessions"
+            sessions.mkdir()
             session_id = "019dc5bc-9c57-7aa0-a007-18250d608ad3"
             rollout = sessions / f"rollout-{session_id}.jsonl"
             rollout.write_text(_line("1", "session_meta", {"id": session_id, "cwd": "Z:\\MoonMarket"}) + _line("2", "response_item", {"type": "reasoning"}), encoding="utf-8")
-            state = folder / "state.sqlite"; db = sqlite3.connect(state)
+            state = folder / "state.sqlite"
+            db = sqlite3.connect(state)
             db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, name TEXT, first_user_message TEXT, preview TEXT, agent_path TEXT, cwd TEXT, rollout_path TEXT)")
             db.execute("INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)", (session_id, "okay Dex, so go ahead and read the core spec", None, "okay Dex", None, None, "Z:\\MoonMarket", str(rollout)))
-            db.commit(); db.close()
+            db.commit()
+            db.close()
             index = folder / "session_index.jsonl"
             index.write_text(json.dumps({"id": session_id, "thread_name": "Review core spec"}) + "\n", encoding="utf-8")
             service = PlotkeeperService(ledger_path=folder / "ledger.sqlite", sessions_root=sessions, codex_state_path=state, session_index_path=index)
@@ -72,6 +76,33 @@ class ActiveRunSurfaceTests(unittest.TestCase):
             service.ledger.replace_tasks(run.run_id, [{"task_id": "T001", "title": "Real synced task", "status": "pending"}])
             self.assertEqual([task["title"] for task in service._tasks_payload(run)], ["Real synced task"])
             service.close_db()
+
+    def test_session_title_refreshes_after_cached_lookup_and_missing_sqlite_row(self):
+        with self._temp_root() as folder:
+            folder = Path(folder)
+            session_id = "019dc5bc-9c57-7aa0-a007-18250d608ad5"
+            state = folder / "state.sqlite"
+            rollout = folder / "rollout.jsonl"
+            rollout.write_text(_line("1", "session_meta", {"id": session_id}), encoding="utf-8")
+            db = sqlite3.connect(state)
+            db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, name TEXT, first_user_message TEXT, preview TEXT, agent_path TEXT, cwd TEXT, rollout_path TEXT)")
+            db.commit()
+            db.close()
+            index = folder / "session_index.jsonl"
+            index.write_text(json.dumps({"id": session_id, "thread_name": "First title"}) + "\n", encoding="utf-8")
+            catalog = ThreadCatalog(state, folder, index)
+            indexed_only = catalog.metadata(session_id)
+            self.assertEqual(indexed_only["task_label"], "First title")
+            self.assertEqual(indexed_only["project_name"], "Unknown project")
+
+            db = sqlite3.connect(state)
+            db.execute("INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)", (session_id, "Database title", None, None, None, None, str(folder), str(rollout)))
+            db.commit()
+            db.close()
+            self.assertEqual(catalog.metadata(session_id)["task_label"], "First title")
+
+            index.write_text(json.dumps({"id": session_id, "thread_name": "Updated title"}) + "\n", encoding="utf-8")
+            self.assertEqual(catalog.metadata(session_id)["task_label"], "Updated title")
 
     def test_legacy_message_roots_are_not_enrolled_or_picked(self):
         with self._temp_root() as folder:

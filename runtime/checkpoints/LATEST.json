@@ -2,12 +2,12 @@
   "current_track": "STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW",
   "tracks": {
     "PLOTKEEPER V0.1.7 PR RELEASE": {
-      "step": "PR-open",
-      "note": "PR 1 is open against main and intentionally unmerged while CodeRabbit and GitHub Actions review the exact release slice.",
+      "step": "post-green-tests",
+      "note": "PR 1 remains open and unmerged; all CodeRabbit findings are corrected locally, including connector races, reconstruction false-success handling, title refresh, safe legacy-listener behavior, accessibility, and review-contract sanitization. Awaiting exact-head push and re-review.",
       "branch": "release/v0.1.7-plotkeeper-surface",
-      "head": "8ab3cff",
-      "next_cmd": "gh pr checks 1 && gh pr view 1 --comments",
-      "validations": ["release contract validates at deb9b287d2535d2a1b9633fa0a2f79a7991ef25fd8caf918c737647558b17ef0", "clean one-worktree exact candidate", "76 tests", "live MoonMarket title, task, reconstruction, and isolated Chrome app proof", "independent VALIDATED PASS"]
+      "head": "05e6382 + reviewed worktree corrections",
+      "next_cmd": "git diff --check && py -3 -B -m unittest discover -s tests -v",
+      "validations": ["sanitized release contract validates at 9ed96e422737d84ce29d0d573656d6c07326748c2c9d26635a40ef40a8687f1b", "80 tests", "Ruff E702", "Node syntax", "diff check", "all CodeRabbit findings locally reconciled"]
     },
     "PLOTKEEPER PLAN RECONSTRUCTION": {
       "step": "post-green-tests",

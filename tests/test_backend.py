@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import multiprocessing
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from urllib.error import HTTPError
@@ -21,10 +23,18 @@ def line(timestamp, typ, payload):
     return json.dumps({"timestamp": timestamp, "type": typ, "payload": payload}) + "\n"
 
 
+def _ensure_connector_worker(path: str, results) -> None:
+    try:
+        results.put(("ok", ensure_connector(path)))
+    except Exception as exc:
+        results.put(("error", type(exc).__name__, str(exc)))
+
+
 class BackendTests(unittest.TestCase):
     def test_plan_reconstruction_resumes_exact_root_in_enrolled_cwd_once_and_hides_after_sync(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "project"; root.mkdir()
+            root = Path(td) / "project"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
             run = service.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad3", str(root), service.dashboard_url)
             calls = []
@@ -43,7 +53,8 @@ class BackendTests(unittest.TestCase):
     def test_isolated_browser_launcher_uses_dedicated_profile_and_app_window(self):
         with tempfile.TemporaryDirectory() as td:
             calls = []
-            executable = Path(td) / "msedge.exe"; executable.write_bytes(b"")
+            executable = Path(td) / "msedge.exe"
+            executable.write_bytes(b"")
             launcher = IsolatedBrowserLauncher(
                 Path(td) / "profile",
                 candidates=lambda: [executable],
@@ -58,6 +69,25 @@ class BackendTests(unittest.TestCase):
             self.assertIn(f"--user-data-dir={Path(td) / 'profile'}", args)
             self.assertEqual(kwargs["cwd"], td)
 
+    def test_browser_profile_root_is_independent_of_custom_ledger_location(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            sessions = base / "sessions"
+            sessions.mkdir()
+            profile_root = base / "configured-root"
+            service = PlotkeeperService(
+                ledger_path=base / "arbitrary" / "state.sqlite",
+                sessions_root=sessions,
+                profile_root=profile_root,
+            )
+            try:
+                self.assertEqual(
+                    service.browser_opener.profile_dir.resolve(),
+                    (profile_root / "runtime" / "plotkeeper-browser-profile").resolve(),
+                )
+            finally:
+                service.close_db()
+
     def test_private_connector_is_persisted_and_malformed_records_fail_closed(self):
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "runtime" / "plotkeeper-connector.json"
@@ -71,6 +101,73 @@ class BackendTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 read_connector(path)
 
+    def test_private_connector_first_creation_is_atomic_across_processes(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = str(Path(td) / "runtime" / "plotkeeper-connector.json")
+            context = multiprocessing.get_context("spawn")
+            results = context.Queue()
+            processes = [context.Process(target=_ensure_connector_worker, args=(path, results)) for _ in range(2)]
+            for process in processes:
+                process.start()
+            for process in processes:
+                process.join(10)
+                if process.is_alive():
+                    process.terminate()
+                    process.join()
+                self.assertEqual(process.exitcode, 0)
+            values = [results.get(timeout=2) for _ in processes]
+            self.assertTrue(all(value[0] == "ok" for value in values), values)
+            self.assertEqual(values[0][1], values[1][1])
+            self.assertEqual(values[0][1], read_connector(path))
+
+    def test_plan_reconstruction_releases_lock_and_retries_after_immediate_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "project"
+            root.mkdir()
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
+            run = service.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad3", str(root), service.dashboard_url)
+            started = threading.Event()
+            release = threading.Event()
+
+            def blocking_runner(*_args, **_kwargs):
+                started.set()
+                release.wait(2)
+                return mock.Mock(returncode=0)
+
+            worker = threading.Thread(target=service.reconstruct_plan, args=(run.run_id,), kwargs={"runner": blocking_runner})
+            worker.start()
+            self.assertTrue(started.wait(2))
+            duplicate = service.reconstruct_plan(run.run_id, runner=lambda *_args, **_kwargs: self.fail("duplicate runner"))
+            self.assertTrue(duplicate["already_requested"])
+            release.set()
+            worker.join(2)
+            self.assertFalse(worker.is_alive())
+
+            class FailedProcess:
+                returncode = None
+
+                def __init__(self):
+                    self.reaped = False
+
+                def poll(self):
+                    return 23
+
+                def wait(self, timeout=0):
+                    self.reaped = True
+                    return 23
+
+            failed = FailedProcess()
+            service2 = PlotkeeperService(ledger_path=Path(td) / "ledger-2.sqlite", sessions_root=td)
+            run2 = service2.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad4", str(root), service2.dashboard_url)
+            first = service2.reconstruct_plan(run2.run_id, runner=lambda *_args, **_kwargs: failed)
+            self.assertEqual(first["error"], "reconstruction_injection_failed")
+            self.assertEqual(first["returncode"], 23)
+            self.assertTrue(failed.reaped)
+            second = service2.reconstruct_plan(run2.run_id, runner=lambda *_args, **_kwargs: mock.Mock(returncode=0))
+            self.assertTrue(second["ok"])
+            service.close_db()
+            service2.close_db()
+
     def test_popout_opens_only_exact_same_origin_dashboard_path(self):
         with tempfile.TemporaryDirectory() as td:
             opened = []
@@ -80,7 +177,8 @@ class BackendTests(unittest.TestCase):
                 browser_opener=lambda url, *, new=0: opened.append((url, new)) or True,
             )
             server = service.serve("127.0.0.1", 0)
-            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True); thread.start()
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True)
+            thread.start()
             origin = f"http://127.0.0.1:{server.server_port}"
             try:
                 body = json.dumps({"path": "/?run_id=exact&session_id=root"}).encode()
@@ -100,7 +198,9 @@ class BackendTests(unittest.TestCase):
                         urlopen(bad, timeout=2)
                 self.assertEqual(len(opened), 1)
             finally:
-                server.shutdown(); server.server_close(); service.close_db()
+                server.shutdown()
+                server.server_close()
+                service.close_db()
 
     def test_closed_root_enrolls_one_linked_successor_and_stays_immutable(self):
         with tempfile.TemporaryDirectory() as td:
@@ -168,7 +268,8 @@ class BackendTests(unittest.TestCase):
             db.execute("INSERT INTO reports(run_id,session_id,kind,text,evidence,created_at) VALUES (?,?,?,?,?,?)", ("legacy-run", "legacy-root", "claim", "preserve", "[]", "2026-01-02"))
             db.execute("INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?)", ("legacy-run", "T1", "Keep", "completed", "owner", None, "ws", "plan", 0))
             db.execute("INSERT INTO goal_contracts VALUES (?,?,?,?,?,?,?,?,?)", ("legacy-run", "C1", "contract.json", "ACTIVE", "goal", "hash", "base", "{}", "2026-01-02"))
-            db.commit(); db.close()
+            db.commit()
+            db.close()
             ledger = Ledger(path)
             self.assertEqual(len(ledger.list_runs()), 1)
             historical = ledger.by_root("legacy-root")
@@ -186,7 +287,8 @@ class BackendTests(unittest.TestCase):
 
     def test_packaged_dashboard_is_served(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             server = service.serve("127.0.0.1", 0)
             thread = __import__("threading").Thread(target=server.serve_forever, daemon=True)
@@ -204,10 +306,12 @@ class BackendTests(unittest.TestCase):
 
     def test_handler_errors_return_non_empty_response_instead_of_empty_socket(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             server = service.serve("127.0.0.1", 0)
-            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True); thread.start()
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True)
+            thread.start()
             try:
                 with self.assertRaises(Exception) as caught:
                     urlopen(f"http://127.0.0.1:{server.server_port}/api/events?since=not-a-number", timeout=2)
@@ -215,7 +319,9 @@ class BackendTests(unittest.TestCase):
                 self.assertEqual(getattr(response, "status", None), 500)
                 self.assertIn("Plotkeeper error", response.read().decode())
             finally:
-                server.shutdown(); server.server_close(); service.close_db()
+                server.shutdown()
+                server.server_close()
+                service.close_db()
 
     def test_parser_identifies_root_invocation_and_terminal_events(self):
         obs = parse_session("root.jsonl", [
@@ -229,7 +335,8 @@ class BackendTests(unittest.TestCase):
 
     def test_historical_invocation_is_excluded_by_first_activation_watermark(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             source = root / "root.jsonl"
             source.write_text(line("1", "session_meta", {"id": "root-1", "cwd": td}) + line("2", "message", {"role": "user", "content": "$specswarm"}), encoding="utf-8")
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
@@ -245,7 +352,8 @@ class BackendTests(unittest.TestCase):
 
     def test_close_requires_injected_terminal_receipt(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             source = root / "root.jsonl"
             source.write_text(line("1", "session_meta", {"id": "root-1", "cwd": td}), encoding="utf-8")
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
@@ -401,7 +509,8 @@ class BackendTests(unittest.TestCase):
 
     def test_sync_plan_extracts_checkbox_tasks(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             run = service.ledger.enroll("root-1", td, service.dashboard_url)
             plan = Path(td) / "CHECKLIST.md"
@@ -476,10 +585,12 @@ class BackendTests(unittest.TestCase):
 
     def test_sync_plan_persists_goal_contract_and_closeout_invokes_review_skill(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             run = service.ledger.enroll("root-1", td, service.dashboard_url)
-            plan = Path(td) / "CHECKLIST.md"; plan.write_text("- [ ] Ship safely\n", encoding="utf-8")
+            plan = Path(td) / "CHECKLIST.md"
+            plan.write_text("- [ ] Ship safely\n", encoding="utf-8")
             contract = Path(td) / "contract.json"
             contract.write_text(json.dumps({"id": "PROD-1", "status": "ACTIVE", "user_goal": "Preserve v1 while adding v2", "contract_hash": "abc", "baseline": {"sha": "deadbeef"}, "invariants": ["v1 remains live"]}), encoding="utf-8")
             result = service.sync_plan(run.run_id, [str(plan)], str(contract))
@@ -493,8 +604,10 @@ class BackendTests(unittest.TestCase):
 
     def test_partial_jsonl_line_is_not_lost(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
-            source = root / "root.jsonl"; source.write_text("", encoding="utf-8")
+            root = Path(td) / "sessions"
+            root.mkdir()
+            source = root / "root.jsonl"
+            source.write_text("", encoding="utf-8")
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             complete = line("1", "message", {"role": "user", "content": "$specswarm"})
             source.write_text(line("0", "session_meta", {"id": "root-1", "cwd": td}) + complete[:-2], encoding="utf-8")
@@ -505,7 +618,8 @@ class BackendTests(unittest.TestCase):
 
     def test_independent_root_attaches_by_run_marker(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             run = service.ledger.enroll("spec-root", td, service.dashboard_url)
             source = root / "implementation.jsonl"
@@ -516,7 +630,8 @@ class BackendTests(unittest.TestCase):
 
     def test_child_session_maps_to_root(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             r = root / "root.jsonl"
             r.write_text(line("1", "session_meta", {"id": "root-1", "cwd": td}) + line("2", "message", {"role": "user", "content": "$specswarm"}), encoding="utf-8")
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
@@ -535,7 +650,8 @@ class BackendTests(unittest.TestCase):
 
     def test_canonical_root_task_deduplicates_worktree_variants_and_preserves_history(self):
         with tempfile.TemporaryDirectory() as td:
-            root = Path(td) / "sessions"; root.mkdir()
+            root = Path(td) / "sessions"
+            root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=root)
             first = root / "root-a.jsonl"
             first.write_text(line("1", "session_meta", {"id": "session-a", "task_id": "task-42", "cwd": td}) +

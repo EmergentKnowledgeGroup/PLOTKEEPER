@@ -12,6 +12,7 @@ from .service import PlotkeeperService
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="plotkeeper")
     parser.add_argument("--ledger", default=os.environ.get("PLOTKEEPER_LEDGER", "runtime/plotkeeper.sqlite3"))
+    parser.add_argument("--connector", default=os.environ.get("PLOTKEEPER_CONNECTOR"))
     parser.add_argument("--sessions", default=os.environ.get("PLOTKEEPER_SESSIONS", str(Path.home() / ".codex" / "sessions")))
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
@@ -39,9 +40,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    connector_file = connector_path(Path(args.ledger).resolve().parent.parent)
+    connector_file = Path(args.connector).resolve() if args.connector else connector_path(Path(args.ledger).resolve().parent.parent)
     connector = ensure_connector(connector_file, args.port if args.command == "serve" else None)
-    service = PlotkeeperService(ledger_path=args.ledger, sessions_root=args.sessions, dashboard_url=str(connector["url"]))
+    service = PlotkeeperService(ledger_path=args.ledger, sessions_root=args.sessions,
+                                dashboard_url=str(connector["url"]), profile_root=connector_file.parent.parent)
     if args.command == "connector":
         print(json.dumps(connector, sort_keys=True))
     elif args.command == "status":

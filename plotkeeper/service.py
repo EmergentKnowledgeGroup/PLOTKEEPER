@@ -25,10 +25,11 @@ class PlotkeeperService:
                  codex_state_path: str | os.PathLike[str] | None = None,
                  session_index_path: str | os.PathLike[str] | None = None,
                  thread_catalog: ThreadCatalog | None = None,
-                 browser_opener: Callable[..., bool] | None = None):
+                 browser_opener: Callable[..., bool] | None = None,
+                 profile_root: str | os.PathLike[str] | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
-        repo_root = Path(ledger_path).resolve().parent.parent
+        repo_root = Path(profile_root).resolve() if profile_root is not None else Path(ledger_path).resolve().parent.parent
         self.browser_opener = browser_opener or IsolatedBrowserLauncher(repo_root / "runtime" / "plotkeeper-browser-profile")
         self.scanner = SessionScanner(sessions_root, self.ledger.watermark, self.ledger.set_watermark)
         self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root, session_index_path)
@@ -39,6 +40,7 @@ class PlotkeeperService:
         self._events: list[dict[str, Any]] = []
         self._event_lock = threading.Lock()
         self._repair_lock = threading.Lock()
+        self._repair_inflight: set[str] = set()
         self._stop = threading.Event()
 
     @staticmethod
@@ -316,6 +318,25 @@ class PlotkeeperService:
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 creationflags=flags, close_fds=True)
 
+    @staticmethod
+    def _runner_returncode(result: Any) -> int | None:
+        """Observe and reap an immediately failed child without blocking."""
+        if isinstance(result, int):
+            return result
+        code = getattr(result, "returncode", 0)
+        if code is None:
+            poll = getattr(result, "poll", None)
+            if callable(poll):
+                code = poll()
+        if code not in (0, None):
+            wait = getattr(result, "wait", None)
+            if callable(wait):
+                try:
+                    wait(timeout=0)
+                except (OSError, TimeoutError, TypeError, subprocess.TimeoutExpired):
+                    pass
+        return code
+
     def review_prompt(self, run_id: str) -> str:
         contract = self.ledger.goal_contract(run_id)
         contract_ref = (f"contract {contract['contract_id']} at {contract['path']}" if contract else
@@ -383,6 +404,8 @@ class PlotkeeperService:
                 return {"ok": False, "error": "plan_already_synced"}
             if self.ledger.has_report_kind(run_id, "plan-repair-injected"):
                 return {"ok": True, "already_requested": True}
+            if run_id in self._repair_inflight:
+                return {"ok": True, "already_requested": True}
             run_cwd = self._validated_run_cwd(run.cwd)
             if run_cwd is None:
                 return {"ok": False, "error": "run_cwd_invalid"}
@@ -397,15 +420,19 @@ class PlotkeeperService:
             )
             args = ["codex.exe", "exec", "resume", run.root_session_id, prompt, "--json", "--skip-git-repo-check"]
             runner = runner or self._spawn_codex
-            try:
-                result = runner(args, cwd=str(run_cwd))
-                code = getattr(result, "returncode", result if isinstance(result, int) else 0)
-            except Exception as exc:
-                return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
+            self._repair_inflight.add(run_id)
+        try:
+            result = runner(args, cwd=str(run_cwd))
+            code = self._runner_returncode(result)
             if code not in (0, None):
                 return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
             self.ledger.add_report(run_id, "plan-repair-injected", "Exact root task was asked to reconstruct, sync, and verify its original SpecSwarm task surface.")
             return {"ok": True, "queued": True, "run_id": run_id}
+        except Exception as exc:
+            return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
+        finally:
+            with self._repair_lock:
+                self._repair_inflight.discard(run_id)
 
     def inject_check_in(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -532,7 +559,12 @@ class PlotkeeperService:
                         return
                     raw = target.read_bytes()
                     content_type = "text/html; charset=utf-8" if target.suffix == ".html" else ("text/css; charset=utf-8" if target.suffix == ".css" else "text/javascript; charset=utf-8")
-                    self.send_response(HTTPStatus.OK); self.send_header("Content-Type", content_type); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(raw)))
+                    self.end_headers()
+                    self.wfile.write(raw)
                 elif parsed.path == "/api/runs":
                     # Interactive inventory is intentionally active-only. The
                     # ledger remains the source of historical detail, but

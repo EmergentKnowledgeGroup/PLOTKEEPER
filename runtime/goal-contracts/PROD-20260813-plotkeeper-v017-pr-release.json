@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-v017-pr-release",
   "status": "ACTIVE",
-  "contract_hash": "deb9b287d2535d2a1b9633fa0a2f79a7991ef25fd8caf918c737647558b17ef0",
+  "contract_hash": "9ed96e422737d84ce29d0d573656d6c07326748c2c9d26635a40ef40a8687f1b",
   "origin": "DIRECT",
   "user_goal": "Publish the validated Plotkeeper UI, identity, connector, isolated-window, fallback-task, and reconstruction slice through a CodeRabbit-reviewed PR, merge only when green, then release and attest it.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcf4-c1b8-7783-8368-0f323690ce9a",
-    "original_request_hash": "a2b2dc5e839da9d36e0d1eccfc8dd37310fe18d731f783a496b94845fed79a22",
-    "verbatim_text": "If you feel confident (above 95%) to the quality of this release, this is what you want you to do - push a PR to main but do not merge/close yet.  Run the [$pr-review-ci-loop](C:\\Users\\UltariumV3\\.codex\\skills\\pr-review-ci-loop\\SKILL.md) as CR *SHOULD* grab it and take a look for us - I would like this particular slice to be reivewed by him.\n\nOnce hes all green and good, update all docs/surfaces that need it, then merge/close, and make sure we have a release, what was added/fixed and then check in",
+    "original_request_ref": "github-pr-authority:v0.1.7-release-request",
+    "original_request_hash": "c28af2d30444bb5a9494af39816143a4b9ff08379c659c202e8f112b3fac3cbc",
+    "verbatim_text": "Open a pull request for the validated Plotkeeper slice, require CodeRabbit and CI review before merge, update affected documentation and release notes, then merge, publish a release, and verify the result.",
     "captured_at_utc": "2026-08-13T22:05:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:original-v0.1.7-release-authority"
   },
   "baseline": {
     "protected_ref": "public main and v0.1.6",
@@ -23,14 +23,16 @@
   "classification": "PRODUCTION_AFFECTING",
   "allowed": {
     "paths": [
-      "** source paths already changed between baseline and candidate",
       "CHANGELOG.md",
       "README.md",
-      "docs/**",
-      "integrations/codex/**",
+      "docs/",
+      "integrations/codex/",
       "pyproject.toml",
       "plotkeeper/__init__.py",
-      ".github/workflows/**",
+      "plotkeeper/",
+      "tests/",
+      "scripts/",
+      ".github/workflows/",
       "runtime/checkpoints/LATEST.md",
       "runtime/checkpoints/LATEST.json",
       "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json"
@@ -55,7 +57,7 @@
     "paths": [
       "runtime/plotkeeper.sqlite3",
       "runtime/plotkeeper-connector.json",
-      "runtime/plotkeeper-browser-profile/**",
+      "runtime/plotkeeper-browser-profile/",
       "user project repositories and data"
     ],
     "semantic_changes": [

@@ -58,6 +58,8 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertIn("PIP_CACHE_DIR", install)
         self.assertIn("plotkeeper-connector.json", install)
         self.assertIn("plotkeeper-connector.json", start)
+        self.assertNotIn("$legacyPort", install)
+        self.assertNotIn("$legacyListener", install)
         self.assertNotIn("[int]$Port = 47831", install)
         self.assertNotIn("[int]$Port = 47831", start)
 

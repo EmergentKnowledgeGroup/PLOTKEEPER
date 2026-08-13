@@ -58,13 +58,6 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId) {
     $commandLine = Get-OwnerCommandLine $ListenerProcessId
     return $commandLine -match '(?i)(plotkeeper\.cli|plotkeeper[\\/]scripts[\\/]start\.ps1)'
 }
-$legacyPort = 47831
-if ($Port -ne $legacyPort) {
-    $legacyListener = Get-ListenerPid $legacyPort
-    if ($legacyListener -and (Test-PlotkeeperOwner $legacyListener)) {
-        Stop-Process -Id $legacyListener -Force -ErrorAction Stop
-    }
-}
 $listener = Get-ListenerPid
 if ($listener) {
     if (-not (Test-PlotkeeperOwner $listener)) {

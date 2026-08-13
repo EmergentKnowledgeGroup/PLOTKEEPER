@@ -52,6 +52,10 @@ class IsolatedBrowserLauncher:
                     [str(executable), f"--app={url}", "--new-window", "--no-first-run",
                      "--no-default-browser-check", f"--user-data-dir={self.profile_dir}"],
                     cwd=str(self.profile_dir.parent),
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                     close_fds=True,
                 )
                 return True

@@ -21,10 +21,16 @@ BUNDLED_SKILLS = (
 
 def load_connector(repo_root: Path) -> dict:
     connector_path = repo_root / "runtime" / "plotkeeper-connector.json"
-    connector = json.loads(connector_path.read_text(encoding="utf-8"))
-    if connector.get("host") != "127.0.0.1" or not 1 <= int(connector.get("port", 0)) <= 65535:
+    try:
+        connector = json.loads(connector_path.read_text(encoding="utf-8"))
+        if not isinstance(connector, dict):
+            raise ValueError("connector must be an object")
+        port = int(connector.get("port", 0))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid Plotkeeper connector: {connector_path}") from exc
+    if connector.get("host") != "127.0.0.1" or not 1 <= port <= 65535:
         raise ValueError(f"invalid Plotkeeper connector: {connector_path}")
-    return {**connector, "url": f"http://127.0.0.1:{int(connector['port'])}", "path": str(connector_path)}
+    return {**connector, "url": f"http://127.0.0.1:{port}", "path": str(connector_path)}
 
 
 def hook_command(codex_home: Path) -> str:
