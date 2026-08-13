@@ -1,0 +1,115 @@
+{
+  "id": "PROD-20260813-plotkeeper-validating-release-evidence",
+  "status": "ACTIVE",
+  "contract_hash": "044766c25f04a2a6f5c2dd287f1bbaafb76ee27056c19cae3d2da86f8fa08c7f",
+  "origin": "DIRECT",
+  "user_goal": "Make the designated v0.1.7 release contract truthfully validatable and its evidence hashes platform-stable.",
+  "authority": {
+    "original_request_ref": "github-pr-authority:v0.1.7-validation-remediation",
+    "original_request_hash": "e42b9b3fd6dd23410227f471f61e292adce0d10f20974570b868635077501f71",
+    "verbatim_text": "Correct verified release validation blockers before merging Plotkeeper v0.1.7.",
+    "captured_at_utc": "2026-08-14T00:30:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "ignored-local-evidence:v0.1.7-validation-remediation"
+  },
+  "baseline": {
+    "protected_ref": "exact reviewed candidate before validation remediation",
+    "sha": "77ad3b48f4760f4a3d5ffba687c97af16bb2029c",
+    "retrieved_at_utc": "2026-08-14T00:30:00Z",
+    "protection_evidence": "clean pushed PR head independently reviewed",
+    "selection_reason": "Canonical reviewer found missing VALIDATED obligation and newline-sensitive evidence hashing."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".gitattributes",
+      "runtime/goal-contracts/",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "designated release contract and pointer"
+    ],
+    "semantic_changes": [
+      "Add one truthful VALIDATED obligation and enforce LF for tracked goal contracts; rebind canonical hashes and pointer."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "user project repositories and data"
+    ],
+    "semantic_changes": [
+      "No product behavior, merge, release, install, service, secret, or user-data mutation."
+    ]
+  },
+  "invariants": [
+    "All release acceptance requirements remain intact.",
+    "Working-tree and Git-blob contract evidence hashes agree across platforms.",
+    "No phase advances without canonical PASS."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-VALIDATION-FIX",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "Canonical review can truthfully validate and bind the designated release contract on Windows and Linux.",
+      "forbidden_behavior": "Empty VALIDATED obligations or newline-dependent evidence hashes.",
+      "target_and_actor": "release contract, reviewer, guard, and server verifier",
+      "required_proof_ids": [
+        "PR-VALIDATION-FIX"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-VALIDATION-FIX",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-VALIDATION-FIX"
+      ],
+      "claim": "Contract validation, LF/Git-blob parity, full tests, and exact phase-chain replay prove the fix.",
+      "required_environment": "clean exact candidate checkout",
+      "command_or_read_only_check": "contract validator, git blob hash comparison, tests, production review",
+      "expected_observation": "all checks and phase receipts PASS"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-VALIDATION-FIX",
+      "phase": "DEPLOY_READY",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-VALIDATION-FIX",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "signed canonical release bundle accepted by server verifier and trusted guard"
+    }
+  ],
+  "stop_conditions": [
+    "Contract invalidity, hash mismatch, test failure, or non-PASS review."
+  ],
+  "known_discrepancies": [
+    "CodeRabbit incremental review is rate-limited; exact-head CI and independent review remain mandatory."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User-authorized correction of every verified review blocker before release",
+      "acceptance_cases": [
+        "AC-VALIDATION-FIX"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-pointer-hash-parity.json",
+    "sha256": "5e3634b11adc15d810637cf12bea652ee49d8fd3df809edba823d56ecb485490"
+  }
+}

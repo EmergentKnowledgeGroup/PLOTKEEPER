@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-v017-pr-release",
   "status": "ACTIVE",
-  "contract_hash": "8b059084cf916593e1727a49fb28c58a0982ee522c485e2dc82192462afe1162",
+  "contract_hash": "7b727e67a05884c9e1ac9d1fc2b58fbd5dc3af7229829819b9a692311c85aacb",
   "origin": "DIRECT",
   "user_goal": "Publish the validated Plotkeeper UI, identity, connector, isolated-window, fallback-task, and reconstruction slice through a CodeRabbit-reviewed PR, merge only when green, then release and attest it.",
   "authority": {
@@ -77,6 +77,16 @@
   ],
   "acceptance_cases": [
     {
+      "id": "AC-VALIDATE",
+      "phase": "VALIDATED",
+      "promised_behavior": "The exact candidate, cumulative scope, contracts, tests, and review evidence are independently validated before merge readiness.",
+      "forbidden_behavior": "Advancing an unvalidated candidate or omitting cumulative scope and contract-chain checks.",
+      "target_and_actor": "Exact Plotkeeper candidate and independent production reviewer",
+      "required_proof_ids": [
+        "PR-VALIDATE"
+      ]
+    },
+    {
       "id": "AC-PR",
       "phase": "MERGE_READY",
       "promised_behavior": "A PR to main contains the exact reviewed slice, CodeRabbit feedback is fully triaged/resolved, and required CI is green.",
@@ -108,6 +118,17 @@
     }
   ],
   "proof_requirements": [
+    {
+      "id": "PR-VALIDATE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-VALIDATE"
+      ],
+      "claim": "Independent exact-candidate validation proves cumulative scope, contract chain, tests, and review evidence before release progression.",
+      "required_environment": "clean exact candidate checkout",
+      "command_or_read_only_check": "production-goal-review cumulative diff, contract validation, full tests, and adversarial evidence",
+      "expected_observation": "VALIDATED PASS with exact candidate binding and zero open items"
+    },
     {
       "id": "PR-PR",
       "phase": "MERGE_READY",
