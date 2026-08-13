@@ -120,6 +120,36 @@ class BackendTests(unittest.TestCase):
             self.assertEqual(values[0][1], values[1][1])
             self.assertEqual(values[0][1], read_connector(path))
 
+    def test_private_connector_rejects_unsupported_hard_link_without_overwriting_winner(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "runtime" / "plotkeeper-connector.json"
+            with mock.patch("plotkeeper.connector.os.link", side_effect=OSError("operation not supported")):
+                with self.assertRaisesRegex(RuntimeError, "atomic create-only"):
+                    ensure_connector(path)
+            self.assertFalse(path.exists())
+            self.assertEqual(list(path.parent.glob(".*.tmp")), [])
+
+    def test_running_reconstruction_process_is_reaped_by_daemon(self):
+        class RunningProcess:
+            returncode = None
+
+            def __init__(self):
+                self.reaped = threading.Event()
+                self.wait_was_daemon = None
+
+            def poll(self):
+                return None
+
+            def wait(self):
+                self.wait_was_daemon = threading.current_thread().daemon
+                self.reaped.set()
+                return 0
+
+        process = RunningProcess()
+        self.assertIsNone(PlotkeeperService._runner_returncode(process))
+        self.assertTrue(process.reaped.wait(2))
+        self.assertTrue(process.wait_was_daemon)
+
     def test_plan_reconstruction_releases_lock_and_retries_after_immediate_failure(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "project"

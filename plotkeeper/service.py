@@ -319,6 +319,13 @@ class PlotkeeperService:
                                 creationflags=flags, close_fds=True)
 
     @staticmethod
+    def _daemon_reap(result: Any) -> None:
+        try:
+            result.wait()
+        except (OSError, ValueError, subprocess.SubprocessError):
+            pass
+
+    @staticmethod
     def _runner_returncode(result: Any) -> int | None:
         """Observe and reap an immediately failed child without blocking."""
         if isinstance(result, int):
@@ -328,6 +335,16 @@ class PlotkeeperService:
             poll = getattr(result, "poll", None)
             if callable(poll):
                 code = poll()
+        if code is None:
+            wait = getattr(result, "wait", None)
+            if callable(wait):
+                threading.Thread(
+                    target=PlotkeeperService._daemon_reap,
+                    args=(result,),
+                    daemon=True,
+                    name="plotkeeper-codex-reaper",
+                ).start()
+            return None
         if code not in (0, None):
             wait = getattr(result, "wait", None)
             if callable(wait):

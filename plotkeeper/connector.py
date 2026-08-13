@@ -86,6 +86,11 @@ def ensure_connector(path: str | os.PathLike[str], explicit_port: int | None = N
             os.link(temporary, target)
         except FileExistsError:
             return read_connector(target)
+        except OSError as exc:
+            raise RuntimeError(
+                "Plotkeeper connector requires an atomic create-only filesystem operation; "
+                f"hard-link creation failed for {target}"
+            ) from exc
     finally:
         temporary.unlink(missing_ok=True)
     return read_connector(target)
