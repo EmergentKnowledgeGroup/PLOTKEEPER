@@ -3,11 +3,11 @@
   "tracks": {
     "PLOTKEEPER V0.1.7 PR RELEASE": {
       "step": "post-green-tests",
-      "note": "PR 1 remains open and unmerged; all CodeRabbit findings are corrected locally, including connector races, reconstruction false-success handling, title refresh, safe legacy-listener behavior, accessibility, and review-contract sanitization. Awaiting exact-head push and re-review.",
+      "note": "PR 1 remains open and unmerged; CodeRabbit findings are corrected, CI is green, and final v0.1.7 version, changelog, release, rollback, and verifier surfaces are updated for final review.",
       "branch": "release/v0.1.7-plotkeeper-surface",
-      "head": "05e6382 + reviewed worktree corrections",
+      "head": "a0a0406 + final release surfaces",
       "next_cmd": "git diff --check && py -3 -B -m unittest discover -s tests -v",
-      "validations": ["sanitized release contract validates at 9ed96e422737d84ce29d0d573656d6c07326748c2c9d26635a40ef40a8687f1b", "80 tests", "Ruff E702", "Node syntax", "diff check", "all CodeRabbit findings locally reconciled"]
+      "validations": ["sanitized release contract validates at 9ed96e422737d84ce29d0d573656d6c07326748c2c9d26635a40ef40a8687f1b", "82 tests before final docs", "Ruff E702", "Node syntax", "diff check", "two CodeRabbit passes reconciled"]
     },
     "PLOTKEEPER PLAN RECONSTRUCTION": {
       "step": "post-green-tests",
