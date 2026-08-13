@@ -44,6 +44,8 @@ The transition to `REVIEWED` requires a terminal, injected receipt with
 
 ## Local security boundary
 
-The default server binds to `127.0.0.1`. There is no authentication or TLS
+The server binds only to `127.0.0.1` using one persisted high private connector
+chosen during installation. A fixed port is never silently taken over; owned-
+listener checks remain the safety boundary. There is no authentication or TLS
 layer. Session contents may contain sensitive project context, so do not expose
 the dashboard to another interface without adding an appropriate access layer.

@@ -1,10 +1,21 @@
-param([string]$Python = "", [int]$Port = 47831)
+param([string]$Python = "", [int]$Port = 0)
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $Root
+$localPython = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not $Python) {
-    $localPython = Join-Path $Root ".venv\Scripts\python.exe"
     $Python = if (Test-Path $localPython) { $localPython } else { "python" }
+}
+$connectorPath = Join-Path $Root "runtime\plotkeeper-connector.json"
+if ($Port -le 0) {
+    if (-not (Test-Path -LiteralPath $connectorPath)) {
+        $connectorJson = & $Python -m plotkeeper.cli --ledger (Join-Path $Root "runtime\plotkeeper.sqlite3") connector
+        if ($LASTEXITCODE -ne 0) { throw "Plotkeeper could not allocate its loopback connector." }
+        $null = $connectorJson | ConvertFrom-Json
+    }
+    $connector = Get-Content -LiteralPath $connectorPath -Raw | ConvertFrom-Json
+    if ([string]$connector.host -ne "127.0.0.1" -or [int]$connector.port -lt 1 -or [int]$connector.port -gt 65535) { throw "Plotkeeper connector is invalid; rerun scripts\install.ps1 with an explicit -Port if recovery is required." }
+    $Port = [int]$connector.port
 }
 
 function Get-ListenerPid {

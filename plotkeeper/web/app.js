@@ -220,6 +220,14 @@
   $('#collapse-all').addEventListener('click', () => { $$('.workstream').forEach(section => { section.classList.remove('is-open'); $('.workstream-head', section)?.setAttribute('aria-expanded', 'false'); }); $$('.task-row').forEach(row => { row.classList.remove('is-open'); $('.task-button', row)?.setAttribute('aria-expanded', 'false'); }); });
   $('#task-filter').addEventListener('input', event => { state.filter = event.target.value.trim().toLowerCase(); renderBoard(state.tasks); if (state.selected) selectTask(state.selected, false); });
   $('#run-selector').addEventListener('change', event => { if (event.target.value) loadRun(event.target.value); });
+  $('#pop-out').addEventListener('click', async () => {
+    const button = $('#pop-out'); const original = button.innerHTML; button.disabled = true;
+    try {
+      const result = await getJson('/api/open-browser', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: `${window.location.pathname}${window.location.search}` }) });
+      button.innerHTML = result.ok ? '✓ <span>Opened</span>' : original;
+    } catch (_error) { button.innerHTML = '! <span>Could not open</span>'; }
+    window.setTimeout(() => { button.innerHTML = original; button.disabled = false; }, 1800);
+  });
   $('#run-picker-button').addEventListener('click', () => setPickerOpen($('#run-picker-menu').hidden, true));
   $('#run-picker-button').addEventListener('keydown', event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); setPickerOpen(true, true); } });
   $('#run-picker-menu').addEventListener('click', event => { const option = event.target.closest('.run-picker-option'); if (!option) return; setPickerOpen(false); $('#run-selector').value = option.dataset.runId; loadRun(option.dataset.runId); $('#run-picker-button').focus(); });

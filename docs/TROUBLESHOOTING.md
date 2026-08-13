@@ -5,7 +5,8 @@
 Check the health endpoint:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:47831/health
+$connector = Get-Content .\runtime\plotkeeper-connector.json -Raw | ConvertFrom-Json
+Invoke-RestMethod "$($connector.url)/health"
 ```
 
 If the port is unavailable, start on another one:

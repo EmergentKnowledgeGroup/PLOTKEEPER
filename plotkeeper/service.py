@@ -5,6 +5,7 @@ import os
 import subprocess
 import threading
 import re
+import webbrowser
 from urllib.parse import quote
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -22,9 +23,11 @@ class PlotkeeperService:
                  sessions_root: str | os.PathLike[str] = Path.home() / ".codex" / "sessions",
                  dashboard_url: str = "http://127.0.0.1:47831",
                  codex_state_path: str | os.PathLike[str] | None = None,
-                 thread_catalog: ThreadCatalog | None = None):
+                 thread_catalog: ThreadCatalog | None = None,
+                 browser_opener: Callable[[str], bool] | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
+        self.browser_opener = browser_opener or webbrowser.open
         self.scanner = SessionScanner(sessions_root, self.ledger.watermark, self.ledger.set_watermark)
         self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root)
         self._session_identity: dict[str, dict[str, Any]] = {}
@@ -517,6 +520,21 @@ class PlotkeeperService:
             def _do_POST(self) -> None:
                 parsed = urlparse(self.path)
                 body = self._body()
+                if parsed.path == "/api/open-browser":
+                    host = self.headers.get("Host", "")
+                    origin = self.headers.get("Origin")
+                    if not re.fullmatch(r"127\.0\.0\.1:\d+", host) or (origin and origin != f"http://{host}"):
+                        self._json({"ok": False, "error": "untrusted_origin"}, HTTPStatus.FORBIDDEN)
+                        return
+                    relative = str(body.get("path", ""))
+                    target = urlparse(relative)
+                    if target.scheme or target.netloc or target.path not in {"/", "/dashboard"} or not relative.startswith("/"):
+                        self._json({"ok": False, "error": "invalid_dashboard_path"}, HTTPStatus.BAD_REQUEST)
+                        return
+                    url = f"http://{host}{relative}"
+                    opened = bool(service.browser_opener(url))
+                    self._json({"ok": opened, "url": url} if opened else {"ok": False, "error": "browser_launch_failed"}, 200 if opened else 502)
+                    return
                 if parsed.path == "/api/poll":
                     self._json({"events": service.poll_once()})
                     return

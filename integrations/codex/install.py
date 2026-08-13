@@ -19,6 +19,14 @@ BUNDLED_SKILLS = (
 )
 
 
+def load_connector(repo_root: Path) -> dict:
+    connector_path = repo_root / "runtime" / "plotkeeper-connector.json"
+    connector = json.loads(connector_path.read_text(encoding="utf-8"))
+    if connector.get("host") != "127.0.0.1" or not 1 <= int(connector.get("port", 0)) <= 65535:
+        raise ValueError(f"invalid Plotkeeper connector: {connector_path}")
+    return {**connector, "url": f"http://127.0.0.1:{int(connector['port'])}", "path": str(connector_path)}
+
+
 def hook_command(codex_home: Path) -> str:
     script = codex_home / "skills" / "adaptive-execution" / "scripts" / "adaptive_execution.py"
     return f'py -3 "{script}" hook'
@@ -92,7 +100,11 @@ def install(codex_home: Path, *, skip_plugins: bool = False) -> Path:
 
     config_path = codex_home / "plotkeeper.json"
     config = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-    config["repo_root"] = str(Path(__file__).resolve().parents[2])
+    repo_root = Path(__file__).resolve().parents[2]
+    connector = load_connector(repo_root)
+    config["repo_root"] = str(repo_root)
+    config["connector_path"] = connector["path"]
+    config["dashboard_url"] = connector["url"]
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
     hooks_path = codex_home / "hooks.json"

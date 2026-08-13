@@ -52,9 +52,11 @@ Clone or download the repository, open PowerShell in its root, then run:
 .\scripts\install.ps1
 ```
 
-The installer creates an isolated `.venv`, installs Plotkeeper into it, starts
-the local service, and registers it for the current Windows user at sign-in.
-Open <http://127.0.0.1:47831/>.
+The installer creates an isolated `.venv`, installs Plotkeeper into it, chooses
+and persists an available high private loopback connector, starts the local
+service, and registers it for the current Windows user at sign-in. The exact URL
+is printed after installation and stored in `runtime/plotkeeper-connector.json`.
+Use **Pop out** to open the exact current surface in your default browser.
 
 For an evaluation that does not touch your Codex sessions:
 

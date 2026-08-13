@@ -1,6 +1,20 @@
 {
   "current_track": "STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW",
   "tracks": {
+    "PLOTKEEPER POPOUT PRIVATE CONNECTOR": {
+      "step": "post-green-tests",
+      "note": "Exact run-bound external-browser pop-out and one persisted OS-assigned private loopback connector are implemented across service, installer, startup, CLI, Codex config, SpecSwarm, UI, tests, and docs; installed lifecycle and independent review remain.",
+      "branch": "main",
+      "head": "58f3dee2bdca8109be78e26bf245275787ddf453",
+      "next_cmd": ".\\scripts\\install.ps1",
+      "validations": [
+        "final active contract PROD-20260813-plotkeeper-popout-private-connector-final validates at a157f786d6291f287f4cc70f033536b2e1fc1dc83690dd145a412047001b2d2e",
+        "73/73 tests green",
+        "focused origin, path, and browser-opener attacks green",
+        "Node, Python, PowerShell syntax and git diff check green",
+        "generated connector is exactly ignored"
+      ]
+    },
     "PLOTKEEPER RESPONSIVE RUN PICKER": {
       "step": "post-green-browser-qa",
       "note": "Native viewport-unbounded run select replaced by an accessible project-grouped listbox; long labels are compact and bounded, and Run Detail remains a full-width row below Workstreams at every supported width.",

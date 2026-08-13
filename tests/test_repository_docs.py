@@ -56,6 +56,10 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertIn("Stop-Process -Id $listener", install)
         self.assertIn("runtime\\tmp\\install", install)
         self.assertIn("PIP_CACHE_DIR", install)
+        self.assertIn("plotkeeper-connector.json", install)
+        self.assertIn("plotkeeper-connector.json", start)
+        self.assertNotIn("[int]$Port = 47831", install)
+        self.assertNotIn("[int]$Port = 47831", start)
 
     def test_panel_receipt_instructions_require_html_proof(self):
         skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")
@@ -63,6 +67,7 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertIn('data-testid="plotkeeper-app"', skill)
         self.assertIn("Only after the valid HTML check succeeds", skill)
         self.assertIn("PK:PANEL_OPENED", skill)
+        self.assertIn("plotkeeper_cli.py\" connector", skill)
 
 
 if __name__ == "__main__":

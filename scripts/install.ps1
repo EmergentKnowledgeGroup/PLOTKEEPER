@@ -1,4 +1,4 @@
-param([string]$Python = "python", [int]$Port = 47831)
+param([string]$Python = "python", [int]$Port = 0)
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 New-Item -ItemType Directory -Force -Path (Join-Path $Root "runtime") | Out-Null
@@ -25,6 +25,14 @@ try {
         Remove-Item -LiteralPath $installTemp -Recurse -Force
     }
 }
+$connectorPath = Join-Path $Root "runtime\plotkeeper-connector.json"
+$explicitPort = if ($Port -gt 0) { "$Port" } else { "" }
+$connectorJson = & $venvPython -c "import json,sys; from plotkeeper.connector import ensure_connector; print(json.dumps(ensure_connector(sys.argv[1], int(sys.argv[2]) if sys.argv[2] else None)))" $connectorPath $explicitPort
+if ($LASTEXITCODE -ne 0) { throw "Plotkeeper connector selection failed." }
+$connector = $connectorJson | ConvertFrom-Json
+$Port = [int]$connector.port
+$HostAddress = [string]$connector.host
+if ($HostAddress -ne "127.0.0.1") { throw "Plotkeeper connector must remain loopback-only." }
 $start = Join-Path $PSScriptRoot "start.ps1"
 $run = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port $Port"
 New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
@@ -35,9 +43,9 @@ function Test-Dashboard {
         return $response.StatusCode -eq 200 -and $response.Content -match '(?is)<html(?:\s|>)' -and $response.Content -match 'data-testid=["'']plotkeeper-app["'']'
     } catch { return $false }
 }
-function Get-ListenerPid {
+function Get-ListenerPid([int]$TargetPort = $Port) {
     try {
-        $connection = Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -First 1
+        $connection = Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort $TargetPort -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($connection) { return [int]$connection.OwningProcess }
     } catch { }
     return $null
@@ -49,6 +57,13 @@ function Get-OwnerCommandLine([int]$ListenerProcessId) {
 function Test-PlotkeeperOwner([int]$ListenerProcessId) {
     $commandLine = Get-OwnerCommandLine $ListenerProcessId
     return $commandLine -match '(?i)(plotkeeper\.cli|plotkeeper[\\/]scripts[\\/]start\.ps1)'
+}
+$legacyPort = 47831
+if ($Port -ne $legacyPort) {
+    $legacyListener = Get-ListenerPid $legacyPort
+    if ($legacyListener -and (Test-PlotkeeperOwner $legacyListener)) {
+        Stop-Process -Id $legacyListener -Force -ErrorAction Stop
+    }
 }
 $listener = Get-ListenerPid
 if ($listener) {
@@ -69,4 +84,4 @@ for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
     $healthy = Test-Dashboard
 }
 if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
-Write-Output "Plotkeeper installed, running, and registered for user startup."
+Write-Output "Plotkeeper installed, running, and registered for user startup at $($connector.url)."

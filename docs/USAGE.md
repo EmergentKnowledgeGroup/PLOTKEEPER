@@ -50,8 +50,9 @@ authorize it—the production goal-contract workflow owns that decision.
 Health and data endpoints:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:47831/health
-Invoke-RestMethod http://127.0.0.1:47831/api/runs
+$connector = Get-Content .\runtime\plotkeeper-connector.json -Raw | ConvertFrom-Json
+Invoke-RestMethod "$($connector.url)/health"
+Invoke-RestMethod "$($connector.url)/api/runs"
 ```
 
 ## Stop behavior

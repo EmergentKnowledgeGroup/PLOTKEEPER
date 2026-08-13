@@ -5,10 +5,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from unittest import mock
 
 from plotkeeper.ledger import Ledger
+from plotkeeper.connector import DYNAMIC_PORT_MAX, DYNAMIC_PORT_MIN, ensure_connector, read_connector
 from plotkeeper.models import RunState
 from plotkeeper.service import PlotkeeperService
 from plotkeeper.sessions import parse_session
@@ -19,6 +21,46 @@ def line(timestamp, typ, payload):
 
 
 class BackendTests(unittest.TestCase):
+    def test_private_connector_is_persisted_and_malformed_records_fail_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "runtime" / "plotkeeper-connector.json"
+            first = ensure_connector(path)
+            second = ensure_connector(path)
+            self.assertEqual(first, second)
+            self.assertEqual(first["host"], "127.0.0.1")
+            self.assertGreaterEqual(first["port"], DYNAMIC_PORT_MIN)
+            self.assertLessEqual(first["port"], DYNAMIC_PORT_MAX)
+            path.write_text('{"host":"0.0.0.0","port":80}', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                read_connector(path)
+
+    def test_popout_opens_only_exact_same_origin_dashboard_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            opened = []
+            service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td, browser_opener=lambda url: opened.append(url) or True)
+            server = service.serve("127.0.0.1", 0)
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True); thread.start()
+            origin = f"http://127.0.0.1:{server.server_port}"
+            try:
+                body = json.dumps({"path": "/?run_id=exact&session_id=root"}).encode()
+                request = Request(origin + "/api/open-browser", data=body, headers={"Content-Type": "application/json", "Origin": origin}, method="POST")
+                with urlopen(request, timeout=2) as response:
+                    result = json.load(response)
+                self.assertTrue(result["ok"])
+                self.assertEqual(opened, [origin + "/?run_id=exact&session_id=root"])
+                attacks = [
+                    ({"path": "https://example.com/"}, origin),
+                    ({"path": "/api/runs"}, origin),
+                    ({"path": "/?run_id=evil"}, "https://evil.example"),
+                ]
+                for payload, request_origin in attacks:
+                    bad = Request(origin + "/api/open-browser", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Origin": request_origin}, method="POST")
+                    with self.assertRaises(HTTPError):
+                        urlopen(bad, timeout=2)
+                self.assertEqual(len(opened), 1)
+            finally:
+                server.shutdown(); server.server_close(); service.close_db()
+
     def test_closed_root_enrolls_one_linked_successor_and_stays_immutable(self):
         with tempfile.TemporaryDirectory() as td:
             ledger = Ledger(Path(td) / "ledger.sqlite")

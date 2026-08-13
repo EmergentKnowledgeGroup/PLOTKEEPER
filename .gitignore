@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 runtime/plotkeeper.sqlite3*
+runtime/plotkeeper-connector.json
 runtime/qa/
 runtime/goal-reviews/
 examples/.demo-runtime/
