@@ -90,6 +90,8 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
         self.assertIn("Select an active run…", self.js)
         self.assertIn("/api/open-browser", self.js)
         self.assertIn('id="pop-out"', self.index)
+        self.assertIn('id="run-picker-label"', self.index)
+        self.assertIn('aria-labelledby="run-picker-label run-picker-value"', self.index)
         self.assertIn('aria-label="Open this exact Plotkeeper surface in a standalone window"', self.index)
         self.assertIn('title="Open this exact Plotkeeper surface in a standalone window"', self.index)
         self.assertNotIn("default browser", self.index)

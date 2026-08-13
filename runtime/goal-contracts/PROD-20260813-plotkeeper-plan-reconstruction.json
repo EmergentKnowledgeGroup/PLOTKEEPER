@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-plan-reconstruction",
   "status": "ACTIVE",
-  "contract_hash": "080d26e7688c9b7032fae93113bfad24f57b6bfc89638d9286fccea519b380dc",
+  "contract_hash": "0566bcd2ccdf39972377fe5be737f45cd395cdbf7b2acbb361b303d8f06ee735",
   "origin": "DIRECT",
   "user_goal": "Let a fallback Plotkeeper run ask its exact Codex task to reconstruct and verify the original SpecSwarm task surface without guessing artifacts.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcdb-eed3-7082-9886-dc515c54dd4b",
-    "original_request_hash": "26c9a4e3c340c879d15ecc436f90457e6b2ba5edd502238966a226bd7babba07",
-    "verbatim_text": "Okay - also while youre working on that - see if theres a way that if this happens, that PK can ping the codex agent to basically reconstruct the task surfaces and rows from the original specswarm (or if PK can do it itself) and then have the agent verify and run corrections.\n\ncontinue",
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-plan-reconstruction",
+    "original_request_hash": "6876a2ad29525f01832c9f249c28940c69cf967a0cd9eb61324de86109154b17",
+    "verbatim_text": "Authorized Plotkeeper change: Let a fallback Plotkeeper run ask its exact Codex task to reconstruct and verify the original SpecSwarm task surface without guessing artifacts.",
     "captured_at_utc": "2026-08-13T21:45:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-plan-reconstruction-authority"
   },
   "baseline": {
     "protected_ref": "canonical-title/task/isolated-window candidate",
@@ -126,6 +126,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-canonical-title-task-popout.json",
-    "sha256": "95ca6cb286a89ac8fa2e688d33d4f34795db5b21554d1fee57cb2e763856d858"
+    "sha256": "89fb56fdb8435e5bedd287af185bdc8aab74262cb17626809a5d4561deced41c"
   }
 }

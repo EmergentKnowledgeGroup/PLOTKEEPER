@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-popout-private-connector-final",
   "status": "ACTIVE",
-  "contract_hash": "a157f786d6291f287f4cc70f033536b2e1fc1dc83690dd145a412047001b2d2e",
+  "contract_hash": "6720589defb6d7d2d8656a5092b9e758f56518a2f169f144b0987736c438ec90",
   "origin": "DIRECT",
   "user_goal": "Complete the authorized browser pop-out and persistent private connector while keeping its generated machine-local record out of Git.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcc0-6725-7df0-aa1f-0d26d2e6ad65",
-    "original_request_hash": "c0d18a7d946d7c01575bf682d53d299455aad225acf2eeb1045e0c1ed477aa5e",
-    "verbatim_text": "Dont suppose you can add a 'pop out into a separate browser window' button can you? Would be nice to see the surface beyond just the codex app itself in the sidebar?\n\nOH ALSO - I wanted to make sure, with PK - we arent assigning some internal IP:port that would be taken up/overlapping by other potential processes right?  If so, can we make it some really obscure connector so that it just generally wouldnt interfere?",
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-private-connector-final",
+    "original_request_hash": "b765d12de14e61e807d17e965997963e59bf3504d95049b924f595a5dab0b7fc",
+    "verbatim_text": "Authorized Plotkeeper change: Complete the authorized browser pop-out and persistent private connector while keeping its generated machine-local record out of Git.",
     "captured_at_utc": "2026-08-13T20:35:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-private-connector-final-authority"
   },
   "baseline": {
     "protected_ref": "validated responsive-picker candidate before connector implementation",

@@ -28,9 +28,9 @@
         <strong id="run-progress-value">—</strong>
       </div>
       <div class="run-picker">
-        <span>Run</span>
+        <span id="run-picker-label">Run</span>
         <div class="run-combobox">
-          <button id="run-picker-button" class="run-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="run-picker-menu" disabled><span id="run-picker-value">Loading runs…</span><span aria-hidden="true">⌄</span></button>
+          <button id="run-picker-button" class="run-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="run-picker-menu" aria-labelledby="run-picker-label run-picker-value" disabled><span id="run-picker-value">Loading runs…</span><span aria-hidden="true">⌄</span></button>
           <div id="run-picker-menu" class="run-picker-menu" role="listbox" aria-label="Active runs grouped by project" hidden></div>
           <select id="run-selector" class="sr-only" aria-hidden="true" tabindex="-1"><option value="">Loading runs…</option></select>
         </div>

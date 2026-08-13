@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-popout-private-connector",
   "status": "ACTIVE",
-  "contract_hash": "515ba9ffb677d6668a53364fd04037c8f70b2054e465aeec3c1766a3bc5dce4e",
+  "contract_hash": "730ead7f1e14117e42db5ce0a3d6d612dfa189f4605f1288d3e43239f1879014",
   "origin": "DIRECT",
   "user_goal": "Let users pop the exact Plotkeeper surface into their default browser and avoid fixed-port collisions by persisting one private loopback connector shared by every Plotkeeper entry point.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcc0-6725-7df0-aa1f-0d26d2e6ad65",
-    "original_request_hash": "c0d18a7d946d7c01575bf682d53d299455aad225acf2eeb1045e0c1ed477aa5e",
-    "verbatim_text": "Dont suppose you can add a 'pop out into a separate browser window' button can you? Would be nice to see the surface beyond just the codex app itself in the sidebar?\n\nOH ALSO - I wanted to make sure, with PK - we arent assigning some internal IP:port that would be taken up/overlapping by other potential processes right?  If so, can we make it some really obscure connector so that it just generally wouldnt interfere?",
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-private-connector",
+    "original_request_hash": "42854bf6a96976e3de2a8ac6aab25ba5ab654aba819d4181cf3364ea2540af53",
+    "verbatim_text": "Authorized Plotkeeper change: Let users pop the exact Plotkeeper surface into their default browser and avoid fixed-port collisions by persisting one private loopback connector shared by every Plotkeeper entry point.",
     "captured_at_utc": "2026-08-13T20:20:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-private-connector-authority"
   },
   "baseline": {
     "protected_ref": "local validated responsive-picker successor of public v0.1.6",

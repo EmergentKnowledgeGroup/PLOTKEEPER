@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-canonical-title-task-popout",
   "status": "ACTIVE",
-  "contract_hash": "022e73876c51b5b52e803a75a0b8ee2a7244c102cbe53d5430c46d769f6f09bc",
+  "contract_hash": "b26c4711acd8d3f09c908b2b7f7ac6571e1020fde984d5439aeaf5ced11283b9",
   "origin": "DIRECT",
   "user_goal": "Use Codex task titles, keep run titles bounded, ensure active runs expose a truthful task, and open Plotkeeper in an isolated standalone browser window.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcdb-eed3-7082-9886-dc515c54dd4b",
-    "original_request_hash": "713039c1738b5a90df9dc5cd4de26fe73bd5a893b3722dfdb49ad4d3a4a44a4f",
-    "verbatim_text": "okay, well, popout didnt work as far as new window - could potentially try a headless chrome or something as an option so that it doesnt attach to a current browser session??\n\nEITHER WAY - this was ONE RUN selected and it has a HUGE MASSIVE uhhh run title??? LOL\n\nALSO...\n\nIts identifying a run (runs should be picking up sessionID TITLES, not first message text!), but there are no active tasks??  Is this just because the thread isnt picking up any?  But if PK is active on it, it SHOULD have tasks, right???\n\nSESSIONID - 019dc5bc-9c57-7aa0-a007-18250d608ad3\n\nSo this should read : MoonMarket - Review Core Spec\n*NOT*\nMoonMarket - Okay dex, so go ahead and...",
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-canonical-title-task-popout",
+    "original_request_hash": "755e5bc487d05c9ba7ef1d770e6142e2e83cff8cbb337d536c2b1b08952a3a22",
+    "verbatim_text": "Authorized Plotkeeper change: Use Codex task titles, keep run titles bounded, ensure active runs expose a truthful task, and open Plotkeeper in an isolated standalone browser window.",
     "captured_at_utc": "2026-08-13T21:25:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-canonical-title-task-popout-authority"
   },
   "baseline": {
     "protected_ref": "validated new-window-request candidate before canonical-title/task/isolated-window correction",

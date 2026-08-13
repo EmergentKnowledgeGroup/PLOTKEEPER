@@ -1,17 +1,17 @@
 {
   "id": "PROD-20260813-plotkeeper-popout-new-window",
   "status": "ACTIVE",
-  "contract_hash": "1207dbc4c39781648bccb9d85686143186b6203b6db965b05bbf7a625d9a8ce0",
+  "contract_hash": "9ba03cbb5695952e3e40e1ce451c45d3eae324e01d26716a3765f3448cf5758d",
   "origin": "DIRECT",
   "user_goal": "Require Plotkeeper pop-out to request a brand-new Windows default-browser window, not merely another tab.",
   "authority": {
-    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcc0-6725-7df0-aa1f-0d26d2e6ad65",
-    "original_request_hash": "5718cf24d19e83067ac8908a43f1dfa82bb2ebda1d88a1dc1f1c07d736221c18",
-    "verbatim_text": "Make sure it opens a brand new browser window and doesnt just open a new tab in a current window!  continue!",
+    "original_request_ref": "sanitized-authority:PROD-20260813-plotkeeper-popout-new-window",
+    "original_request_hash": "41a74e9a439f0ee02d1e8e73dd2e55f424f2d10974da26e9c90c8decced3231f",
+    "verbatim_text": "Authorized Plotkeeper change: Require Plotkeeper pop-out to request a brand-new Windows default-browser window, not merely another tab.",
     "captured_at_utc": "2026-08-13T21:05:00Z",
     "execution_authority": "AUTHORIZED",
     "source_kind": "CODEX_CONVERSATION_EXPORT",
-    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+    "immutable_locator": "ignored-local-evidence:PROD-20260813-plotkeeper-popout-new-window-authority"
   },
   "baseline": {
     "protected_ref": "committed pop-out and private-connector candidate before new-window clarification",
