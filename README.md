@@ -56,7 +56,9 @@ The installer creates an isolated `.venv`, installs Plotkeeper into it, chooses
 and persists an available high private loopback connector, starts the local
 service, and registers it for the current Windows user at sign-in. The exact URL
 is printed after installation and stored in `runtime/plotkeeper-connector.json`.
-Use **Pop out** to open the exact current surface in your default browser.
+Use **Pop out** to open the exact current surface as a standalone Edge or Chrome app window. Plotkeeper uses a dedicated machine-local browser profile so the window does not join your normal browser session; if neither browser is available, it falls back to the Windows default browser.
+
+Run names come from Codex's user-visible task title, not the first prompt. If an active run predates checklist synchronization, Plotkeeper shows one explicitly labeled Codex thread task instead of an empty execution board; a synchronized SpecSwarm checklist always replaces that fallback.
 
 For an evaluation that does not touch your Codex sessions:
 

@@ -11,6 +11,7 @@ from unittest import mock
 
 from plotkeeper.ledger import Ledger
 from plotkeeper.connector import DYNAMIC_PORT_MAX, DYNAMIC_PORT_MIN, ensure_connector, read_connector
+from plotkeeper.browser_launcher import IsolatedBrowserLauncher
 from plotkeeper.models import RunState
 from plotkeeper.service import PlotkeeperService
 from plotkeeper.sessions import parse_session
@@ -21,6 +22,24 @@ def line(timestamp, typ, payload):
 
 
 class BackendTests(unittest.TestCase):
+    def test_isolated_browser_launcher_uses_dedicated_profile_and_app_window(self):
+        with tempfile.TemporaryDirectory() as td:
+            calls = []
+            executable = Path(td) / "msedge.exe"; executable.write_bytes(b"")
+            launcher = IsolatedBrowserLauncher(
+                Path(td) / "profile",
+                candidates=lambda: [executable],
+                process_launcher=lambda args, **kwargs: calls.append((args, kwargs)) or object(),
+                fallback=lambda *_args, **_kwargs: self.fail("fallback should not run"),
+            )
+            url = "http://127.0.0.1:53327/?run_id=exact&session_id=root"
+            self.assertTrue(launcher(url, new=1))
+            args, kwargs = calls[0]
+            self.assertIn(f"--app={url}", args)
+            self.assertIn("--new-window", args)
+            self.assertIn(f"--user-data-dir={Path(td) / 'profile'}", args)
+            self.assertEqual(kwargs["cwd"], td)
+
     def test_private_connector_is_persisted_and_malformed_records_fail_closed(self):
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "runtime" / "plotkeeper-connector.json"

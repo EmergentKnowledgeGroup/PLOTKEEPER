@@ -51,3 +51,10 @@ Running the demo again recreates only `examples/.demo-runtime/`:
 ```
 
 It does not read or modify your real Codex sessions.
+### Pop out joins an existing browser session
+
+Current Plotkeeper versions first launch Edge or Chrome in app mode with `runtime/plotkeeper-browser-profile/`. This creates a standalone window isolated from the normal browser profile. If the machine has neither supported Chromium executable, Plotkeeper falls back to the registered default browser and that browser may choose a tab.
+
+### An active run has one Codex task instead of its checklist
+
+The run is enrolled, but SpecSwarm's checklist was never synchronized. The single row is a truthful thread-level fallback, not a fabricated plan. Re-run the documented `sync-plan` command with the locked spec/checklist/blockerboard to populate the real workstreams.

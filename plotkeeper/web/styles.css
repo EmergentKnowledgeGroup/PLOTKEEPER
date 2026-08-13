@@ -37,7 +37,7 @@ a { color: inherit; }
 .connection-dot { width: .45rem; height: .45rem; border-radius: 50%; background: var(--amber); }
 .connection.is-online { color: var(--accent); }.connection.is-online .connection-dot { background: var(--accent); }.connection.is-error { color: var(--red); }.connection.is-error .connection-dot { background: var(--red); }
 .goal-row { align-items: end; margin-top: 1rem; }
-.goal-copy { width: 100%; min-width: 0; max-width: 100%; }.goal-copy h1 { overflow-wrap: anywhere; }
+.goal-copy { width: 100%; min-width: 0; max-width: 100%; }.goal-copy h1 { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .eyebrow, .label { display: block; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; font-size: .68rem; }
 h1, h2, p { margin: 0; }
 h1 { max-width: 56rem; margin-top: .25rem; font: 700 clamp(1.25rem, 3vw, 2rem)/1.16 ui-sans-serif, system-ui, sans-serif; }

@@ -4,6 +4,15 @@
 
 Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 
+## PLOTKEEPER CANONICAL TITLE TASK POPOUT
+
+- step: post-green-tests
+- note: Phase-start authority was sealed before mutation; Codex session-index titles now override prompt previews, empty active runs expose one truthful thread-level fallback task, headers clamp to two lines, and pop-out uses an isolated Chromium app profile.
+- branch: main
+- head: 31ab330a1f6f2ef959f782330a292a713acd99a9
+- next_cmd: `git diff --check && py -3 -B -m unittest discover -s tests -v`
+- validations: contract `PROD-20260813-plotkeeper-canonical-title-task-popout` validates at `022e73876c51b5b52e803a75a0b8ee2a7244c102cbe53d5430c46d769f6f09bc`; exact MoonMarket fixture resolves `Review core spec`; fallback/synced-task precedence tests pass; isolated launcher arguments prove app mode, dedicated profile, and exact URL; 75/75 tests plus Node/Python/diff checks green
+
 ## PLOTKEEPER POPOUT PRIVATE CONNECTOR
 
 - step: post-green-tests

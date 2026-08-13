@@ -1,0 +1,185 @@
+{
+  "id": "PROD-20260813-plotkeeper-canonical-title-task-popout",
+  "status": "ACTIVE",
+  "contract_hash": "022e73876c51b5b52e803a75a0b8ee2a7244c102cbe53d5430c46d769f6f09bc",
+  "origin": "DIRECT",
+  "user_goal": "Use Codex task titles, keep run titles bounded, ensure active runs expose a truthful task, and open Plotkeeper in an isolated standalone browser window.",
+  "authority": {
+    "original_request_ref": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281/turn/019ffcdb-eed3-7082-9886-dc515c54dd4b",
+    "original_request_hash": "713039c1738b5a90df9dc5cd4de26fe73bd5a893b3722dfdb49ad4d3a4a44a4f",
+    "verbatim_text": "okay, well, popout didnt work as far as new window - could potentially try a headless chrome or something as an option so that it doesnt attach to a current browser session??\n\nEITHER WAY - this was ONE RUN selected and it has a HUGE MASSIVE uhhh run title??? LOL\n\nALSO...\n\nIts identifying a run (runs should be picking up sessionID TITLES, not first message text!), but there are no active tasks??  Is this just because the thread isnt picking up any?  But if PK is active on it, it SHOULD have tasks, right???\n\nSESSIONID - 019dc5bc-9c57-7aa0-a007-18250d608ad3\n\nSo this should read : MoonMarket - Review Core Spec\n*NOT*\nMoonMarket - Okay dex, so go ahead and...",
+    "captured_at_utc": "2026-08-13T21:25:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex://session/019fde25-c83c-7721-8902-a2f47fd67281"
+  },
+  "baseline": {
+    "protected_ref": "validated new-window-request candidate before canonical-title/task/isolated-window correction",
+    "sha": "31ab330a1f6f2ef959f782330a292a713acd99a9",
+    "retrieved_at_utc": "2026-08-13T21:25:00Z",
+    "protection_evidence": "clean single main worktree",
+    "selection_reason": "Preserve the private connector and same-origin pop-out while correcting the live defects shown by the user."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      ".gitignore",
+      "plotkeeper/browser_launcher.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/service.py",
+      "plotkeeper/web/styles.css",
+      "tests/test_active_run_surface.py",
+      "tests/test_backend.py",
+      "tests/test_web_static.py",
+      "README.md",
+      "docs/USAGE.md",
+      "docs/TROUBLESHOOTING.md",
+      "docs/ARCHITECTURE.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-canonical-title-task-popout.json"
+    ],
+    "resources": [
+      "read-only Codex session_index.jsonl",
+      "machine-local runtime/plotkeeper-browser-profile",
+      "installed owned Plotkeeper service",
+      "standalone Edge or Chrome app window"
+    ],
+    "semantic_changes": [
+      "Prefer exact session_index thread_name over transcript prompt fields.",
+      "Return a truthful single thread-level fallback task only when an active run has no synchronized plan tasks.",
+      "Bound title layout in header and selector.",
+      "Launch a separate Chromium app window using a dedicated Plotkeeper profile, with safe default-browser fallback only when Chromium is unavailable."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/models.py",
+      "integrations/codex/bundled/upstream/**",
+      ".github/**",
+      "runtime/plotkeeper.sqlite3",
+      "pyproject.toml",
+      "plotkeeper/__init__.py"
+    ],
+    "semantic_changes": [
+      "No fabricated checklist items, Codex state writes, ledger history rewrites, non-loopback URL, arbitrary executable launch, foreign-process termination, release, version bump, push, or publication."
+    ]
+  },
+  "invariants": [
+    "Codex state and session index remain read-only.",
+    "Existing synchronized tasks always win over the fallback.",
+    "The fallback is labeled as a Codex thread task and never presented as a synchronized plan.",
+    "Pop-out target remains exact same-origin path and query.",
+    "Dedicated browser profile is machine-local and ignored by Git.",
+    "MoonMarket session 019dc5bc-9c57-7aa0-a007-18250d608ad3 resolves to project MoonMarket and title Review core spec."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-TITLE",
+      "phase": "VALIDATED",
+      "promised_behavior": "The exact MoonMarket session displays MoonMarket — Review core spec from session_index thread_name, with bounded rendering.",
+      "forbidden_behavior": "Using first_user_message, preview, or transcript prompt when an explicit thread_name exists.",
+      "target_and_actor": "Plotkeeper dashboard and Codex task 019dc5bc-9c57-7aa0-a007-18250d608ad3",
+      "required_proof_ids": [
+        "PR-TITLE"
+      ]
+    },
+    {
+      "id": "AC-TASK",
+      "phase": "VALIDATED",
+      "promised_behavior": "An active run with no synced plan exposes exactly one truthful thread-level task; synchronized plan tasks replace it.",
+      "forbidden_behavior": "Zero-task active surface or invented checklist/subtasks.",
+      "target_and_actor": "Plotkeeper execution board",
+      "required_proof_ids": [
+        "PR-TASK"
+      ]
+    },
+    {
+      "id": "AC-WINDOW",
+      "phase": "VALIDATED",
+      "promised_behavior": "Pop out launches an isolated standalone Chromium app window with a dedicated Plotkeeper profile for the exact current URL.",
+      "forbidden_behavior": "Attaching to the current browser profile/session, headless invisible launch, arbitrary URL, or unsafe shell execution.",
+      "target_and_actor": "Windows Plotkeeper user",
+      "required_proof_ids": [
+        "PR-WINDOW"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-TITLE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-TITLE"
+      ],
+      "claim": "Read-only real Codex index and API/browser evidence show exact title and bounded geometry.",
+      "required_environment": "live Codex state plus installed Plotkeeper browser",
+      "command_or_read_only_check": "query exact session, API, and desktop/mobile geometry",
+      "expected_observation": "MoonMarket — Review core spec with no prompt-text title or overflow"
+    },
+    {
+      "id": "PR-TASK",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-TASK"
+      ],
+      "claim": "Tests and live API show one fallback task for the unsynced MoonMarket run and unchanged real task lists when present.",
+      "required_environment": "unit fixture plus copied or live read-only ledger",
+      "command_or_read_only_check": "API task assertions and full suite",
+      "expected_observation": "one truthful working/review task when empty; synced tasks unchanged"
+    },
+    {
+      "id": "PR-WINDOW",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-WINDOW"
+      ],
+      "claim": "A real launch proves a new visible browser process/window uses the dedicated Plotkeeper profile and exact URL; attacks remain rejected.",
+      "required_environment": "installed Windows Edge or Chrome plus live Plotkeeper",
+      "command_or_read_only_check": "instrumented launcher regression and real process/window proof",
+      "expected_observation": "new standalone app process/window, dedicated profile, exact loopback URL, hostile targets rejected"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-1",
+      "phase": "VALIDATED",
+      "required_role": "independent UI, identity, lifecycle, and security reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-1",
+      "phase": "VALIDATED",
+      "required_receipt": "validated local installed behavior only; publication requires separate authority"
+    }
+  ],
+  "stop_conditions": [
+    "Missing canonical title evidence, fabricated task semantics, existing task replacement, isolated-window proof failure, origin regression, unexpected diff, or independent non-PASS."
+  ],
+  "known_discrepancies": [
+    "state_5.sqlite stores the original prompt for the target while session_index.jsonl stores the user-visible renamed title.",
+    "The target active run has zero persisted task rows because historical sync-plan did not occur.",
+    "webbrowser new=1 was advisory and attached to the existing browser session."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "User screenshots and exact MoonMarket session correction",
+      "acceptance_cases": [
+        "AC-TITLE",
+        "AC-TASK",
+        "AC-WINDOW"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-new-window.json",
+    "sha256": "6d5173c9a1d6624c9863d0f5c090fba5ed6e57f0a923783561debc8256894827"
+  }
+}

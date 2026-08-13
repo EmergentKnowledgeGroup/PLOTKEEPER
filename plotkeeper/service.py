@@ -5,7 +5,6 @@ import os
 import subprocess
 import threading
 import re
-import webbrowser
 from urllib.parse import quote
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -14,6 +13,7 @@ from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
 from .ledger import Ledger
+from .browser_launcher import IsolatedBrowserLauncher
 from .models import RunState, SessionObservation
 from .sessions import SessionScanner, ThreadCatalog
 
@@ -23,13 +23,15 @@ class PlotkeeperService:
                  sessions_root: str | os.PathLike[str] = Path.home() / ".codex" / "sessions",
                  dashboard_url: str = "http://127.0.0.1:47831",
                  codex_state_path: str | os.PathLike[str] | None = None,
+                 session_index_path: str | os.PathLike[str] | None = None,
                  thread_catalog: ThreadCatalog | None = None,
                  browser_opener: Callable[..., bool] | None = None):
         self.ledger = Ledger(ledger_path)
         self.dashboard_url = dashboard_url.rstrip("/")
-        self.browser_opener = browser_opener or webbrowser.open
+        repo_root = Path(ledger_path).resolve().parent.parent
+        self.browser_opener = browser_opener or IsolatedBrowserLauncher(repo_root / "runtime" / "plotkeeper-browser-profile")
         self.scanner = SessionScanner(sessions_root, self.ledger.watermark, self.ledger.set_watermark)
-        self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root)
+        self.thread_catalog = thread_catalog or ThreadCatalog(codex_state_path, sessions_root, session_index_path)
         self._session_identity: dict[str, dict[str, Any]] = {}
         if self.ledger.get_meta("activation_at") is None:
             self.ledger.set_meta("activation_at", self._now())
@@ -170,7 +172,27 @@ class PlotkeeperService:
         catalog = self.thread_catalog.metadata(bound_session_id)
         if catalog and catalog.get("thread_source"):
             payload["thread_source"] = str(catalog["thread_source"])
+        if not self.ledger.tasks(run.run_id):
+            payload["current_task_id"] = "THREAD"
         return payload
+
+    def _tasks_payload(self, run) -> list[dict[str, Any]]:
+        tasks = self.ledger.tasks(run.run_id)
+        if tasks:
+            return tasks
+        identity = self._identity(run)
+        return [{
+            "task_id": "THREAD",
+            "title": str(identity.get("task_label") or identity.get("task_id") or run.root_session_id),
+            "status": "review_pending" if run.state == RunState.REVIEW_PENDING else "working",
+            "owner": "Codex root task",
+            "parent_task_id": None,
+            "workstream": "Codex task",
+            "source": "codex:thread-title",
+            "purpose": "Current Codex task; no synchronized SpecSwarm checklist is attached.",
+            "summary": "Thread-level fallback only. Sync the locked checklist to show its real workstreams.",
+            "ordinal": 0,
+        }]
 
     def _interactive_runs(self) -> list[Any]:
         runs: list[Any] = []
@@ -496,7 +518,7 @@ class PlotkeeperService:
                         sessions.extend({"session_id": sid, "status": "observed", "task_id": sid,
                                          "task_label": sid} for sid in run.children)
                         events = [{"kind": item["kind"], "text": item["text"], "timestamp": item["created_at"], "session_id": item["session_id"], "evidence": json.loads(item["evidence"] or "[]")} for item in reports]
-                        self._json({"run": service._run_payload(run), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service.ledger.tasks(rid), "events": events, "sessions": sessions})
+                        self._json({"run": service._run_payload(run), "contract": service.ledger.goal_contract(rid), "reports": reports, "tasks": service._tasks_payload(run), "events": events, "sessions": sessions})
                     elif run and run.state == RunState.CLOSED:
                         self._json({"error": "run_closed"}, 410)
                     else:

@@ -61,3 +61,8 @@ The foreground server stops with `Ctrl+C`. The current installer starts a
 hidden process but does not install a Windows service. To stop that instance,
 identify the process whose command line includes `plotkeeper.cli serve` using
 normal Windows process tools, then stop that exact process.
+### Pop out and task identity
+
+**Pop out** launches the exact run/session URL in a standalone Chromium app window with Plotkeeper's own local profile. The profile contains no Plotkeeper run authority and is ignored by Git. Codex task names come from the local task index; prompt previews are only a compatibility fallback when no explicit task name exists.
+
+An active run with no synchronized checklist displays one `Codex task` fallback row using that exact task name. This means “active” never renders as a mysterious empty board, while still avoiding invented subtasks. Run `sync-plan` to replace the fallback with the locked checklist's real tasks.

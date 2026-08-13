@@ -56,6 +56,7 @@ class PlotkeeperStaticSurfaceTests(unittest.TestCase):
         self.assertIn("overflow-x: hidden", self.css)
         self.assertIn("overflow-wrap: anywhere", self.css)
         self.assertIn("-webkit-line-clamp: 2", self.css)
+        self.assertRegex(self.css, r"\.goal-copy h1[^}]+-webkit-line-clamp:\s*2")
         desktop_rule = re.search(r"@media \(min-width: 48rem\) \{([^}]|\}(?!\s*@media))*", self.css)
         self.assertIsNotNone(desktop_rule)
         self.assertNotIn("grid-template-columns", desktop_rule.group(0))

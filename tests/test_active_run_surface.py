@@ -47,6 +47,32 @@ class ActiveRunSurfaceTests(unittest.TestCase):
             self.assertIn("run_id=", exact["run"]["dashboard_url"])
             service.close_db()
 
+    def test_session_index_title_precedes_original_prompt_and_empty_run_gets_truthful_thread_task(self):
+        with self._temp_root() as folder:
+            folder = Path(folder); sessions = folder / "sessions"; sessions.mkdir()
+            session_id = "019dc5bc-9c57-7aa0-a007-18250d608ad3"
+            rollout = sessions / f"rollout-{session_id}.jsonl"
+            rollout.write_text(_line("1", "session_meta", {"id": session_id, "cwd": "Z:\\MoonMarket"}) + _line("2", "response_item", {"type": "reasoning"}), encoding="utf-8")
+            state = folder / "state.sqlite"; db = sqlite3.connect(state)
+            db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, name TEXT, first_user_message TEXT, preview TEXT, agent_path TEXT, cwd TEXT, rollout_path TEXT)")
+            db.execute("INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)", (session_id, "okay Dex, so go ahead and read the core spec", None, "okay Dex", None, None, "Z:\\MoonMarket", str(rollout)))
+            db.commit(); db.close()
+            index = folder / "session_index.jsonl"
+            index.write_text(json.dumps({"id": session_id, "thread_name": "Review core spec"}) + "\n", encoding="utf-8")
+            service = PlotkeeperService(ledger_path=folder / "ledger.sqlite", sessions_root=sessions, codex_state_path=state, session_index_path=index)
+            run = service.ledger.enroll(session_id, "Z:\\MoonMarket", service.dashboard_url)
+            payload = service._run_payload(run)
+            self.assertEqual(payload["project_name"], "MoonMarket")
+            self.assertEqual(payload["task_label"], "Review core spec")
+            self.assertEqual(payload["current_task_id"], "THREAD")
+            fallback = service._tasks_payload(run)
+            self.assertEqual(len(fallback), 1)
+            self.assertEqual(fallback[0]["title"], "Review core spec")
+            self.assertEqual(fallback[0]["source"], "codex:thread-title")
+            service.ledger.replace_tasks(run.run_id, [{"task_id": "T001", "title": "Real synced task", "status": "pending"}])
+            self.assertEqual([task["title"] for task in service._tasks_payload(run)], ["Real synced task"])
+            service.close_db()
+
     def test_legacy_message_roots_are_not_enrolled_or_picked(self):
         with self._temp_root() as folder:
             root = Path(folder) / "sessions"

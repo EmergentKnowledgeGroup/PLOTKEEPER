@@ -268,11 +268,14 @@ class ThreadCatalog:
     TERMINAL_TYPES = {"task_complete", "turn_complete", "turn_aborted"}
 
     def __init__(self, path: str | os.PathLike[str] | None = None,
-                 sessions_root: str | os.PathLike[str] | None = None):
+                 sessions_root: str | os.PathLike[str] | None = None,
+                 session_index_path: str | os.PathLike[str] | None = None):
         self.path = Path(path) if path is not None else Path.home() / ".codex" / "state_5.sqlite"
         self.sessions_root = Path(sessions_root) if sessions_root is not None else Path.home() / ".codex" / "sessions"
+        self.session_index_path = Path(session_index_path) if session_index_path is not None else Path.home() / ".codex" / "session_index.jsonl"
         self._metadata_cache: dict[str, dict[str, Any] | None] = {}
         self._active_cache: dict[str, tuple[int, bool]] = {}
+        self._title_cache: tuple[int, dict[str, str]] | None = None
 
     @property
     def available(self) -> bool:
@@ -311,10 +314,33 @@ class ThreadCatalog:
         else:
             result = dict(row)
             result.setdefault("thread_source", None)
-            result["task_label"] = self._label(result)
+            result["task_label"] = self._thread_titles().get(session_id) or self._label(result)
             result["project_name"] = self._project_name(result.get("cwd"))
         self._metadata_cache[session_id] = result
         return result
+
+    def _thread_titles(self) -> dict[str, str]:
+        try:
+            stamp = self.session_index_path.stat().st_mtime_ns
+        except OSError:
+            return {}
+        if self._title_cache and self._title_cache[0] == stamp:
+            return self._title_cache[1]
+        titles: dict[str, str] = {}
+        try:
+            for line in self.session_index_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                session_id = row.get("id")
+                title = row.get("thread_name")
+                if isinstance(session_id, str) and isinstance(title, str) and title.strip():
+                    titles[session_id] = " ".join(title.split())
+        except OSError:
+            return {}
+        self._title_cache = (stamp, titles)
+        return titles
 
     @staticmethod
     def _project_name(cwd: str | None) -> str:
