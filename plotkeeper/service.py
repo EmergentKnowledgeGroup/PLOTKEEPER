@@ -309,6 +309,13 @@ class PlotkeeperService:
     def _run_codex(args: list[str], *, cwd: str):
         return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
 
+    @staticmethod
+    def _spawn_codex(args: list[str], *, cwd: str):
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        return subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                creationflags=flags, close_fds=True)
+
     def review_prompt(self, run_id: str) -> str:
         contract = self.ledger.goal_contract(run_id)
         contract_ref = (f"contract {contract['contract_id']} at {contract['path']}" if contract else
@@ -389,13 +396,13 @@ class PlotkeeperService:
                 "and verification evidence to the user. Do not implement unrelated application code."
             )
             args = ["codex.exe", "exec", "resume", run.root_session_id, prompt, "--json", "--skip-git-repo-check"]
-            runner = runner or self._run_codex
+            runner = runner or self._spawn_codex
             try:
                 result = runner(args, cwd=str(run_cwd))
                 code = getattr(result, "returncode", result if isinstance(result, int) else 0)
             except Exception as exc:
                 return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
-            if code != 0:
+            if code not in (0, None):
                 return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
             self.ledger.add_report(run_id, "plan-repair-injected", "Exact root task was asked to reconstruct, sync, and verify its original SpecSwarm task surface.")
             return {"ok": True, "queued": True, "run_id": run_id}
