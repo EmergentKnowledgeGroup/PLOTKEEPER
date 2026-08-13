@@ -1,7 +1,7 @@
 {
   "id": "PROD-20260813-plotkeeper-canonical-title-task-popout",
   "status": "ACTIVE",
-  "contract_hash": "b26c4711acd8d3f09c908b2b7f7ac6571e1020fde984d5439aeaf5ced11283b9",
+  "contract_hash": "9c37598f3fcb1dccb18f480d089a0b70cf18d290d3db597ca31afcf41c5f5521",
   "origin": "DIRECT",
   "user_goal": "Use Codex task titles, keep run titles bounded, ensure active runs expose a truthful task, and open Plotkeeper in an isolated standalone browser window.",
   "authority": {
@@ -72,7 +72,7 @@
     "The fallback is labeled as a Codex thread task and never presented as a synchronized plan.",
     "Pop-out target remains exact same-origin path and query.",
     "Dedicated browser profile is machine-local and ignored by Git.",
-    "MoonMarket session 019dc5bc-9c57-7aa0-a007-18250d608ad3 resolves to project MoonMarket and title Review core spec."
+    "MoonMarket session 11111111-2222-4333-8444-555555555555 resolves to project MoonMarket and title Review core spec."
   ],
   "acceptance_cases": [
     {
@@ -80,7 +80,7 @@
       "phase": "VALIDATED",
       "promised_behavior": "The exact MoonMarket session displays MoonMarket — Review core spec from session_index thread_name, with bounded rendering.",
       "forbidden_behavior": "Using first_user_message, preview, or transcript prompt when an explicit thread_name exists.",
-      "target_and_actor": "Plotkeeper dashboard and Codex task 019dc5bc-9c57-7aa0-a007-18250d608ad3",
+      "target_and_actor": "Plotkeeper dashboard and Codex task 11111111-2222-4333-8444-555555555555",
       "required_proof_ids": [
         "PR-TITLE"
       ]
@@ -180,6 +180,6 @@
   ],
   "previous_contract": {
     "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-popout-new-window.json",
-    "sha256": "6d5173c9a1d6624c9863d0f5c090fba5ed6e57f0a923783561debc8256894827"
+    "sha256": "9319dd6b48f181997fe51376671a4941b4fafa9e306acdea388f3a990fd8f936"
   }
 }

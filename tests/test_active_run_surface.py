@@ -52,7 +52,7 @@ class ActiveRunSurfaceTests(unittest.TestCase):
             folder = Path(folder)
             sessions = folder / "sessions"
             sessions.mkdir()
-            session_id = "019dc5bc-9c57-7aa0-a007-18250d608ad3"
+            session_id = "11111111-2222-4333-8444-555555555555"
             rollout = sessions / f"rollout-{session_id}.jsonl"
             rollout.write_text(_line("1", "session_meta", {"id": session_id, "cwd": "Z:\\MoonMarket"}) + _line("2", "response_item", {"type": "reasoning"}), encoding="utf-8")
             state = folder / "state.sqlite"
@@ -80,7 +80,7 @@ class ActiveRunSurfaceTests(unittest.TestCase):
     def test_session_title_refreshes_after_cached_lookup_and_missing_sqlite_row(self):
         with self._temp_root() as folder:
             folder = Path(folder)
-            session_id = "019dc5bc-9c57-7aa0-a007-18250d608ad5"
+            session_id = "11111111-2222-4333-8444-555555555557"
             state = folder / "state.sqlite"
             rollout = folder / "rollout.jsonl"
             rollout.write_text(_line("1", "session_meta", {"id": session_id}), encoding="utf-8")

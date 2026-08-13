@@ -36,7 +36,7 @@ class BackendTests(unittest.TestCase):
             root = Path(td) / "project"
             root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
-            run = service.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad3", str(root), service.dashboard_url)
+            run = service.ledger.enroll("11111111-2222-4333-8444-555555555555", str(root), service.dashboard_url)
             calls = []
             result = service.reconstruct_plan(run.run_id, runner=lambda args, **kwargs: calls.append((args, kwargs)) or mock.Mock(returncode=0))
             self.assertTrue(result["ok"])
@@ -155,7 +155,7 @@ class BackendTests(unittest.TestCase):
             root = Path(td) / "project"
             root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
-            run = service.ledger.enroll("019dc5bc-9c57-7aa0-a007-18250d608ad3", str(root), service.dashboard_url)
+            run = service.ledger.enroll("11111111-2222-4333-8444-555555555555", str(root), service.dashboard_url)
             started = threading.Event()
             release = threading.Event()
 
