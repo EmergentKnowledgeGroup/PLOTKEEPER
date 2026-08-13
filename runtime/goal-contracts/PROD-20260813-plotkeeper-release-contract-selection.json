@@ -1,0 +1,179 @@
+{
+  "id": "PROD-20260813-plotkeeper-release-contract-selection",
+  "status": "ACTIVE",
+  "contract_hash": "f5859da6ca2145ccfbd805ee8ca44acf6a2d5775ef2e1c626d5f84c58320cc78",
+  "origin": "DIRECT",
+  "user_goal": "Make Plotkeeper release-contract selection explicit, deterministic, and fail closed across the trusted host guard and server-side verifier, so non-release successor contracts can never unlock or supersede the designated public-release contract.",
+  "authority": {
+    "original_request_ref": "codex-parent-delegation:release-contract-selection-fix",
+    "original_request_hash": "bdf1e827d7a42d91048d7e4992f2c820556456d1ab8070a7c98c1bc318766e8f",
+    "verbatim_text": "Create append-only production contract successor (baseline 9d0400f) authorizing only trusted guard/server verifier/workflow/config/tests/docs/checkpoints/new contract. Current flaw: trusted guard latest_active_contract chooses newest mtime; newest listener ownership contract has RL-NONE/no release, while workflow verifier designates v017-pr-release. Make release contract selection explicit/deterministic and fail closed; non-release successors must never unlock or supersede release. Prefer a repository tracked pointer/designated contract that host guard and server verifier agree on, and test mtime/reordering/adversarial non-release successor. Do not commit/push/install/live mutate. Run focused/full tests, verifier/guard adversarial, diff check. Return exact files/hashes/evidence. No children.",
+    "captured_at_utc": "2026-08-13T23:20:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-parent-delegation:release-contract-selection-fix"
+  },
+  "baseline": {
+    "protected_ref": "release/v0.1.7-plotkeeper-surface",
+    "sha": "9d0400f3c36c6615598222c5780b04488aeb86ad",
+    "retrieved_at_utc": "2026-08-13T23:20:00Z",
+    "protection_evidence": "Clean single worktree at the exact delegated release-surface head before this successor contract or implementation mutation.",
+    "selection_reason": "The delegation explicitly names 9d0400f as the protected baseline and limits the repair to release-contract authority selection and its proof surfaces."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "scripts/verify_public_release.py",
+      ".github/workflows/release-verifier.yml",
+      "docs/RELEASE.md",
+      "tests/test_production_guard.py",
+      "tests/test_release_verifier.py",
+      "tests/test_repository_docs.py",
+      "runtime/goal-contracts/RELEASE_CONTRACT.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-release-contract-selection.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "Tracked release-contract pointer and disposable temporary repositories/contract fixtures used by tests only."
+    ],
+    "semantic_changes": [
+      "Resolve one tracked designated release contract by an explicit relative path and content hash, shared by the host guard and server verifier.",
+      "Reject missing, malformed, absolute, traversal, hash-mismatched, non-ACTIVE, or non-release designated contracts before any release command is authorized.",
+      "Keep workflow configuration on the same tracked pointer and add adversarial mtime/reordering and non-release-successor proof without installation, service, commit, push, or deployment mutation."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "runtime/plotkeeper-browser-profile/",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      ".github/workflows/tests.yml",
+      "any path not explicitly listed under allowed.paths"
+    ],
+    "semantic_changes": [
+      "No release, merge, push, install, restart, deployment, live-process, listener, connector, ledger, UI, database, dependency, or user-project behavior change.",
+      "No filesystem mtime, filename ordering, newest-contract heuristic, environment-only override, or non-release contract may authorize or supersede the designated release contract.",
+      "No pointer or contract fixture may escape the repository root or be treated as release authority without exact pointer identity and content-hash agreement."
+    ]
+  },
+  "invariants": [
+    "The host guard and server verifier resolve the same tracked designated release contract and exact contract-file SHA-256.",
+    "A newer or reordered ACTIVE successor with RL-NONE cannot unlock, supersede, or change the selected release contract.",
+    "Missing, malformed, tampered, path-traversing, non-ACTIVE, or non-release pointers fail closed.",
+    "The current v0.1.7 public-release contract remains the designated target until a separately authorized pointer change is reviewed.",
+    "The worktree remains free of installation, live-service, commit, push, and deployment mutation."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-DESIGNATED",
+      "phase": "VALIDATED",
+      "promised_behavior": "The guard and verifier select the tracked designated release contract by explicit path, contract ID, and exact content hash rather than mtime or directory order.",
+      "forbidden_behavior": "Selecting the newest ACTIVE JSON, accepting an unbound environment override, or allowing guard/verifier disagreement.",
+      "target_and_actor": "Plotkeeper host release guard and server-side public-release verifier",
+      "required_proof_ids": [
+        "PR-DESIGNATED"
+      ]
+    },
+    {
+      "id": "AC-NONRELEASE",
+      "phase": "VALIDATED",
+      "promised_behavior": "A newer, reordered, or adversarial ACTIVE non-release successor with RL-NONE cannot unlock or supersede the designated public-release contract.",
+      "forbidden_behavior": "Release authorization changing because of mtime, filename order, pointer tampering, or a non-release successor.",
+      "target_and_actor": "Disposable contract fixtures and release decision paths",
+      "required_proof_ids": [
+        "PR-ADVERSARIAL"
+      ]
+    },
+    {
+      "id": "AC-SCOPE",
+      "phase": "VALIDATED",
+      "promised_behavior": "Only the authorized trust, workflow, documentation, test, pointer, contract, and checkpoint surfaces change and all focused/full validation passes.",
+      "forbidden_behavior": "Unlisted diffs, release operations, installation, live-service mutation, commit, push, or skipped adversarial proof.",
+      "target_and_actor": "Protected 9d0400f checkout and local validation commands",
+      "required_proof_ids": [
+        "PR-SCOPE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-DESIGNATED",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-DESIGNATED"
+      ],
+      "claim": "Static and unit proof show both trust paths consume one tracked pointer and reject pointer/contract identity or hash disagreement.",
+      "required_environment": "Protected Plotkeeper checkout with no installation or live-service mutation",
+      "command_or_read_only_check": "Focused guard and verifier tests plus workflow/docs pointer assertions",
+      "expected_observation": "Guard and verifier resolve the same exact designated release contract; malformed or mismatched inputs are denied."
+    },
+    {
+      "id": "PR-ADVERSARIAL",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-NONRELEASE"
+      ],
+      "claim": "Disposable fixtures prove mtime/reordering and adversarial non-release successors cannot unlock or supersede release authority.",
+      "required_environment": "Temporary repository/contract fixtures only",
+      "command_or_read_only_check": "Focused adversarial unittest cases exercising guard and verifier selection",
+      "expected_observation": "The designated release path remains stable and non-release/tampered pointers fail closed."
+    },
+    {
+      "id": "PR-SCOPE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-SCOPE"
+      ],
+      "claim": "The exact allowed diff is bounded and the repository remains regression-free.",
+      "required_environment": "Protected 9d0400f checkout",
+      "command_or_read_only_check": "Contract validation, focused tests, full unittest suite, Python syntax, workflow/doc assertions, and git diff --check",
+      "expected_observation": "All checks pass; no forbidden path or operational mutation appears."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-SELECTION",
+      "phase": "VALIDATED",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-NONE",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "No release or deployment is authorized in this bounded repair lane; parent v0.1.7 release review remains required."
+    }
+  ],
+  "stop_conditions": [
+    "Any unexpected diff, pointer/hash disagreement, failed focused/full test, syntax or diff-check failure, or inability to prove guard/verifier agreement.",
+    "Any request to commit, push, install, restart, deploy, mutate live service, or broaden the allowed surfaces without a new append-only contract."
+  ],
+  "known_discrepancies": [
+    "The listener-ownership successor is newer and intentionally RL-NONE; it must remain independent of public-release authority.",
+    "The workflow previously named the release contract directly; this repair replaces that duplicate authority with the tracked pointer while preserving the same designated target."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "codex-parent-delegation:release-contract-selection-fix",
+      "acceptance_cases": [
+        "AC-DESIGNATED",
+        "AC-NONRELEASE",
+        "AC-SCOPE"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-listener-ownership.json",
+    "sha256": "4ccafa9a4987640f3f23981f321dfd2f158d4fac5c31e84595d4a1890909031c"
+  }
+}

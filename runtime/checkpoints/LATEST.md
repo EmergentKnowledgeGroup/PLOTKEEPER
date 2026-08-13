@@ -174,3 +174,12 @@ Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 - head: f7d5fb3
 - next_cmd: `Invoke-RestMethod http://127.0.0.1:47831/health`
 - validations: 14 unit/static tests green; sealed production contract validates; compileall and JS syntax green; live service and desktop/mobile empty-state browser QA green; independent review PARTIAL only because no real enrolled contract-bearing run exists yet
+
+## PLOTKEEPER RELEASE CONTRACT SELECTION FIX
+
+- step: post-green-tests
+- note: Tracked `RELEASE_CONTRACT.json` now deterministically binds guard and server verifier to the v0.1.7 PR release contract; mtime/reordering and RL-NONE successor attacks are covered. No commit, push, install, or live-service mutation.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: 9d0400f3c36c6615598222c5780b04488aeb86ad
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active successor contract validates at `f5859da6ca2145ccfbd805ee8ca44acf6a2d5775ef2e1c626d5f84c58320cc78`; focused guard/verifier/docs suite 30 passed; full unittest suite 90 passed; py_compile and git diff --check passed; no commit, push, install, restart, deployment, or live-service mutation

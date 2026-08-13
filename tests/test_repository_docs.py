@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from pathlib import Path
@@ -41,6 +42,18 @@ class RepositoryDocumentationTests(unittest.TestCase):
             self.assertIn(name, (readme + integration).lower())
         self.assertNotIn("adds the `transcendr/slopware-skills` marketplace", integration)
         self.assertTrue((ROOT / "integrations" / "codex" / "bundled" / "dependencies.json").is_file())
+
+    def test_release_authority_uses_tracked_pointer(self):
+        pointer_path = ROOT / "runtime" / "goal-contracts" / "RELEASE_CONTRACT.json"
+        pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+        self.assertEqual(pointer["purpose"], "PLOTKEEPER_PUBLIC_RELEASE")
+        self.assertEqual(pointer["contract_id"], "PROD-20260813-plotkeeper-v017-pr-release")
+        self.assertTrue((ROOT / pointer["contract_path"]).is_file())
+        workflow = (ROOT / ".github" / "workflows" / "release-verifier.yml").read_text(encoding="utf-8")
+        self.assertIn("PLOTKEEPER_CONTRACT_POINTER: runtime/goal-contracts/RELEASE_CONTRACT.json", workflow)
+        self.assertNotIn("PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json", workflow)
+        release_docs = (ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8")
+        self.assertIn("filesystem mtime and contract filename ordering are never release authority", release_docs)
 
     def test_startup_scripts_gate_on_persisted_exact_listener_owner(self):
         install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")

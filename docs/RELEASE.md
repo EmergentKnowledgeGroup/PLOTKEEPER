@@ -17,6 +17,18 @@ Rollback may restore an older executable, but it must never downgrade or rewrite
 a ledger after a successor has been created. Preserve a copy of the migrated
 ledger before any executable rollback.
 
+## Release contract authority
+
+Release authority is selected by the tracked pointer at
+`runtime/goal-contracts/RELEASE_CONTRACT.json`. It names one contract path,
+contract ID, and exact contract-file SHA-256. The host guard and
+`scripts/verify_public_release.py` both resolve and validate this pointer;
+filesystem mtime and contract filename ordering are never release authority.
+The GitHub workflow passes the same pointer through
+`PLOTKEEPER_CONTRACT_POINTER`. A successor contract that is not itself an
+authorized release contract (including an `RL-NONE` lane) cannot unlock or
+supersede the designated release contract.
+
 ## First public release
 
 The first public release target is `EmergentKnowledgeGroup/PLOTKEEPER`, with

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
+  "contract_id": "PROD-20260813-plotkeeper-v017-pr-release",
+  "contract_path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json",
+  "contract_sha256": "d4dee6a821251ae6ab5fe19dfa21626e840c6e2d88686d820be25cdbe3433892"
+}
