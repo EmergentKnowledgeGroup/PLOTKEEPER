@@ -14,6 +14,11 @@ from pathlib import Path
 RELEASE_CONTRACT_POINTER = Path("runtime/goal-contracts/RELEASE_CONTRACT.json")
 
 
+def canonical_json_hash(document: object) -> str:
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _safe_repo_path(repo_root: Path, value: object) -> Path | None:
     if not isinstance(value, str) or not value or Path(value).is_absolute():
         return None
@@ -51,9 +56,9 @@ def designated_release_contract(repo_root: Path, pointer_value: object = RELEASE
         raise ValueError("release contract pointer target is invalid")
     contract_bytes = contract_path.read_bytes()
     expected_sha = str(pointer.get("contract_sha256", "")).lower()
-    if not expected_sha or not hmac.compare_digest(hashlib.sha256(contract_bytes).hexdigest(), expected_sha):
-        raise ValueError("release contract pointer hash mismatch")
     contract = json.loads(contract_bytes.decode("utf-8"))
+    if not expected_sha or not hmac.compare_digest(canonical_json_hash(contract), expected_sha):
+        raise ValueError("release contract pointer hash mismatch")
     if (
         not isinstance(contract, dict)
         or contract.get("status") != "ACTIVE"

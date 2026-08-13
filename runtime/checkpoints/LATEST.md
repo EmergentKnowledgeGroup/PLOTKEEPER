@@ -183,3 +183,12 @@ Track: `STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW`
 - head: 9d0400f3c36c6615598222c5780b04488aeb86ad
 - next_cmd: `py -3 -B -m unittest discover -s tests -v`
 - validations: active successor contract validates at `f5859da6ca2145ccfbd805ee8ca44acf6a2d5775ef2e1c626d5f84c58320cc78`; focused guard/verifier/docs suite 30 passed; full unittest suite 90 passed; py_compile and git diff --check passed; no commit, push, install, restart, deployment, or live-service mutation
+
+## PLOTKEEPER POINTER HASH PARITY FIX
+
+- step: post-green-tests
+- note: Release pointer now stores a canonical JSON contract hash stable across LF and CRLF; guard and verifier parity regressions pass. No commit, push, install, or live mutation.
+- branch: release/v0.1.7-plotkeeper-surface
+- head: 16c438044d36a9f1214e75dd8be9ecf33e0b047f
+- next_cmd: `py -3 -B -m unittest discover -s tests -v`
+- validations: active successor contract validates at `d74c64eab95ba61a98a58b34176e89fc12b1c0d2c41b8f6879bbaf3f6d1f6741`; canonical pointer hash `8c82f3735b58ecd18c8bfb1f5260972eca4dbd8c3a3d60af27622e5de0be0ca3`; focused guard/verifier parity suite 27 passed; full unittest suite 92 passed; py_compile and git diff --check passed; no commit, push, install, restart, deployment, or live-service mutation

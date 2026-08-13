@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import hashlib
 import os
 import tempfile
 import unittest
@@ -32,7 +31,7 @@ class ProductionGuardTests(unittest.TestCase):
             "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
             "contract_id": contract_id,
             "contract_path": f"runtime/goal-contracts/{filename}",
-            "contract_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "contract_sha256": GUARD.canonical_json_hash(contract),
         }
         (cwd / "runtime" / "goal-contracts" / "RELEASE_CONTRACT.json").write_text(json.dumps(pointer), encoding="utf-8")
         return path
@@ -142,6 +141,35 @@ class ProductionGuardTests(unittest.TestCase):
             key_path.write_text("test-review-key", encoding="utf-8")
             with mock.patch.dict("os.environ", {"PLOTKEEPER_REVIEW_KEY_FILE": str(key_path)}):
                 self.assertFalse(GUARD.evaluate(self.payload(cwd, "git push origin main"))[0])
+
+    def test_lf_and_crlf_contract_bytes_have_same_guard_hash(self):
+        base = Path(__file__).parents[1] / "runtime" / "qa"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as folder:
+            cwd = Path(folder)
+            contracts = cwd / "runtime" / "goal-contracts"
+            contracts.mkdir(parents=True)
+            document = {
+                "id": "release",
+                "status": "ACTIVE",
+                "contract_hash": "abc",
+                "release_requirements": [{"id": "RL-DEPLOY", "phase": "DEPLOY_READY"}],
+            }
+            contract_path = contracts / "release.json"
+            text = json.dumps(document, indent=2)
+            pointer = {
+                "schema_version": 1,
+                "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
+                "contract_id": "release",
+                "contract_path": "runtime/goal-contracts/release.json",
+                "contract_sha256": GUARD.canonical_json_hash(document),
+            }
+            (contracts / "RELEASE_CONTRACT.json").write_text(json.dumps(pointer), encoding="utf-8")
+            contract_path.write_text(text, encoding="utf-8", newline="\n")
+            lf = GUARD.latest_active_contract(cwd)
+            contract_path.write_bytes(text.replace("\n", "\r\n").encode("utf-8"))
+            crlf = GUARD.latest_active_contract(cwd)
+            self.assertEqual(lf["contract_hash"], crlf["contract_hash"])
 
 
 if __name__ == "__main__":

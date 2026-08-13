@@ -1,0 +1,174 @@
+{
+  "id": "PROD-20260813-plotkeeper-pointer-hash-parity",
+  "status": "ACTIVE",
+  "contract_hash": "d74c64eab95ba61a98a58b34176e89fc12b1c0d2c41b8f6879bbaf3f6d1f6741",
+  "origin": "DIRECT",
+  "user_goal": "Make the tracked Plotkeeper release-contract pointer hash platform-stable across CRLF and LF working trees, with guard and server verifier parity proof, without changing release scope or performing any operational mutation.",
+  "authority": {
+    "original_request_ref": "codex-parent-delegation:pointer-hash-parity",
+    "original_request_hash": "6ed8ffdfa3a3a61b76759e817cfa2e06b8e2634b8f08f2c5fb96eb6c5245f880",
+    "verbatim_text": "Fix cross-platform pointer hash blocker. RELEASE_CONTRACT currently binds raw working-tree SHA causing CRLF/LF divergence (Windows d4dee6..., Git/Linux 728311...). Change pointer/guard/server to platform-stable canonical JSON contract hash (or raw Git blob semantics consistently) and add CRLF/LF parity regression proving guard+verifier agree. Append-only successor contract if required, exact scope only. No commit/push/install. Full/focused tests, diff check, concise handoff, then stop.",
+    "captured_at_utc": "2026-08-13T23:45:00Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-parent-delegation:pointer-hash-parity"
+  },
+  "baseline": {
+    "protected_ref": "release/v0.1.7-plotkeeper-surface",
+    "sha": "16c438044d36a9f1214e75dd8be9ecf33e0b047f",
+    "retrieved_at_utc": "2026-08-13T23:45:00Z",
+    "protection_evidence": "Exact current release-surface head after the prior release-contract selection fix; no operational action is authorized.",
+    "selection_reason": "The delegated repair is limited to cross-platform canonical hashing of the existing tracked pointer target and its parity proof."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "scripts/verify_public_release.py",
+      "tests/test_production_guard.py",
+      "tests/test_release_verifier.py",
+      "runtime/goal-contracts/RELEASE_CONTRACT.json",
+      "runtime/goal-contracts/PROD-20260813-plotkeeper-pointer-hash-parity.json",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json"
+    ],
+    "resources": [
+      "Disposable temporary contract fixtures and in-memory CRLF/LF byte variants only."
+    ],
+    "semantic_changes": [
+      "Hash the parsed contract's canonical JSON representation for pointer verification, independent of newline encoding.",
+      "Require host guard and server verifier to accept equivalent CRLF/LF contract bytes and reject altered canonical content.",
+      "Preserve the designated contract path, ID, release requirements, workflow configuration, and all release behavior."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      ".github/",
+      "docs/",
+      "runtime/plotkeeper.sqlite3",
+      "runtime/plotkeeper-connector.json",
+      "any path not explicitly listed under allowed.paths"
+    ],
+    "semantic_changes": [
+      "No release, merge, push, install, restart, deployment, listener, connector, ledger, UI, dependency, or user-project mutation.",
+      "No raw working-tree newline, filesystem mtime, filename ordering, environment override, or alternate contract may alter release authority.",
+      "No test may touch an installed service, live listener, or user data."
+    ]
+  },
+  "invariants": [
+    "Equivalent LF and CRLF representations of the designated contract resolve to the same canonical hash in guard and verifier.",
+    "Canonical content changes, pointer ID/path changes, malformed pointers, and non-release contracts fail closed.",
+    "The designated v0.1.7 public-release contract and exact pointer path remain unchanged except for the hash representation.",
+    "No commit, push, install, restart, deployment, or live-service mutation occurs."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-PARITY",
+      "phase": "VALIDATED",
+      "promised_behavior": "Guard and server verifier accept equivalent LF and CRLF contract bytes using one platform-stable canonical JSON hash.",
+      "forbidden_behavior": "Windows/Linux newline differences cause false rejection or guard/verifier disagreement.",
+      "target_and_actor": "Tracked release pointer, host guard, and server verifier",
+      "required_proof_ids": [
+        "PR-PARITY"
+      ]
+    },
+    {
+      "id": "AC-FAILCLOSED",
+      "phase": "VALIDATED",
+      "promised_behavior": "Canonical content tampering and pointer/contract identity mismatch fail closed.",
+      "forbidden_behavior": "Raw-byte normalization masks semantic content changes or allows a non-release contract.",
+      "target_and_actor": "Disposable contract fixtures and release decision paths",
+      "required_proof_ids": [
+        "PR-FAILCLOSED"
+      ]
+    },
+    {
+      "id": "AC-SCOPE",
+      "phase": "VALIDATED",
+      "promised_behavior": "Only the authorized hash, pointer, test, contract, and checkpoint surfaces change and all validation passes.",
+      "forbidden_behavior": "Unlisted diffs or operational mutation.",
+      "target_and_actor": "Protected release-surface checkout",
+      "required_proof_ids": [
+        "PR-SCOPE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-PARITY",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-PARITY"
+      ],
+      "claim": "Guard and server verifier produce and consume identical canonical JSON contract hashes for LF and CRLF fixtures.",
+      "required_environment": "Disposable temporary fixtures",
+      "command_or_read_only_check": "Focused guard and verifier CRLF/LF parity tests",
+      "expected_observation": "Both paths select the same contract for both newline encodings."
+    },
+    {
+      "id": "PR-FAILCLOSED",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-FAILCLOSED"
+      ],
+      "claim": "Semantic contract and pointer tampering fail closed after canonical hashing.",
+      "required_environment": "Disposable temporary fixtures",
+      "command_or_read_only_check": "Focused tamper and identity mismatch tests",
+      "expected_observation": "No release authorization is returned for altered content."
+    },
+    {
+      "id": "PR-SCOPE",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-SCOPE"
+      ],
+      "claim": "The bounded diff is regression-free and operationally untouched.",
+      "required_environment": "Protected release-surface checkout",
+      "command_or_read_only_check": "Contract validation, focused/full tests, py_compile, and git diff --check",
+      "expected_observation": "All checks pass and no forbidden surface changes."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-PARITY",
+      "phase": "VALIDATED",
+      "required_role": "independent production-goal reviewer"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-NONE",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "No release or deployment is authorized in this bounded parity repair lane."
+    }
+  ],
+  "stop_conditions": [
+    "Any unexpected diff, newline-dependent behavior, failed test, contract validation failure, or diff-check failure.",
+    "Any request to commit, push, install, restart, deploy, or broaden scope without a new contract."
+  ],
+  "known_discrepancies": [
+    "The prior pointer stored a raw working-tree hash, which is not portable across newline-normalizing checkouts."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [
+    {
+      "authority": "codex-parent-delegation:pointer-hash-parity",
+      "acceptance_cases": [
+        "AC-PARITY",
+        "AC-FAILCLOSED",
+        "AC-SCOPE"
+      ]
+    }
+  ],
+  "previous_contract": {
+    "path": "runtime/goal-contracts/PROD-20260813-plotkeeper-release-contract-selection.json",
+    "sha256": "1a9b26cd2187173a694545e1396421195deb36625ded1ea4b990d486d8a3e7d6"
+  }
+}

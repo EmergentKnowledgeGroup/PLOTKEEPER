@@ -20,6 +20,11 @@ RELEASE_PATTERN = re.compile(
 RELEASE_CONTRACT_POINTER = Path("runtime/goal-contracts/RELEASE_CONTRACT.json")
 
 
+def canonical_json_hash(document: object) -> str:
+    encoded = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def deny(reason: str) -> int:
     print(f"PLOTKEEPER GUARD: {reason}", file=sys.stderr)
     return 2
@@ -74,9 +79,9 @@ def designated_release_contract(cwd: Path) -> dict | None:
         if contract_path is None or not contract_path.is_file():
             return None
         contract_bytes = contract_path.read_bytes()
-        if not hmac.compare_digest(hashlib.sha256(contract_bytes).hexdigest(), str(pointer.get("contract_sha256", "")).lower()):
-            return None
         contract = json.loads(contract_bytes.decode("utf-8"))
+        if not hmac.compare_digest(canonical_json_hash(contract), str(pointer.get("contract_sha256", "")).lower()):
+            return None
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return None
     if (
