@@ -80,6 +80,8 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertNotIn("$legacyListener", install)
         self.assertNotIn("[int]$Port = 47831", install)
         self.assertNotIn("[int]$Port = 47831", start)
+        self.assertIn('else { "0" }', install)
+        self.assertIn('port if port else None', install)
 
     def test_explicit_port_replacement_precedes_install_and_start_mutation(self):
         install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")

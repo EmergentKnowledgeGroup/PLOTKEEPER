@@ -102,8 +102,8 @@ try {
         Remove-Item -LiteralPath $installTemp -Recurse -Force
     }
 }
-$explicitPort = if ($Port -gt 0) { "$Port" } else { "" }
-$connectorJson = & $venvPython -c "import json,sys; from plotkeeper.connector import ensure_connector; print(json.dumps(ensure_connector(sys.argv[1], int(sys.argv[2]) if sys.argv[2] else None)))" $connectorPath $explicitPort
+$explicitPort = if ($Port -gt 0) { "$Port" } else { "0" }
+$connectorJson = & $venvPython -c "import json,sys; from plotkeeper.connector import ensure_connector; port=int(sys.argv[2]); print(json.dumps(ensure_connector(sys.argv[1], port if port else None)))" $connectorPath $explicitPort
 if ($LASTEXITCODE -ne 0) { throw "Plotkeeper connector selection failed." }
 $connector = $connectorJson | ConvertFrom-Json
 $Port = [int]$connector.port
