@@ -6,12 +6,12 @@ Track: `PLOTKEEPER V0.1.8 INSTALLER HOTFIX`
 
 ## PLOTKEEPER V0.1.8 INSTALLER HOTFIX
 
-- step: post-green-tests
+- step: PR-open
 - note: v0.1.7 package publication succeeded but its default no-Port installer path dropped an empty argv value and failed before connector/service readiness; PR 2 carries the sentinel fix and is being promoted as immutable v0.1.8.
 - branch: hotfix/v0.1.7-installer
-- head: b5a386b06d3759321460215095cc4eb4275bb81a + v0.1.8 release surfaces
-- next_cmd: `git commit and push the exact v0.1.8 candidate to PR 2, then rerun CodeRabbit and CI`
-- validations: active hotfix contract validates at `8b2bc02ee5f18bbf30390e259789fcf88597195c323891cd8acc7d7dde3555f2`; full suite 96/96; Node and PowerShell parse green; git diff check green; public v0.1.7 remains immutable
+- head: 64a51b5 + PR-open checkpoint
+- next_cmd: `gh pr checks 2 --watch --interval 10`
+- validations: active hotfix contract validates at `8b2bc02ee5f18bbf30390e259789fcf88597195c323891cd8acc7d7dde3555f2`; full suite 96/96; Node and PowerShell parse green; git diff check green; PR 2 updated with v0.1.8 release surfaces; public v0.1.7 remains immutable
 
 ## PLOTKEEPER V0.1.7 LISTENER OWNERSHIP
 
