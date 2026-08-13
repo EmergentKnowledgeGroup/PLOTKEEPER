@@ -2,11 +2,11 @@
   "current_track": "STARSHAPE SUCCESSOR LF CLOSEOUT REVIEW",
   "tracks": {
     "PLOTKEEPER V0.1.7 PR RELEASE": {
-      "step": "phase-start",
-      "note": "User authorized a CodeRabbit-reviewed PR, conditional merge, v0.1.7 release, install, and live attestation. Pre-PR confidence is 97 percent from 76 tests, live exact-session UI/process proof, and independent VALIDATED PASS.",
-      "branch": "main",
-      "head": "72c101aa1a8117aa3974924f7eeb6fac1ea616dd",
-      "next_cmd": "git switch -c release/v0.1.7-plotkeeper-surface && git push -u origin release/v0.1.7-plotkeeper-surface",
+      "step": "PR-open",
+      "note": "PR 1 is open against main and intentionally unmerged while CodeRabbit and GitHub Actions review the exact release slice.",
+      "branch": "release/v0.1.7-plotkeeper-surface",
+      "head": "8ab3cff",
+      "next_cmd": "gh pr checks 1 && gh pr view 1 --comments",
       "validations": ["release contract validates at deb9b287d2535d2a1b9633fa0a2f79a7991ef25fd8caf918c737647558b17ef0", "clean one-worktree exact candidate", "76 tests", "live MoonMarket title, task, reconstruction, and isolated Chrome app proof", "independent VALIDATED PASS"]
     },
     "PLOTKEEPER PLAN RECONSTRUCTION": {
