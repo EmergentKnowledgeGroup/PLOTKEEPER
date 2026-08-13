@@ -47,11 +47,11 @@ class RepositoryDocumentationTests(unittest.TestCase):
         pointer_path = ROOT / "runtime" / "goal-contracts" / "RELEASE_CONTRACT.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         self.assertEqual(pointer["purpose"], "PLOTKEEPER_PUBLIC_RELEASE")
-        self.assertEqual(pointer["contract_id"], "PROD-20260813-plotkeeper-v017-pr-release")
+        self.assertEqual(pointer["contract_id"], "PROD-20260813-plotkeeper-v018-installer-hotfix")
         self.assertTrue((ROOT / pointer["contract_path"]).is_file())
         workflow = (ROOT / ".github" / "workflows" / "release-verifier.yml").read_text(encoding="utf-8")
         self.assertIn("PLOTKEEPER_CONTRACT_POINTER: runtime/goal-contracts/RELEASE_CONTRACT.json", workflow)
-        self.assertNotIn("PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json", workflow)
+        self.assertNotIn("PLOTKEEPER_CONTRACT: runtime/goal-contracts/PROD-20260813-plotkeeper-v018-installer-hotfix.json", workflow)
         release_docs = (ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8")
         self.assertIn("filesystem mtime and contract filename ordering are never release authority", release_docs)
 

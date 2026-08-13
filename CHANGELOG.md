@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.8 - 2026-08-13
+
+- Fix the default installer path so an omitted `-Port` is passed to connector
+  selection as an explicit zero sentinel instead of disappearing from the
+  inline Python argument vector.
+- Preserve explicit-port behavior and the existing fail-closed ownership checks
+  for occupied loopback listeners.
+- Supersede the immutable v0.1.7 release, whose package upgrade succeeded but
+  whose no-port connector setup stopped before service readiness.
+
 ## 0.1.7 - 2026-08-13
 
 - Group active runs by project in a viewport-bounded accessible picker and keep

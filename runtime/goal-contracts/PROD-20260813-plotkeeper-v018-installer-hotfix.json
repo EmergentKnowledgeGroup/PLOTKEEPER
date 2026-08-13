@@ -1,0 +1,62 @@
+{
+  "id": "PROD-20260813-plotkeeper-v018-installer-hotfix",
+  "status": "ACTIVE",
+  "contract_hash": "8b2bc02ee5f18bbf30390e259789fcf88597195c323891cd8acc7d7dde3555f2",
+  "origin": "DIRECT",
+  "user_goal": "Correct the published v0.1.7 installer regression, review the correction through the existing PR, publish it as v0.1.8, install it, and attest the exact live result.",
+  "authority": {
+    "original_request_ref": "codex-task:plotkeeper-v018-hotfix",
+    "original_request_hash": "26013abc046a854336adf7f018f3386ded96d6472446207bd425824f3ce41269",
+    "verbatim_text": "Once hes all green and good, update all docs/surfaces that need it, then merge/close, and make sure we have a release, what was added/fixed and then check in",
+    "captured_at_utc": "2026-08-13T23:40:15Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "codex-task-current-user-authority"
+  },
+  "baseline": {
+    "protected_ref": "public main and v0.1.7",
+    "sha": "71a3c0eac65a5240b35372fa5c1b89e016f1e59a",
+    "retrieved_at_utc": "2026-08-13T23:40:15Z",
+    "protection_evidence": "origin/main and public v0.1.7 tag resolve to the protected release commit",
+    "selection_reason": "The installer regression was discovered only after publishing and attempting to install v0.1.7."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": ["scripts/install.ps1", "tests/test_repository_docs.py", "pyproject.toml", "plotkeeper/__init__.py", "CHANGELOG.md", "docs/RELEASE.md", "runtime/checkpoints/LATEST.md", "runtime/checkpoints/LATEST.json", "runtime/goal-contracts/", ".github/workflows/"],
+    "resources": ["hotfix PR 2", "GitHub Actions", "CodeRabbit review", "public main", "v0.1.8 tag and release", "GitHub deploy receipt variable", "owned local Plotkeeper installation and listener"],
+    "semantic_changes": ["Preserve an explicit zero sentinel when PowerShell invokes connector selection without a user port.", "Publish the reviewed correction as v0.1.8 without rewriting the v0.1.7 tag.", "Update version, changelog, rollback, release authority, checkpoints, and release-verifier bindings required by the hotfix."]
+  },
+  "forbidden": {
+    "paths": ["runtime/plotkeeper.sqlite3", "runtime/plotkeeper-connector.json", "runtime/plotkeeper-owner.json", "runtime/plotkeeper-browser-profile/", "user project repositories and data"],
+    "semantic_changes": ["No ledger mutation, unrelated feature change, foreign listener takeover, secret exposure, tag rewrite, force push, or success claim without public/install/live attestation."]
+  },
+  "invariants": ["Omitting -Port reaches connector selection with an explicit zero sentinel and never shifts argv.", "An explicit valid port retains its existing meaning.", "The installer remains fail closed for unknown or foreign listeners.", "PR 2 stays open until exact-head CI, CodeRabbit reconciliation, and independent review pass.", "Public main, v0.1.8, installed package, connector, owner record, and live service resolve to one exact candidate.", "The v0.1.7 release remains immutable and is documented as superseded by v0.1.8."],
+  "acceptance_cases": [
+    {"id":"AC-VALIDATE","phase":"VALIDATED","promised_behavior":"The exact hotfix and regression are independently validated.","forbidden_behavior":"A test-only or argument-shifting false green.","target_and_actor":"Exact candidate and independent reviewer","required_proof_ids":["PR-VALIDATE"]},
+    {"id":"AC-PR","phase":"MERGE_READY","promised_behavior":"PR 2 exact head has green CI and reconciled CodeRabbit feedback.","forbidden_behavior":"Merging stale or unresolved code.","target_and_actor":"GitHub PR 2, CI, CodeRabbit, and maintainer","required_proof_ids":["PR-PR"]},
+    {"id":"AC-RELEASE","phase":"DEPLOY_READY","promised_behavior":"Version, docs, rollback, tests, signed receipts, verifier, and guard approve the exact v0.1.8 candidate.","forbidden_behavior":"Publishing an unreviewed or mismatched SHA.","target_and_actor":"Plotkeeper release pipeline","required_proof_ids":["PR-RELEASE"]},
+    {"id":"AC-LIVE","phase":"ATTESTED","promised_behavior":"Public, installed, and live v0.1.8 behavior matches the approved candidate.","forbidden_behavior":"Stale package, failed connector, wrong listener, or unverifiable release.","target_and_actor":"GitHub and owned local Plotkeeper service","required_proof_ids":["PR-LIVE"]}
+  ],
+  "proof_requirements": [
+    {"id":"PR-VALIDATE","phase":"VALIDATED","acceptance_case_ids":["AC-VALIDATE"],"claim":"A real installer invocation without -Port and the full exact suite prove the regression is corrected.","required_environment":"clean exact candidate and isolated installer surface","command_or_read_only_check":"production-goal review, full tests, PowerShell parse, and installer harness","expected_observation":"VALIDATED PASS with zero open items"},
+    {"id":"PR-PR","phase":"MERGE_READY","acceptance_case_ids":["AC-PR"],"claim":"Raw PR review threads and exact-SHA checks prove merge readiness.","required_environment":"GitHub PR 2","command_or_read_only_check":"inspect every review thread/comment and exact-head check","expected_observation":"zero unresolved actionable feedback and all required checks success"},
+    {"id":"PR-RELEASE","phase":"DEPLOY_READY","acceptance_case_ids":["AC-RELEASE"],"claim":"Signed phase receipts, server verifier, and trusted guard approve one exact candidate.","required_environment":"clean candidate checkout","command_or_read_only_check":"production-goal review and release verifier/guard","expected_observation":"DEPLOY_READY PASS with zero open items"},
+    {"id":"PR-LIVE","phase":"ATTESTED","acceptance_case_ids":["AC-LIVE"],"claim":"Public SHA/tag/release/Actions and installed service evidence are exact.","required_environment":"GitHub and owned local service","command_or_read_only_check":"public metadata, package parity, connector, owner, health, and UI checks","expected_observation":"ATTESTED and CLOSED PASS"}
+  ],
+  "review_requirements": [
+    {"id":"RR-PR","phase":"MERGE_READY","required_role":"CodeRabbit plus independent production reviewer"},
+    {"id":"RR-DEPLOY","phase":"DEPLOY_READY","required_role":"independent release reviewer"},
+    {"id":"RR-LIVE","phase":"ATTESTED","required_role":"independent public/install/live attestor"}
+  ],
+  "release_requirements": [
+    {"id":"RL-PR","phase":"MERGE_READY","required_receipt":"open PR 2 with exact-head CodeRabbit and CI success"},
+    {"id":"RL-DEPLOY","phase":"DEPLOY_READY","required_receipt":"signed VALIDATED through DEPLOY_READY bundle accepted by verifier and guard"},
+    {"id":"RL-LIVE","phase":"ATTESTED","required_receipt":"signed ATTESTED and CLOSED receipts after public/install/live proof"}
+  ],
+  "stop_conditions": ["Unexpected diff, dirty or multiple worktrees, unresolved review or CI, failed installer proof, non-PASS receipt, SHA mismatch, foreign listener risk, secret/runtime-data exposure, or rollback failure."],
+  "known_discrepancies": ["v0.1.7 is public but its no-Port installer invocation failed after upgrading the package; it must remain immutable and be superseded by v0.1.8."],
+  "delegation": {"contract_id_required_in_child_prompts":true,"allowed_surfaces_must_be_explicit":true},
+  "locked_artifacts": {},
+  "requirement_trace": [{"authority":"User-authorized reviewed PR, merge, release, and check-in","acceptance_cases":["AC-VALIDATE","AC-PR","AC-RELEASE","AC-LIVE"]}],
+  "previous_contract": {"path":"runtime/goal-contracts/PROD-20260813-plotkeeper-v017-pr-release.json","sha256":"5d0ade652f20c48f6f2c47db481b25b41f1cb98001f7794151b79c3597cc763f"}
+}
