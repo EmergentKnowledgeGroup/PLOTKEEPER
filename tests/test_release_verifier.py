@@ -14,6 +14,12 @@ SPEC.loader.exec_module(VERIFIER)
 
 
 class ReleaseVerifierTests(unittest.TestCase):
+    def test_repository_release_pointer_matches_live_designated_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        pointer = json.loads((root / "runtime/goal-contracts/RELEASE_CONTRACT.json").read_text(encoding="utf-8"))
+        contract = json.loads((root / pointer["contract_path"]).read_text(encoding="utf-8"))
+        self.assertEqual(pointer["contract_sha256"], VERIFIER.canonical_json_hash(contract))
+
     candidate = "a" * 40
     diff_hash = "d" * 64
     review_key = "test-review-key"
