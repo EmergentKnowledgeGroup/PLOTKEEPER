@@ -2,12 +2,12 @@
   "current_track": "PLOTKEEPER V0.1.11 OWNER TIME PRECISION",
   "tracks": {
     "PLOTKEEPER V0.1.11 OWNER TIME PRECISION": {
-      "step": "phase-start",
+      "step": "PR-open",
       "note": "The reviewed v0.1.10 package installed but its owned restart exposed legacy whole-second records versus CIM fractional ticks; v0.1.11 preserves legacy precision while keeping new invariant records exact.",
       "branch": "hotfix/v0.1.10-owner-time-precision",
-      "head": "f75a6214cd92f2f87f70b223e309031b0e552105",
-      "next_cmd": "py -3 -B -m unittest discover -s tests -q",
-      "validations": ["public main lease-restored to reviewed v0.1.10 b73eaa69e7c481c2857b35d6c1975d138088d7c6", "precision fix preserved on dedicated branch", "legacy fractional, exact invariant equality, and exact mismatch focused regression green", "v0.1.11 contract hash 8af6dcd81a3944a5560cf6d9ac42775719abbdea0755d5503c4539bd7b091823", "release pointer canonical hash bbed1b31909dcde147532167098c845c0b6121cff321ad60e9124737483edd38"]
+      "head": "05ee7500f388edf39ebcebed97e9df8d16a1cf49 (reviewed source candidate; checkpoint-only successor records it)",
+      "next_cmd": "gh pr checks 5 --watch --interval 10",
+      "validations": ["public main lease-restored to reviewed v0.1.10 b73eaa69e7c481c2857b35d6c1975d138088d7c6", "precision fix preserved on dedicated branch", "legacy fractional, exact invariant equality, and exact mismatch focused regression green", "v0.1.11 contract hash 8af6dcd81a3944a5560cf6d9ac42775719abbdea0755d5503c4539bd7b091823", "release pointer canonical hash bbed1b31909dcde147532167098c845c0b6121cff321ad60e9124737483edd38", "98 of 98 tests", "diff check green"]
     },
     "PLOTKEEPER V0.1.10 OWNER TIME IDENTITY": {
       "step": "PR-open",
