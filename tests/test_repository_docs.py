@@ -93,6 +93,10 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertLess(start.index("$priorOwner = Read-OwnerRecord"), start.index("$listener = Get-ListenerPid"))
         self.assertIn("Stop-OwnedListener $priorListener ([int]$priorOwner.port)", start)
 
+    @unittest.skipUnless(
+        os.name == "nt" and shutil.which("powershell.exe") and shutil.which("py"),
+        "requires Windows PowerShell and the Python launcher",
+    )
     def test_installer_without_port_persists_auto_selected_loopback_connector(self):
         temp_root = ROOT / "runtime" / "tmp" / "tests" / f"no-port-{uuid.uuid4().hex}"
         checkout = temp_root / "checkout"
@@ -144,6 +148,18 @@ class RepositoryDocumentationTests(unittest.TestCase):
                     ["powershell.exe", "-NoProfile", "-Command", f"Stop-Process -Id {owner_pid} -Force -ErrorAction SilentlyContinue"],
                     capture_output=True, text=True, check=False,
                 )
+            cleanup_env = os.environ.copy()
+            cleanup_env["PLOTKEEPER_TEST_CHECKOUT"] = str(checkout)
+            subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-Command",
+                    "$root=[IO.Path]::GetFullPath($env:PLOTKEEPER_TEST_CHECKOUT); "
+                    "Get-Process python,pythonw -ErrorAction SilentlyContinue | "
+                    "Where-Object { $_.Path -and [IO.Path]::GetFullPath($_.Path).StartsWith($root,[StringComparison]::OrdinalIgnoreCase) } | "
+                    "Stop-Process -Force -ErrorAction SilentlyContinue",
+                ],
+                env=cleanup_env, capture_output=True, text=True, check=False,
+            )
             restore_env = os.environ.copy()
             restore_env["PLOTKEEPER_TEST_PRIOR_STARTUP"] = prior
             restore = (
@@ -154,7 +170,10 @@ class RepositoryDocumentationTests(unittest.TestCase):
             )
             subprocess.run(["powershell.exe", "-NoProfile", "-Command", restore], env=restore_env, check=False)
             if temp_root.exists():
-                shutil.rmtree(temp_root, ignore_errors=True)
+                shutil.rmtree(temp_root)
+            for parent in (temp_root.parent, temp_root.parent.parent):
+                if parent.is_dir() and not any(parent.iterdir()):
+                    parent.rmdir()
 
     def test_panel_receipt_instructions_require_html_proof(self):
         skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")
