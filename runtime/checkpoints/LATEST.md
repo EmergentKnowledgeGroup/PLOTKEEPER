@@ -9,9 +9,9 @@ Track: `PLOTKEEPER V0.1.12 LISTENER PID IDENTITY`
 - step: post-green-tests
 - note: v0.1.12 records the real socket owner, tightly migrates the legacy wrapper relationship, and now waits for the authoritative owner record before the installer reports success.
 - branch: hotfix/v0.1.12-listener-pid-identity
-- head: aa2a6815189f90774058a86f1a50915e163a2b4a + installer owner-publication gate
+- head: 0dad0c0243ce7bd8227cb3acdeca8ef0141a7740 + durable two-install regression
 - next_cmd: `git commit && git push origin hotfix/v0.1.12-listener-pid-identity`
-- validations: legacy wrapper PID 26296 and listener child PID 18052 relationship proven read-only; command line, creation lineage, connector, port, and executable wrapper identity match; direct-child and wrong-parent/wrong-command regressions green; installer success is ordered after authoritative owner validation; v0.1.12 contract hash `1457d84144c4e5c75249c8df62ef216c2c8f633258e09a2f49dd987abbddf895`; release pointer canonical hash `a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1`; 100/100 tests; PowerShell parse and diff check green
+- validations: legacy wrapper PID 26296 and listener child PID 18052 relationship proven read-only; command line, creation lineage, connector, port, and executable wrapper identity match; direct-child and wrong-parent/wrong-command regressions green; installer success is ordered after authoritative owner validation; Windows-gated integration test performs two real installs, matches owner PID to TCP OwningProcess both times, proves PID replacement, and proves first listener exit; v0.1.12 contract hash `1457d84144c4e5c75249c8df62ef216c2c8f633258e09a2f49dd987abbddf895`; release pointer canonical hash `a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1`; 100/100 tests; PowerShell parse and diff check green
 
 ## PLOTKEEPER V0.1.11 OWNER TIME PRECISION
 

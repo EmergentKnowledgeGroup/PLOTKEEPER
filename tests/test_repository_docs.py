@@ -132,12 +132,50 @@ class RepositoryDocumentationTests(unittest.TestCase):
             self.assertEqual(connector["host"], "127.0.0.1")
             self.assertGreater(int(connector["port"]), 0)
             self.assertEqual(connector["url"], f"http://127.0.0.1:{connector['port']}")
+            owner_path = checkout / "runtime" / "plotkeeper-owner.json"
+            first_owner = json.loads(owner_path.read_text(encoding="utf-8-sig"))
+            first_pid = int(first_owner["pid"])
+            tcp_pid_command = (
+                "(Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 "
+                f"-LocalPort {int(connector['port'])} -ErrorAction Stop | "
+                "Select-Object -First 1).OwningProcess"
+            )
+            first_tcp_pid = int(subprocess.check_output(
+                ["powershell.exe", "-NoProfile", "-Command", tcp_pid_command], text=True,
+            ).strip())
+            self.assertEqual(first_owner["port"], connector["port"])
+            self.assertEqual(first_pid, first_tcp_pid)
+
+            second = subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", str(checkout / "scripts" / "install.ps1"),
+                    "-Python", python, "-Port", str(connector["port"]),
+                ],
+                capture_output=True, text=True, timeout=180, check=False,
+            )
+            self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+            second_owner = json.loads(owner_path.read_text(encoding="utf-8-sig"))
+            second_pid = int(second_owner["pid"])
+            second_tcp_pid = int(subprocess.check_output(
+                ["powershell.exe", "-NoProfile", "-Command", tcp_pid_command], text=True,
+            ).strip())
+            self.assertEqual(second_pid, second_tcp_pid)
+            self.assertNotEqual(first_pid, second_pid)
+            first_alive = subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-Command",
+                    f"if (Get-Process -Id {first_pid} -ErrorAction SilentlyContinue) {{ exit 1 }}",
+                ],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(first_alive.returncode, 0, first_alive.stdout + first_alive.stderr)
         finally:
             owner_path = checkout / "runtime" / "plotkeeper-owner.json"
             owner_pid = None
             if owner_path.is_file():
                 try:
-                    owner_pid = int(json.loads(owner_path.read_text(encoding="utf-8"))["pid"])
+                    owner_pid = int(json.loads(owner_path.read_text(encoding="utf-8-sig"))["pid"])
                 except (KeyError, TypeError, ValueError, json.JSONDecodeError):
                     owner_pid = None
             uninstall = checkout / "scripts" / "uninstall.ps1"
