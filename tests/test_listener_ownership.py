@@ -161,7 +161,9 @@ class ListenerOwnerSchemaTests(unittest.TestCase):
             probe = match.group(0) + r'''
 $a = Get-CreationTimeUtcTicks "08/13/2026 23:06:49"
 $b = Get-CreationTimeUtcTicks "8/13/2026 11:06:49 PM"
-$c = Get-CreationTimeUtcTicks "2026-08-14T04:06:49.0000000Z"
+$local = [DateTime]::ParseExact("08/13/2026 23:06:49", "MM/dd/yyyy HH:mm:ss", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeLocal)
+$iso = $local.ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)
+$c = Get-CreationTimeUtcTicks $iso
 $bad = Get-CreationTimeUtcTicks "not-a-time"
 $badText = if ($null -eq $bad) { "NULL" } else { [string]$bad }
 Write-Output "${a}|${b}|${c}|${badText}"
