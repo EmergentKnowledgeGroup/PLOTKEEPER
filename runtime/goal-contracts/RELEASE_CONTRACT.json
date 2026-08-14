@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
-  "contract_id": "PROD-20260813-plotkeeper-v018-installer-hotfix",
-  "contract_path": "runtime/goal-contracts/PROD-20260813-plotkeeper-v018-installer-hotfix.json",
-  "contract_sha256": "a0f58d7b950b4dd099ad38301c0adf7834398ecc989ed8f1c2a373e6cc78044e"
+  "contract_id": "PROD-20260814-plotkeeper-v019-release-hygiene",
+  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-release-hygiene.json",
+  "contract_sha256": "020ce04180fbc1abe7a1e3d4616904e1f4cf33faa8a7c8067598efc00a3acfca"
 }

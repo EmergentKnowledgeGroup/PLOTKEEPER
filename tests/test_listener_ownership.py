@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -72,6 +74,11 @@ def process_command_line(pid: int) -> str:
 
 class ListenerOwnershipTests(unittest.TestCase):
     def setUp(self):
+        self.foreign = None
+        if self._testMethodName == "test_owner_record_schema_is_explicitly_bound":
+            return
+        if os.name != "nt" or not shutil.which("powershell.exe"):
+            self.skipTest("requires Windows PowerShell process-boundary tools")
         self.port = free_port()
         self.foreign = subprocess.Popen(
             [sys.executable, "-c", FOREIGN_SERVER, str(self.port), "plotkeeper.cli"],
@@ -95,7 +102,7 @@ class ListenerOwnershipTests(unittest.TestCase):
         self.assertIn("plotkeeper.cli", process_command_line(self.foreign.pid))
 
     def tearDown(self):
-        if self.foreign.poll() is None:
+        if self.foreign is not None and self.foreign.poll() is None:
             self.foreign.terminate()
             self.foreign.wait(timeout=5)
 

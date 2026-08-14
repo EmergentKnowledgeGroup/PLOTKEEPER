@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9 - 2026-08-14
+
+- Keep the machine-local listener ownership record out of Git so a normal
+  owned installation leaves the checkout clean.
+- Skip only the Windows PowerShell process-boundary listener tests on platforms
+  that cannot execute them, while retaining the portable owner-schema checks.
+- Restore the public Linux release-verifier workflow after the v0.1.8
+  attestation exposed the platform-specific test setup.
+
 ## 0.1.8 - 2026-08-13
 
 - Fix the default installer path so an omitted `-Port` is passed to connector

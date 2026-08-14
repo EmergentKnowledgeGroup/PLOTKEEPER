@@ -1,6 +1,14 @@
 {
-  "current_track": "PLOTKEEPER V0.1.8 INSTALLER HOTFIX",
+  "current_track": "PLOTKEEPER V0.1.9 RELEASE HYGIENE",
   "tracks": {
+    "PLOTKEEPER V0.1.9 RELEASE HYGIENE": {
+      "step": "post-green-tests",
+      "note": "v0.1.8 installed healthy, but public attestation found Linux executing Windows-only ownership tests and the generated owner record missing from Git ignore; v0.1.9 is the narrow correction.",
+      "branch": "hotfix/v0.1.9-release-hygiene",
+      "head": "de8274ff2c52c69d9c297a7a5004486d48ecfb90 + release-hygiene surfaces",
+      "next_cmd": "commit, push, and open PR 3",
+      "validations": ["active contract validates at 4edee01b3ee3cd19b25ab4bcb87801482c36fefd88765f45965de725587f6771", "97 of 97 tests", "generated owner record is ignored while present", "diff check green", "protected v0.1.8 baseline remains immutable"]
+    },
     "PLOTKEEPER V0.1.8 INSTALLER HOTFIX": {
       "step": "PR-open",
       "note": "v0.1.7 package publication succeeded but its default no-Port installer path dropped an empty argv value and failed before connector/service readiness; PR 2 carries the sentinel fix and is being promoted as immutable v0.1.8.",
