@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
+import subprocess
 import unittest
+import uuid
 from pathlib import Path
 
 
@@ -80,8 +84,6 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertNotIn("$legacyListener", install)
         self.assertNotIn("[int]$Port = 47831", install)
         self.assertNotIn("[int]$Port = 47831", start)
-        self.assertIn('else { "0" }', install)
-        self.assertIn('port if port else None', install)
 
     def test_explicit_port_replacement_precedes_install_and_start_mutation(self):
         install = (ROOT / "scripts" / "install.ps1").read_text(encoding="utf-8")
@@ -90,6 +92,69 @@ class RepositoryDocumentationTests(unittest.TestCase):
         self.assertLess(install.index("Stop-OwnedListener $priorListener"), install.index("ensure_connector"))
         self.assertLess(start.index("$priorOwner = Read-OwnerRecord"), start.index("$listener = Get-ListenerPid"))
         self.assertIn("Stop-OwnedListener $priorListener ([int]$priorOwner.port)", start)
+
+    def test_installer_without_port_persists_auto_selected_loopback_connector(self):
+        temp_root = ROOT / "runtime" / "tmp" / "tests" / f"no-port-{uuid.uuid4().hex}"
+        checkout = temp_root / "checkout"
+        startup_key = r"HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+        read_startup = f"(Get-ItemProperty -Path '{startup_key}' -Name Plotkeeper -ErrorAction SilentlyContinue).Plotkeeper"
+        prior = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-Command", read_startup],
+            capture_output=True, text=True, check=False,
+        ).stdout.strip()
+        try:
+            shutil.copytree(
+                ROOT,
+                checkout,
+                ignore=shutil.ignore_patterns(".git", ".venv", "runtime", "__pycache__", "*.pyc"),
+            )
+            python = subprocess.check_output(
+                ["py", "-3", "-c", "import sys; print(sys.executable)"], text=True,
+            ).strip()
+            result = subprocess.run(
+                [
+                    "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", str(checkout / "scripts" / "install.ps1"), "-Python", python,
+                ],
+                capture_output=True, text=True, timeout=180, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            connector = json.loads(
+                (checkout / "runtime" / "plotkeeper-connector.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(connector["host"], "127.0.0.1")
+            self.assertGreater(int(connector["port"]), 0)
+            self.assertEqual(connector["url"], f"http://127.0.0.1:{connector['port']}")
+        finally:
+            owner_path = checkout / "runtime" / "plotkeeper-owner.json"
+            owner_pid = None
+            if owner_path.is_file():
+                try:
+                    owner_pid = int(json.loads(owner_path.read_text(encoding="utf-8"))["pid"])
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                    owner_pid = None
+            uninstall = checkout / "scripts" / "uninstall.ps1"
+            if uninstall.is_file():
+                subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(uninstall)],
+                    capture_output=True, text=True, timeout=60, check=False,
+                )
+            if owner_pid:
+                subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-Command", f"Stop-Process -Id {owner_pid} -Force -ErrorAction SilentlyContinue"],
+                    capture_output=True, text=True, check=False,
+                )
+            restore_env = os.environ.copy()
+            restore_env["PLOTKEEPER_TEST_PRIOR_STARTUP"] = prior
+            restore = (
+                f"New-Item -Path '{startup_key}' -Force | Out-Null; "
+                "if ($env:PLOTKEEPER_TEST_PRIOR_STARTUP) { "
+                f"New-ItemProperty -Path '{startup_key}' -Name Plotkeeper -Value $env:PLOTKEEPER_TEST_PRIOR_STARTUP -PropertyType String -Force | Out-Null "
+                f"}} else {{ Remove-ItemProperty -Path '{startup_key}' -Name Plotkeeper -ErrorAction SilentlyContinue }}"
+            )
+            subprocess.run(["powershell.exe", "-NoProfile", "-Command", restore], env=restore_env, check=False)
+            if temp_root.exists():
+                shutil.rmtree(temp_root, ignore_errors=True)
 
     def test_panel_receipt_instructions_require_html_proof(self):
         skill = (ROOT / "integrations" / "codex" / "bundled" / "skills" / "specswarm" / "SKILL.md").read_text(encoding="utf-8")
