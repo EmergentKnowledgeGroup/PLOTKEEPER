@@ -166,4 +166,11 @@ for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
     $healthy = Test-Health
 }
 if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
+$owned = $false
+for ($attempt = 0; $attempt -lt 40 -and -not $owned; $attempt++) {
+    $listener = Get-ListenerPid $Port
+    if ($listener) { $owned = Test-PlotkeeperOwner $listener $Port }
+    if (-not $owned) { Start-Sleep -Milliseconds 100 }
+}
+if (-not $owned) { throw "Plotkeeper became healthy on port $Port but did not publish a valid owner record." }
 Write-Output "Plotkeeper installed, running, and registered for user startup at $($connector.url)."

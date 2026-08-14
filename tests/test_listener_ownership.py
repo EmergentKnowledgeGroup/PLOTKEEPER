@@ -255,6 +255,15 @@ Write-Output "${accepted}|${wrongParent}|${wrongCommand}"
         self.assertIn("pid = [int]$listenerProcessId", start)
         self.assertIn("Get-ListenerPid", start)
 
+    def test_installer_waits_for_authoritative_owner_record(self):
+        source = INSTALL.read_text(encoding="utf-8")
+        self.assertIn("did not publish a valid owner record", source)
+        health_gate = source.index('if (-not $healthy)')
+        owner_gate = source.index('if (-not $owned) { throw')
+        success = source.index('Write-Output "Plotkeeper installed')
+        self.assertLess(health_gate, owner_gate)
+        self.assertLess(owner_gate, success)
+
 
 if __name__ == "__main__":
     unittest.main()
