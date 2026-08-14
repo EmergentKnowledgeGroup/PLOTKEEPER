@@ -49,7 +49,10 @@ function Test-CreationTimeMatch($IdentityValue, $RecordValue) {
     $identityTicks = Get-CreationTimeUtcTicks $IdentityValue
     $recordTicks = Get-CreationTimeUtcTicks $RecordValue
     if ($null -eq $identityTicks -or $null -eq $recordTicks) { return $false }
-    if ([string]$RecordValue -match '^\d{4}-\d{2}-\d{2}T') { return $identityTicks -eq $recordTicks }
+    $exactRecord = [DateTime]::MinValue
+    if ([DateTime]::TryParseExact([string]$RecordValue, "o", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$exactRecord)) {
+        return $identityTicks -eq $recordTicks
+    }
     $second = [TimeSpan]::TicksPerSecond
     return ($identityTicks - ($identityTicks % $second)) -eq ($recordTicks - ($recordTicks % $second))
 }

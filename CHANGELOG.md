@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.11 - 2026-08-14
+
+- Match truthful legacy owner timestamps at their original whole-second
+  precision while retaining exact fractional-tick comparison for new invariant
+  owner records.
+- Add executable regressions proving legacy fractional acceptance, exact
+  invariant equality, and exact invariant mismatch rejection.
+
 ## 0.1.10 - 2026-08-14
 
 - Compare listener creation times as canonical instants instead of

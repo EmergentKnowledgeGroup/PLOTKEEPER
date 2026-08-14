@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
-  "contract_id": "PROD-20260814-plotkeeper-v0110-owner-time-identity",
-  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v0110-owner-time-identity.json",
-  "contract_sha256": "55547f92e4b6002d71e95487e515283b6c1702eeb1c9c230f3ba561a770e5d2c"
+  "contract_id": "PROD-20260814-plotkeeper-v0111-owner-time-precision",
+  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v0111-owner-time-precision.json",
+  "contract_sha256": "bbed1b31909dcde147532167098c845c0b6121cff321ad60e9124737483edd38"
 }
