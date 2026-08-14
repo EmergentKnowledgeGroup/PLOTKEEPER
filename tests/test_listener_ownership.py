@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -146,6 +147,39 @@ class ListenerOwnerSchemaTests(unittest.TestCase):
                 self.assertIn(field, source)
             self.assertNotIn("Test-Dashboard", source)
             self.assertNotIn("plotkeeper\\.cli", source)
+
+    @unittest.skipUnless(os.name == "nt" and shutil.which("powershell.exe"), "requires Windows PowerShell")
+    def test_creation_time_identity_is_locale_independent_and_fail_closed(self):
+        for script in (INSTALL, START):
+            source = script.read_text(encoding="utf-8")
+            match = re.search(
+                r"function Get-CreationTimeUtcTicks\(\$Value\) \{.*?\n\}",
+                source,
+                flags=re.DOTALL,
+            )
+            self.assertIsNotNone(match, script)
+            probe = match.group(0) + r'''
+$a = Get-CreationTimeUtcTicks "08/13/2026 23:06:49"
+$b = Get-CreationTimeUtcTicks "8/13/2026 11:06:49 PM"
+$c = Get-CreationTimeUtcTicks "2026-08-14T04:06:49.0000000Z"
+$bad = Get-CreationTimeUtcTicks "not-a-time"
+$badText = if ($null -eq $bad) { "NULL" } else { [string]$bad }
+Write-Output "${a}|${b}|${c}|${badText}"
+'''
+            result = subprocess.run(
+                ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", probe],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            a, b, c, bad = result.stdout.strip().split("|")
+            self.assertEqual(a, b)
+            self.assertEqual(b, c)
+            self.assertEqual(bad, "NULL")
+
+        start = START.read_text(encoding="utf-8")
+        self.assertIn('ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)', start)
 
 
 if __name__ == "__main__":

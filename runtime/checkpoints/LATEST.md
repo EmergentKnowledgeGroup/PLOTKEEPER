@@ -2,7 +2,16 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER V0.1.9 RELEASE HYGIENE`
+Track: `PLOTKEEPER V0.1.10 OWNER TIME IDENTITY`
+
+## PLOTKEEPER V0.1.10 OWNER TIME IDENTITY
+
+- step: phase-start
+- note: The v0.1.9 package installed, but restart failed closed because the same Windows process creation instant was serialized in 24-hour form and returned in 12-hour form; v0.1.10 canonicalizes the instant without weakening ownership proof.
+- branch: hotfix/v0.1.10-owner-time-identity
+- head: 979f95577609fbdbccc47d5f854fd4eaf924a377
+- next_cmd: `py -3 -B -m unittest discover -s tests -q`
+- validations: v0.1.9 release is immutable at `979f95577609fbdbccc47d5f854fd4eaf924a377`; v0.1.9 package files installed but owned v0.1.8 listener remains healthy; mismatch proven to be equivalent locale-formatted creation timestamps; v0.1.10 contract validates at `70ae32cba46f5fef9848d8a40cf2f173420a70a1303166f7e37029c5bb130aec`; release pointer canonical hash is `55547f92e4b6002d71e95487e515283b6c1702eeb1c9c230f3ba561a770e5d2c`
 
 ## PLOTKEEPER V0.1.9 RELEASE HYGIENE
 

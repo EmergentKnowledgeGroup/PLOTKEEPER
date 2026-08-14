@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.10 - 2026-08-14
+
+- Compare listener creation times as canonical instants instead of
+  locale-formatted strings, so a truthful owned listener remains recognizable
+  across 12-hour and 24-hour Windows representations.
+- Write new ownership records with an invariant UTC timestamp while continuing
+  to accept valid legacy records.
+- Preserve fail-closed rejection of malformed, stale, PID-reused, and foreign
+  listener ownership records.
+
 ## 0.1.9 - 2026-08-14
 
 - Keep the machine-local listener ownership record out of Git so a normal

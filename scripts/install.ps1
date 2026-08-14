@@ -29,6 +29,19 @@ function Test-SamePath([string]$Left, [string]$Right) {
     try { return [StringComparer]::OrdinalIgnoreCase.Equals([IO.Path]::GetFullPath($Left), [IO.Path]::GetFullPath($Right)) } catch { return $false }
 }
 
+function Get-CreationTimeUtcTicks($Value) {
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [DateTime]) { return ([DateTime]$Value).ToUniversalTime().Ticks }
+    $parsed = [DateTime]::MinValue
+    $formats = @("o", "MM/dd/yyyy HH:mm:ss", "M/d/yyyy H:mm:ss", "MM/dd/yyyy hh:mm:ss tt", "M/d/yyyy h:mm:ss tt")
+    foreach ($format in $formats) {
+        if ([DateTime]::TryParseExact([string]$Value, $format, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeLocal, [ref]$parsed)) {
+            return $parsed.ToUniversalTime().Ticks
+        }
+    }
+    return $null
+}
+
 function Read-OwnerRecord {
     if (-not (Test-Path -LiteralPath $ownerPath)) { return $null }
     try { return Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json } catch { return $null }
@@ -41,7 +54,9 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port)
     if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
     if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
     if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
-    if ([string]$identity.CreationDate -ne [string]$record.creation_time) { return $false }
+    $identityCreation = Get-CreationTimeUtcTicks $identity.CreationDate
+    $recordCreation = Get-CreationTimeUtcTicks $record.creation_time
+    if ($null -eq $identityCreation -or $null -eq $recordCreation -or $identityCreation -ne $recordCreation) { return $false }
     if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
     return $true
 }
