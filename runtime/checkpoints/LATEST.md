@@ -6,7 +6,7 @@ Track: `PLOTKEEPER V0.1.10 OWNER TIME IDENTITY`
 
 ## PLOTKEEPER V0.1.10 OWNER TIME IDENTITY
 
-- step: post-green-tests
+- step: PR-open
 - note: The v0.1.9 package installed, but restart failed closed because the same Windows process creation instant was serialized in 24-hour form and returned in 12-hour form; v0.1.10 canonicalizes the instant without weakening ownership proof.
 - branch: hotfix/v0.1.10-owner-time-identity
 - head: af1c66d778592b30e3ee7228d8b2745aacdfc539 (reviewed source candidate; checkpoint-only successor records it)
