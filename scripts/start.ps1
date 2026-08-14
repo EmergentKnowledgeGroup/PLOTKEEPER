@@ -48,6 +48,9 @@ function Get-CreationTimeUtcTicks($Value) {
     if ($null -eq $Value) { return $null }
     if ($Value -is [DateTime]) { return ([DateTime]$Value).ToUniversalTime().Ticks }
     $parsed = [DateTime]::MinValue
+    if ([DateTime]::TryParse([string]$Value, [Globalization.CultureInfo]::CurrentCulture, [Globalization.DateTimeStyles]::AssumeLocal, [ref]$parsed)) {
+        return $parsed.ToUniversalTime().Ticks
+    }
     $formats = @("o", "MM/dd/yyyy HH:mm:ss", "M/d/yyyy H:mm:ss", "MM/dd/yyyy hh:mm:ss tt", "M/d/yyyy h:mm:ss tt")
     foreach ($format in $formats) {
         if ([DateTime]::TryParseExact([string]$Value, $format, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeLocal, [ref]$parsed)) {

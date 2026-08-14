@@ -165,8 +165,13 @@ $local = [DateTime]::ParseExact("08/13/2026 23:06:49", "MM/dd/yyyy HH:mm:ss", [G
 $iso = $local.ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)
 $c = Get-CreationTimeUtcTicks $iso
 $bad = Get-CreationTimeUtcTicks "not-a-time"
+$priorCulture = [Globalization.CultureInfo]::CurrentCulture
+[Threading.Thread]::CurrentThread.CurrentCulture = [Globalization.CultureInfo]::GetCultureInfo("de-DE")
+$legacyNonUs = Get-CreationTimeUtcTicks "13.08.2026 23:06:49"
+$expectedNonUs = ([DateTime]::Parse("13.08.2026 23:06:49", [Globalization.CultureInfo]::GetCultureInfo("de-DE"), [Globalization.DateTimeStyles]::AssumeLocal)).ToUniversalTime().Ticks
+[Threading.Thread]::CurrentThread.CurrentCulture = $priorCulture
 $badText = if ($null -eq $bad) { "NULL" } else { [string]$bad }
-Write-Output "${a}|${b}|${c}|${badText}"
+Write-Output "${a}|${b}|${c}|${badText}|${legacyNonUs}|${expectedNonUs}"
 '''
             result = subprocess.run(
                 ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", probe],
@@ -175,10 +180,11 @@ Write-Output "${a}|${b}|${c}|${badText}"
                 check=False,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            a, b, c, bad = result.stdout.strip().split("|")
+            a, b, c, bad, legacy_non_us, expected_non_us = result.stdout.strip().split("|")
             self.assertEqual(a, b)
             self.assertEqual(b, c)
             self.assertEqual(bad, "NULL")
+            self.assertEqual(legacy_non_us, expected_non_us)
 
         start = START.read_text(encoding="utf-8")
         self.assertIn('ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)', start)
