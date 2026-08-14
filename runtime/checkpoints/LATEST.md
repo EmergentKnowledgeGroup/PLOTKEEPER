@@ -9,9 +9,9 @@ Track: `PLOTKEEPER V0.1.8 INSTALLER HOTFIX`
 - step: PR-open
 - note: v0.1.7 package publication succeeded but its default no-Port installer path dropped an empty argv value and failed before connector/service readiness; PR 2 carries the sentinel fix and is being promoted as immutable v0.1.8.
 - branch: hotfix/v0.1.7-installer
-- head: 64a51b5 + PR-open checkpoint
-- next_cmd: `gh pr checks 2 --watch --interval 10`
-- validations: active hotfix contract validates at `8b2bc02ee5f18bbf30390e259789fcf88597195c323891cd8acc7d7dde3555f2`; full suite 96/96; Node and PowerShell parse green; git diff check green; PR 2 updated with v0.1.8 release surfaces; public v0.1.7 remains immutable
+- head: a37597eec7edf2de23b9d250c12002c248474480 (reviewed source candidate; this checkpoint-only successor records it)
+- next_cmd: `py -3 -B -m unittest discover -s tests -v && gh pr checks 2 --watch --interval 10`
+- validations: active hotfix contract validates at `8b2bc02ee5f18bbf30390e259789fcf88597195c323891cd8acc7d7dde3555f2`; executable isolated no-Port install regression passes and persists a valid loopback connector; prior full suite 96/96; Node and PowerShell parse green; git diff check green; PR 2 updated with v0.1.8 release surfaces; public v0.1.7 remains immutable
 
 ## PLOTKEEPER V0.1.7 LISTENER OWNERSHIP
 
