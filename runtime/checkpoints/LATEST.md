@@ -2,7 +2,16 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER V0.1.11 OWNER TIME PRECISION`
+Track: `PLOTKEEPER V0.1.12 LISTENER PID IDENTITY`
+
+## PLOTKEEPER V0.1.12 LISTENER PID IDENTITY
+
+- step: phase-start
+- note: Live v0.1.11 install proved the legacy owner record names the venv wrapper while the TCP listener belongs to its direct child; v0.1.12 records the real socket owner and tightly migrates the legacy relationship.
+- branch: hotfix/v0.1.12-listener-pid-identity
+- head: 467692a14e7060df4be992857b61791452c78ebb
+- next_cmd: `py -3 -B -m unittest discover -s tests -q`
+- validations: legacy wrapper PID 26296 and listener child PID 18052 relationship proven read-only; command line, creation lineage, connector, port, and executable wrapper identity match; positive/direct-child and wrong-parent/wrong-command focused regression green; v0.1.12 contract hash `1457d84144c4e5c75249c8df62ef216c2c8f633258e09a2f49dd987abbddf895`; release pointer canonical hash `a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1`
 
 ## PLOTKEEPER V0.1.11 OWNER TIME PRECISION
 

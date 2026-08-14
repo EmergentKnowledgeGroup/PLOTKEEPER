@@ -202,6 +202,59 @@ Write-Output "${a}|${b}|${c}|${badText}|${legacyNonUs}|${expectedNonUs}|${legacy
         start = START.read_text(encoding="utf-8")
         self.assertIn('ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)', start)
 
+    @unittest.skipUnless(os.name == "nt" and shutil.which("powershell.exe"), "requires Windows PowerShell")
+    def test_legacy_wrapper_record_requires_exact_direct_listener_child(self):
+        source = INSTALL.read_text(encoding="utf-8")
+        names = (
+            "Get-TextSha256",
+            "Test-SamePath",
+            "Get-CreationTimeUtcTicks",
+            "Test-CreationTimeMatch",
+            "Test-PlotkeeperOwner",
+        )
+        functions = []
+        for name in names:
+            match = re.search(rf"function {name}\([^)]*\) \{{.*?\n\}}", source, flags=re.DOTALL)
+            self.assertIsNotNone(match, name)
+            functions.append(match.group(0))
+        probe = "\n".join(functions) + r'''
+$Root = "Z:\Fixture"
+$connectorPath = "Z:\Fixture\runtime\plotkeeper-connector.json"
+$command = '"Z:\Fixture\.venv\Scripts\python.exe" -m plotkeeper.cli serve --port 53327'
+$script:parentId = 100
+$script:childParentId = 100
+$script:record = [pscustomobject]@{
+  pid = 100; port = 53327; host = "127.0.0.1"; root = $Root; connector_path = $connectorPath
+  executable = "Z:\Fixture\.venv\Scripts\python.exe"; creation_time = "08/13/2026 23:06:49"
+  command_line_sha256 = Get-TextSha256 $command
+}
+function Read-OwnerRecord { return $script:record }
+function Get-ProcessIdentity([int]$ListenerProcessId) {
+  if ($ListenerProcessId -eq 100) { return [pscustomobject]@{ ProcessId=100; ParentProcessId=1; ExecutablePath="Z:\Fixture\.venv\Scripts\python.exe"; CreationDate=[datetime]"2026-08-13T23:06:49.736"; CommandLine=$command } }
+  if ($ListenerProcessId -eq 200) { return [pscustomobject]@{ ProcessId=200; ParentProcessId=$script:childParentId; ExecutablePath="C:\Python\python.exe"; CreationDate=[datetime]"2026-08-13T23:06:49.736"; CommandLine=$command } }
+  return $null
+}
+$accepted = Test-PlotkeeperOwner 200 53327
+$script:childParentId = 999
+$wrongParent = Test-PlotkeeperOwner 200 53327
+$script:childParentId = 100
+$script:record.command_line_sha256 = "00"
+$wrongCommand = Test-PlotkeeperOwner 200 53327
+Write-Output "${accepted}|${wrongParent}|${wrongCommand}"
+'''
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", probe],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.strip(), "True|False|False")
+
+        start = START.read_text(encoding="utf-8")
+        self.assertIn("pid = [int]$listenerProcessId", start)
+        self.assertIn("Get-ListenerPid", start)
+
 
 if __name__ == "__main__":
     unittest.main()

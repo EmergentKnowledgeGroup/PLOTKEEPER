@@ -2,7 +2,7 @@
 
 ## Current patch
 
-This release is `0.1.11`. Before declaring the local dashboard ready, verify
+This release is `0.1.12`. Before declaring the local dashboard ready, verify
 that `/health` is healthy and `/` returns HTTP 200 with a non-empty HTML body
 containing `<html` and the exact `data-testid="plotkeeper-app"` marker. The installer/startup scripts replace a
 listener only when its process is Plotkeeper-owned; a foreign process on the
@@ -34,6 +34,10 @@ continue to fail closed.
 Version `0.1.11` preserves the whole-second precision of legacy owner records
 while requiring full fractional-tick equality for new invariant ISO records.
 
+Version `0.1.12` records the process that actually owns the TCP listener. A
+legacy virtual-environment wrapper record migrates only when the listener is
+its direct child and all applicable recorded identity fields still match.
+
 ## Release contract authority
 
 Release authority is selected by the tracked pointer at
@@ -63,20 +67,20 @@ py -3 -m unittest discover -s tests -v
 ## Rollback
 
 The protected public baseline for this release is
-`b73eaa69e7c481c2857b35d6c1975d138088d7c6` (`v0.1.10`). If the `v0.1.11` release
+`467692a14e7060df4be992857b61791452c78ebb` (`v0.1.11`). If the `v0.1.12` release
 is defective, preserve the failed release commit for audit and
 restore the public branch to that baseline with a lease-bound update:
 
 ```powershell
 git fetch origin main
 git push --force-with-lease=refs/heads/main:<REMOTE_FAILED_SHA> origin `
-  b73eaa69e7c481c2857b35d6c1975d138088d7c6:refs/heads/main
+  467692a14e7060df4be992857b61791452c78ebb:refs/heads/main
 ```
 
 Replace `<REMOTE_FAILED_SHA>` with the SHA independently read from GitHub. Do
 not use an unqualified force push. Then verify that GitHub's default branch
 resolves to the baseline and record a new live attestation. This rollback
-returns public code to `v0.1.10`. It does not authorize opening a migrated ledger
+returns public code to `v0.1.11`. It does not authorize opening a migrated ledger
 with the older schema after successors exist; retain the failed release and
 migrated ledger for audit and restore the pre-release ledger copy only if no
 post-release run data must be preserved.

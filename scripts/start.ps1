@@ -81,11 +81,18 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port)
     $record = Read-OwnerRecord
     $identity = Get-ProcessIdentity $ListenerProcessId
     if (-not $record -or -not $identity) { return $false }
-    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
+    if ([int]$record.port -ne $TargetPort) { return $false }
     if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
-    if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
-    if (-not (Test-CreationTimeMatch $identity.CreationDate $record.creation_time)) { return $false }
-    if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    $recordIdentity = $identity
+    if ([int]$record.pid -ne $ListenerProcessId) {
+        if ([int]$identity.ParentProcessId -ne [int]$record.pid) { return $false }
+        $recordIdentity = Get-ProcessIdentity ([int]$record.pid)
+        if (-not $recordIdentity) { return $false }
+        if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    }
+    if (-not (Test-SamePath ([string]$recordIdentity.ExecutablePath) ([string]$record.executable))) { return $false }
+    if (-not (Test-CreationTimeMatch $recordIdentity.CreationDate $record.creation_time)) { return $false }
+    if ((Get-TextSha256 ([string]$recordIdentity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
     return $true
 }
 
@@ -134,15 +141,17 @@ $ledgerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper.sqlite
 $argumentList = @("-m", "plotkeeper.cli", "--ledger", $ledgerPath, "--connector", $connectorPath, "serve", "--host", "127.0.0.1", "--port", "$Port")
 $quotedArguments = ($argumentList | ForEach-Object { $value = [string]$_; if ($value.IndexOf(' ') -ge 0 -or $value.IndexOf('"') -ge 0) { '"' + $value.Replace('"', '\"') + '"' } else { $value } }) -join ' '
 $process = Start-Process -FilePath $Python -WorkingDirectory $Root -WindowStyle Hidden -ArgumentList $quotedArguments -PassThru
-$identity = $null
-for ($attempt = 0; $attempt -lt 20 -and -not $identity; $attempt++) {
+$listenerProcessId = $null
+for ($attempt = 0; $attempt -lt 20 -and -not $listenerProcessId; $attempt++) {
     Start-Sleep -Milliseconds 100
-    $identity = Get-ProcessIdentity $process.Id
+    $listenerProcessId = Get-ListenerPid
 }
-if (-not $identity) { throw "Plotkeeper process identity could not be recorded." }
+if (-not $listenerProcessId) { throw "Plotkeeper listener identity could not be recorded." }
+$identity = Get-ProcessIdentity $listenerProcessId
+if (-not $identity -or ($listenerProcessId -ne $process.Id -and [int]$identity.ParentProcessId -ne $process.Id)) { throw "Plotkeeper listener is not owned by the launched process." }
 $owner = [ordered]@{
     version = 1
-    pid = [int]$process.Id
+    pid = [int]$listenerProcessId
     host = "127.0.0.1"
     port = [int]$Port
     root = $Root
@@ -164,5 +173,5 @@ try {
     if (-not $healthy) { throw "Plotkeeper did not become healthy on port $Port." }
     $process.WaitForExit()
 } finally {
-    Remove-OwnerRecord $process.Id
+    Remove-OwnerRecord $listenerProcessId
 }

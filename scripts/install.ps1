@@ -66,11 +66,18 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port)
     $record = Read-OwnerRecord
     $identity = Get-ProcessIdentity $ListenerProcessId
     if (-not $record -or -not $identity) { return $false }
-    if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
+    if ([int]$record.port -ne $TargetPort) { return $false }
     if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
-    if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
-    if (-not (Test-CreationTimeMatch $identity.CreationDate $record.creation_time)) { return $false }
-    if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    $recordIdentity = $identity
+    if ([int]$record.pid -ne $ListenerProcessId) {
+        if ([int]$identity.ParentProcessId -ne [int]$record.pid) { return $false }
+        $recordIdentity = Get-ProcessIdentity ([int]$record.pid)
+        if (-not $recordIdentity) { return $false }
+        if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
+    }
+    if (-not (Test-SamePath ([string]$recordIdentity.ExecutablePath) ([string]$record.executable))) { return $false }
+    if (-not (Test-CreationTimeMatch $recordIdentity.CreationDate $record.creation_time)) { return $false }
+    if ((Get-TextSha256 ([string]$recordIdentity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
     return $true
 }
 

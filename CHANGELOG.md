@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.12 - 2026-08-14
+
+- Persist the process that actually owns Plotkeeper's TCP listener rather than
+  the Windows virtual-environment launcher wrapper.
+- Migrate legacy wrapper records only when the listener is the wrapper's direct
+  child and the recorded command, creation time, executable, paths, and port
+  all match.
+- Add executable positive and adversarial parent-child ownership regressions.
+
 ## 0.1.11 - 2026-08-14
 
 - Match truthful legacy owner timestamps at their original whole-second
