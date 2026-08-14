@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
-  "contract_id": "PROD-20260814-plotkeeper-v019-review-remediation",
-  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-review-remediation.json",
-  "contract_sha256": "26c446afc84f368fbf122acc713a7c8467d693ee5e851b85c189e7f8549f94a8"
+  "contract_id": "PROD-20260814-plotkeeper-v019-enforcement-remediation",
+  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-enforcement-remediation.json",
+  "contract_sha256": "3784acf02ca8e64497685a3bc5586ba9f3ad909f9988cc9192a0b2692b5ba0e2"
 }

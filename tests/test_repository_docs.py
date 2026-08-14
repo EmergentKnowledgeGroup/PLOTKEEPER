@@ -51,8 +51,8 @@ class RepositoryDocumentationTests(unittest.TestCase):
         pointer_path = ROOT / "runtime" / "goal-contracts" / "RELEASE_CONTRACT.json"
         pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
         self.assertEqual(pointer["purpose"], "PLOTKEEPER_PUBLIC_RELEASE")
-        self.assertEqual(pointer["contract_id"], "PROD-20260814-plotkeeper-v019-review-remediation")
-        expected_contract_path = "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-review-remediation.json"
+        self.assertEqual(pointer["contract_id"], "PROD-20260814-plotkeeper-v019-enforcement-remediation")
+        expected_contract_path = "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-enforcement-remediation.json"
         self.assertEqual(pointer["contract_path"], expected_contract_path)
         contract = json.loads((ROOT / expected_contract_path).read_text(encoding="utf-8"))
         self.assertEqual(pointer["contract_id"], contract["id"])
