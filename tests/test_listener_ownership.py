@@ -158,7 +158,13 @@ class ListenerOwnerSchemaTests(unittest.TestCase):
                 flags=re.DOTALL,
             )
             self.assertIsNotNone(match, script)
-            probe = match.group(0) + r'''
+            matcher = re.search(
+                r"function Test-CreationTimeMatch\(\$IdentityValue, \$RecordValue\) \{.*?\n\}",
+                source,
+                flags=re.DOTALL,
+            )
+            self.assertIsNotNone(matcher, script)
+            probe = match.group(0) + "\n" + matcher.group(0) + r'''
 $a = Get-CreationTimeUtcTicks "08/13/2026 23:06:49"
 $b = Get-CreationTimeUtcTicks "8/13/2026 11:06:49 PM"
 $local = [DateTime]::ParseExact("08/13/2026 23:06:49", "MM/dd/yyyy HH:mm:ss", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeLocal)
@@ -170,8 +176,12 @@ $priorCulture = [Globalization.CultureInfo]::CurrentCulture
 $legacyNonUs = Get-CreationTimeUtcTicks "13.08.2026 23:06:49"
 $expectedNonUs = ([DateTime]::Parse("13.08.2026 23:06:49", [Globalization.CultureInfo]::GetCultureInfo("de-DE"), [Globalization.DateTimeStyles]::AssumeLocal)).ToUniversalTime().Ticks
 [Threading.Thread]::CurrentThread.CurrentCulture = $priorCulture
+$identityWithFraction = $local.AddTicks(7362380)
+$legacyFractionMatch = Test-CreationTimeMatch $identityWithFraction "08/13/2026 23:06:49"
+$exactFractionMatch = Test-CreationTimeMatch $identityWithFraction $identityWithFraction.ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)
+$exactMismatch = Test-CreationTimeMatch $identityWithFraction $local.ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)
 $badText = if ($null -eq $bad) { "NULL" } else { [string]$bad }
-Write-Output "${a}|${b}|${c}|${badText}|${legacyNonUs}|${expectedNonUs}"
+Write-Output "${a}|${b}|${c}|${badText}|${legacyNonUs}|${expectedNonUs}|${legacyFractionMatch}|${exactFractionMatch}|${exactMismatch}"
 '''
             result = subprocess.run(
                 ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", probe],
@@ -180,11 +190,14 @@ Write-Output "${a}|${b}|${c}|${badText}|${legacyNonUs}|${expectedNonUs}"
                 check=False,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            a, b, c, bad, legacy_non_us, expected_non_us = result.stdout.strip().split("|")
+            a, b, c, bad, legacy_non_us, expected_non_us, legacy_fraction, exact_fraction, exact_mismatch = result.stdout.strip().split("|")
             self.assertEqual(a, b)
             self.assertEqual(b, c)
             self.assertEqual(bad, "NULL")
             self.assertEqual(legacy_non_us, expected_non_us)
+            self.assertEqual(legacy_fraction, "True")
+            self.assertEqual(exact_fraction, "True")
+            self.assertEqual(exact_mismatch, "False")
 
         start = START.read_text(encoding="utf-8")
         self.assertIn('ToUniversalTime().ToString("o", [Globalization.CultureInfo]::InvariantCulture)', start)

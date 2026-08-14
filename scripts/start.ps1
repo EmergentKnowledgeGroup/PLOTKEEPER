@@ -60,6 +60,15 @@ function Get-CreationTimeUtcTicks($Value) {
     return $null
 }
 
+function Test-CreationTimeMatch($IdentityValue, $RecordValue) {
+    $identityTicks = Get-CreationTimeUtcTicks $IdentityValue
+    $recordTicks = Get-CreationTimeUtcTicks $RecordValue
+    if ($null -eq $identityTicks -or $null -eq $recordTicks) { return $false }
+    if ([string]$RecordValue -match '^\d{4}-\d{2}-\d{2}T') { return $identityTicks -eq $recordTicks }
+    $second = [TimeSpan]::TicksPerSecond
+    return ($identityTicks - ($identityTicks % $second)) -eq ($recordTicks - ($recordTicks % $second))
+}
+
 function Read-OwnerRecord {
     if (-not (Test-Path -LiteralPath $ownerPath)) { return $null }
     try { return Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json } catch { return $null }
@@ -72,9 +81,7 @@ function Test-PlotkeeperOwner([int]$ListenerProcessId, [int]$TargetPort = $Port)
     if ([int]$record.pid -ne $ListenerProcessId -or [int]$record.port -ne $TargetPort) { return $false }
     if ([string]$record.host -ne "127.0.0.1" -or -not (Test-SamePath ([string]$record.root) $Root) -or -not (Test-SamePath ([string]$record.connector_path) $connectorPath)) { return $false }
     if (-not (Test-SamePath ([string]$identity.ExecutablePath) ([string]$record.executable))) { return $false }
-    $identityCreation = Get-CreationTimeUtcTicks $identity.CreationDate
-    $recordCreation = Get-CreationTimeUtcTicks $record.creation_time
-    if ($null -eq $identityCreation -or $null -eq $recordCreation -or $identityCreation -ne $recordCreation) { return $false }
+    if (-not (Test-CreationTimeMatch $identity.CreationDate $record.creation_time)) { return $false }
     if ((Get-TextSha256 ([string]$identity.CommandLine)) -ne [string]$record.command_line_sha256) { return $false }
     return $true
 }
