@@ -6,12 +6,12 @@ Track: `PLOTKEEPER V0.1.9 RELEASE HYGIENE`
 
 ## PLOTKEEPER V0.1.9 RELEASE HYGIENE
 
-- step: PR-open
+- step: post-green-tests
 - note: The reviewed v0.1.9 product patch is unchanged; an append-only enforcement successor now exposes the full cumulative authorized path set to the verifier and trusted guard's single-contract model.
 - branch: hotfix/v0.1.9-release-hygiene
-- head: 49357cb212574dd0280bc70705cda9834ef3495d (reviewed product candidate; enforcement-only successor pending exact-head review)
-- next_cmd: `py -3 -B -m unittest discover -s tests -q && gh pr checks 3 --watch --interval 10`
-- validations: restored parent contract `PROD-20260814-plotkeeper-v019-release-hygiene` validates at `4edee01b3ee3cd19b25ab4bcb87801482c36fefd88765f45965de725587f6771`; review remediation validates at `1621339dedb4313817067a3782d2263ca2b6b39cc2b7972ef3e6ffadcd255350`; enforcement successor validates at `a3a04bcfa1f280e9d1ff3be9fd5170292193e8316c11a5315b88263019b20e46`; release pointer canonical hash is `3784acf02ca8e64497685a3bc5586ba9f3ad909f9988cc9192a0b2692b5ba0e2`; 97/97 tests before enforcement-only successor; generated owner record is ignored while present; protected v0.1.8 baseline remains immutable
+- head: c58944aee61ed7963203478c0002da8b9e1f7e25 (reviewed enforcement candidate; checkpoint-only successor records it)
+- next_cmd: `gh pr checks 3 --watch --interval 10`
+- validations: restored parent contract `PROD-20260814-plotkeeper-v019-release-hygiene` validates at `4edee01b3ee3cd19b25ab4bcb87801482c36fefd88765f45965de725587f6771`; review remediation validates at `1621339dedb4313817067a3782d2263ca2b6b39cc2b7972ef3e6ffadcd255350`; enforcement successor validates at `a3a04bcfa1f280e9d1ff3be9fd5170292193e8316c11a5315b88263019b20e46`; release pointer canonical hash is `3784acf02ca8e64497685a3bc5586ba9f3ad909f9988cc9192a0b2692b5ba0e2`; 97/97 tests; generated owner record is ignored while present; diff check green; protected v0.1.8 baseline remains immutable
 
 ## PLOTKEEPER V0.1.8 INSTALLER HOTFIX
 
