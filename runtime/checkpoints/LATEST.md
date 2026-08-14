@@ -6,12 +6,12 @@ Track: `PLOTKEEPER V0.1.12 LISTENER PID IDENTITY`
 
 ## PLOTKEEPER V0.1.12 LISTENER PID IDENTITY
 
-- step: phase-start
+- step: PR-open
 - note: Live v0.1.11 install proved the legacy owner record names the venv wrapper while the TCP listener belongs to its direct child; v0.1.12 records the real socket owner and tightly migrates the legacy relationship.
 - branch: hotfix/v0.1.12-listener-pid-identity
-- head: 467692a14e7060df4be992857b61791452c78ebb
-- next_cmd: `py -3 -B -m unittest discover -s tests -q`
-- validations: legacy wrapper PID 26296 and listener child PID 18052 relationship proven read-only; command line, creation lineage, connector, port, and executable wrapper identity match; positive/direct-child and wrong-parent/wrong-command focused regression green; v0.1.12 contract hash `1457d84144c4e5c75249c8df62ef216c2c8f633258e09a2f49dd987abbddf895`; release pointer canonical hash `a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1`
+- head: 594b4dded6eb3fe9e6d63424a5097f97b3f7c55d (reviewed source candidate; checkpoint-only successor records it)
+- next_cmd: `gh pr checks 6 --watch --interval 10`
+- validations: legacy wrapper PID 26296 and listener child PID 18052 relationship proven read-only; command line, creation lineage, connector, port, and executable wrapper identity match; positive/direct-child and wrong-parent/wrong-command focused regression green; v0.1.12 contract hash `1457d84144c4e5c75249c8df62ef216c2c8f633258e09a2f49dd987abbddf895`; release pointer canonical hash `a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1`; 99/99 tests; diff check green
 
 ## PLOTKEEPER V0.1.11 OWNER TIME PRECISION
 
