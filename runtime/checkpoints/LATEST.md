@@ -6,11 +6,11 @@ Track: `PLOTKEEPER V0.1.9 RELEASE HYGIENE`
 
 ## PLOTKEEPER V0.1.9 RELEASE HYGIENE
 
-- step: post-green-tests
+- step: PR-open
 - note: v0.1.8 installed healthy, but public attestation found Linux executing Windows-only ownership tests and the generated owner record missing from Git ignore; v0.1.9 is the narrow correction.
 - branch: hotfix/v0.1.9-release-hygiene
-- head: de8274ff2c52c69d9c297a7a5004486d48ecfb90 + release-hygiene surfaces
-- next_cmd: `commit, push, and open PR 3`
+- head: 29180be + PR-open checkpoint
+- next_cmd: `gh pr checks 3 --watch --interval 10`
 - validations: active contract `PROD-20260814-plotkeeper-v019-release-hygiene` validates at `4edee01b3ee3cd19b25ab4bcb87801482c36fefd88765f45965de725587f6771`; 97/97 tests; generated owner record is ignored while present; diff check green; protected v0.1.8 baseline remains immutable
 
 ## PLOTKEEPER V0.1.8 INSTALLER HOTFIX
