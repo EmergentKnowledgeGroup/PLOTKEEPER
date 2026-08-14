@@ -75,8 +75,6 @@ def process_command_line(pid: int) -> str:
 class ListenerOwnershipTests(unittest.TestCase):
     def setUp(self):
         self.foreign = None
-        if self._testMethodName == "test_owner_record_schema_is_explicitly_bound":
-            return
         if os.name != "nt" or not shutil.which("powershell.exe"):
             self.skipTest("requires Windows PowerShell process-boundary tools")
         self.port = free_port()
@@ -139,6 +137,8 @@ class ListenerOwnershipTests(unittest.TestCase):
     def test_install_rejects_spoofed_argv_and_html_before_install_mutation(self):
         self.assert_foreign_survives(INSTALL)
 
+
+class ListenerOwnerSchemaTests(unittest.TestCase):
     def test_owner_record_schema_is_explicitly_bound(self):
         for script in (INSTALL, START):
             source = script.read_text(encoding="utf-8")

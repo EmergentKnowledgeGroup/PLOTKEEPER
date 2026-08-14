@@ -3,5 +3,5 @@
   "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
   "contract_id": "PROD-20260814-plotkeeper-v019-release-hygiene",
   "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v019-release-hygiene.json",
-  "contract_sha256": "020ce04180fbc1abe7a1e3d4616904e1f4cf33faa8a7c8067598efc00a3acfca"
+  "contract_sha256": "6017ddb080dd24dae580ab7bfd6e6e5174a491311acf099b3458cc96c08ac8f6"
 }
