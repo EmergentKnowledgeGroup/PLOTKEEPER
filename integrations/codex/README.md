@@ -45,6 +45,19 @@ SpecSwarm resolves the current connector through Plotkeeper's CLI instead of
 assuming a fixed port, so the sidebar and run-bound dashboard URLs use the same
 persisted loopback origin.
 
+## Non-interfering dispatch
+
+Reviews and explicit plan recovery use fresh CLI sessions, not `exec resume`
+or forks of the owner's chat. `Plotkeeper-Run-ID` attaches the fresh session to
+the existing run, preserving its contract and immutable receipt gate. Recovery
+receives the exact original history path only after session metadata verifies
+the original root ID and enrolled cwd; the history is read-only.
+
+Check-in requests remain queued in the run and CLI `current` payload as
+`check_in.status=pending`. The existing owner reads the instruction and can
+acknowledge via `report --kind check-in-acknowledged` for the exact run. No
+background root writer is created; queued is not a claim of delivery or wakeup.
+
 ## Timing behavior
 
 The first task of a kind is an untimed calibration. Its measured result enters

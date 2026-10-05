@@ -69,6 +69,12 @@ class PlotkeeperService:
                 if run and run.root_session_id != obs.session_id:
                     self.ledger.attach_child(run.run_id, obs.session_id)
                     events.append({"type": "root_variant_attached", "run_id": run.run_id, "session_id": obs.session_id})
+            if run is None and obs.attach_run_ids:
+                candidate = self.ledger.get(obs.attach_run_ids[-1])
+                if candidate and candidate.state != RunState.CLOSED:
+                    run = candidate
+                    self.ledger.attach_child(run.run_id, obs.session_id)
+                    events.append({"type": "session_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if obs.invoked_specswarm and obs.is_root:
                 if run is None and self.ledger.valid_root_session_id(obs.session_id):
                     run = self.ledger.enroll(obs.session_id, obs.cwd, self.dashboard_url, obs.canonical_root_id)
@@ -78,12 +84,6 @@ class PlotkeeperService:
                     if run.predecessor_run_id:
                         event["predecessor_run_id"] = run.predecessor_run_id
                     events.append(event)
-            if run is None and obs.attach_run_ids:
-                candidate = self.ledger.get(obs.attach_run_ids[-1])
-                if candidate and candidate.state != RunState.CLOSED:
-                    run = candidate
-                    self.ledger.attach_child(run.run_id, obs.session_id)
-                    events.append({"type": "session_attached", "run_id": run.run_id, "session_id": obs.session_id})
             if run is None and obs.parent_session_id:
                 parent = self.ledger.by_root(obs.parent_session_id)
                 if parent:
@@ -172,6 +172,12 @@ class PlotkeeperService:
         payload = run.to_dict(self._identity(run, bound_session_id))
         payload["bound_session_id"] = bound_session_id
         payload["dashboard_url"] = self._dashboard_url(run, bound_session_id)
+        if self.ledger.has_report_kind(run.run_id, "check-in-request"):
+            payload["check_in"] = {
+                "status": "acknowledged" if self.ledger.has_report_kind(run.run_id, "check-in-acknowledged") else "pending",
+                "instruction": "Human requested: complete only the current bounded objective, report status/evidence, check in with the human and end the turn. Do not begin another task. Acknowledge through report kind check-in-acknowledged.",
+                "delivery": "queued for the existing owner; no background root writer or guaranteed wakeup",
+            }
         catalog = self.thread_catalog.metadata(bound_session_id)
         if catalog and catalog.get("thread_source"):
             payload["thread_source"] = str(catalog["thread_source"])
@@ -279,7 +285,7 @@ class PlotkeeperService:
         run_cwd = self._validated_run_cwd(run.cwd)
         if run_cwd is None:
             return {"ok": False, "error": "run_cwd_invalid"}
-        args = ["codex.exe", "exec", "resume", run.root_session_id, self.review_prompt(run_id), "--json", "--skip-git-repo-check"]
+        args = ["codex.exe", "exec", self.review_prompt(run_id), "--json", "--skip-git-repo-check"]
         runner = runner or self._run_codex
         self.ledger.mark_review_pending(run_id)
         try:
@@ -355,10 +361,15 @@ class PlotkeeperService:
         return code
 
     def review_prompt(self, run_id: str) -> str:
+        run = self.ledger.get(run_id)
         contract = self.ledger.goal_contract(run_id)
         contract_ref = (f"contract {contract['contract_id']} at {contract['path']}" if contract else
                         "the original production goal contract (if missing, treat that as an explicit blocker)")
-        return (f"Plotkeeper closeout gate for run {run_id}. Invoke $production-goal-review and follow that skill fully. "
+        return (f"Plotkeeper-Run-ID: {run_id}\n"
+                f"Independent fresh-session review for original root {run.root_session_id if run else 'unavailable'} "
+                f"in enrolled cwd {run.cwd if run else 'unavailable'}. Do not resume, fork, or write the original chat. "
+                f"Read exact-run tasks/reports/evidence at {self.dashboard_url}/api/runs/{run_id}. "
+                f"Plotkeeper closeout gate for run {run_id}. Invoke $production-goal-review and follow that skill fully. "
                 f"Run its independent adversarial review against {contract_ref} AND inspect the entire Plotkeeper run: "
                 "every task, child report, blocker, timeline entry, and evidence link. Do not substitute a generic PK review "
                 "for the production goal review. Resolve anything still open. End with exactly: "
@@ -412,7 +423,7 @@ class PlotkeeperService:
         return {"ok": True, "queued": True}
 
     def reconstruct_plan(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
-        """Ask the exact root task to recover its own SpecSwarm artifacts."""
+        """Recover exact root artifacts in an isolated session, never a root writer."""
         with self._repair_lock:
             run = self.ledger.get(run_id)
             if not run or run.state == RunState.CLOSED:
@@ -426,16 +437,26 @@ class PlotkeeperService:
             run_cwd = self._validated_run_cwd(run.cwd)
             if run_cwd is None:
                 return {"ok": False, "error": "run_cwd_invalid"}
+            history = self.thread_catalog.verified_history(run.root_session_id, str(run_cwd))
+            if history is None:
+                return {"ok": False, "error": "root_history_unavailable"}
             prompt = (
+                f"Plotkeeper-Run-ID: {run_id}\n"
+                f"Original root ID: {run.root_session_id}. Enrolled cwd: {run_cwd}. "
+                f"Verified original root history (read-only): {history}. Read this exact history first; "
+                "do not resume, fork, or write the original chat. If history cannot be read, stop and report the blocker. "
                 f"PLOTKEEPER PLAN RECONSTRUCTION for run {run_id}. Recover this exact task's original SpecSwarm "
                 "locked spec, execution checklist, blockerboard, and production goal contract from this task's "
                 "own conversation history and repository evidence. Do not guess by filename and do not use artifacts "
                 "from another phase or task. Verify artifact identity and hashes where available, then run the installed "
-                "Plotkeeper sync-plan command for this exact run with the verified files and contract. Read back the "
+                f"Plotkeeper sync-plan command with --run-id {run_id} for this exact run with the verified files and contract. "
+                "Use the installed SpecSwarm plotkeeper_cli.py bridge, which resolves the registered Plotkeeper ledger; "
+                f"the authoritative ledger is {self.ledger.path.resolve()}. Do not create a ledger in the enrolled cwd. "
+                f"Use {self.dashboard_url}/api/runs/{run_id} for exact-run evidence. Read back the "
                 "Plotkeeper task rows and goal contract, correct any mapping errors, and report the exact files, counts, "
                 "and verification evidence to the user. Do not implement unrelated application code."
             )
-            args = ["codex.exe", "exec", "resume", run.root_session_id, prompt, "--json", "--skip-git-repo-check"]
+            args = ["codex.exe", "exec", prompt, "--json", "--skip-git-repo-check"]
             runner = runner or self._spawn_codex
             self._repair_inflight.add(run_id)
         try:
@@ -443,7 +464,7 @@ class PlotkeeperService:
             code = self._runner_returncode(result)
             if code not in (0, None):
                 return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
-            self.ledger.add_report(run_id, "plan-repair-injected", "Exact root task was asked to reconstruct, sync, and verify its original SpecSwarm task surface.")
+            self.ledger.add_report(run_id, "plan-repair-injected", "Isolated recovery session requested using verified read-only original root history; reconstruction and sync are not yet confirmed.", evidence=[str(history)])
             return {"ok": True, "queued": True, "run_id": run_id}
         except Exception as exc:
             return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
@@ -458,17 +479,7 @@ class PlotkeeperService:
         run_cwd = self._validated_run_cwd(run.cwd)
         if run_cwd is None:
             return {"ok": False, "error": "run_cwd_invalid"}
-        args = ["codex.exe", "exec", "resume", run.root_session_id,
-                "PLOTKEEPER CHECK-IN REQUEST: Complete only your current bounded objective, update Plotkeeper with your status/evidence, then check in with the human and end this turn. Do not begin another task.",
-                "--json", "--skip-git-repo-check"]
-        runner = runner or self._run_codex
-        try:
-            result = runner(args, cwd=str(run_cwd))
-            if result.returncode == 0:
-                self.ledger.add_report(run_id, "check-in-injected", "Check-in turn injected into the root session.")
-            return {"ok": result.returncode == 0, "returncode": result.returncode}
-        except Exception as exc:
-            return {"ok": False, "error": str(exc)}
+        return self.request_check_in(run_id)
 
     def record_review_receipt(self, run_id: str, receipt: dict[str, Any]) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -678,9 +689,9 @@ class PlotkeeperService:
             try:
                 self.poll_once()
                 for run in self.ledger.list_runs(active_only=True):
-                    if (self.ledger.has_report_kind(run.run_id, "check-in-request") and
-                            not self.ledger.has_report_kind(run.run_id, "check-in-injected")):
-                        self.inject_check_in(run.run_id)
+                    # Check-ins remain visible in current/run context for the
+                    # existing owner. The watcher neither writes the root nor
+                    # repeatedly adds delivery/queue reports.
                     if run.state == RunState.REVIEW_REQUIRED:
                         result = self.inject_review(run.run_id)
                         if result.get("ok"):

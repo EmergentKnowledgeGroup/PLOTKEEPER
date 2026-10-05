@@ -1,0 +1,208 @@
+{
+  "id": "PROD-20261005-plotkeeper-noninterference-local",
+  "status": "ACTIVE",
+  "contract_hash": "e8d768de6bcb38b868db10a3b995536b0b002a475bd4c3c09c5b932f4997782a",
+  "origin": "DIRECT",
+  "user_goal": "First eliminate Plotkeeper ownership interference with the owner's original chats. Retain existing run/contract/review gates, original task authority, history and unrelated work. This contract covers the local Plotkeeper repair only; the ordered 3930 tab repair and 4958 assessment remain separate later phases.",
+  "authority": {
+    "original_request_ref": "codex://threads/01a10b6c-2d19-73d3-a78c-856fdf53c663/user/01a10b7d-7632-72a1-bf5a-70f67458775e",
+    "original_request_hash": "2970acdda6be50c55c89564debc30a55f745ec5817b596a769f54fea7a8f8ab7",
+    "verbatim_text": "I have found a few minor bugs too - but something that is a BIT bigger...\n\nThis is what I want you to do, in order\n-fix Plotkeeper’s interference\n-keep using 3930\n-Address tabs being named after their chatIDs (🤮) *AND* opening a chatgpt chat side, and then switching the window BACK to codex side, clears the chatgpt tab as if it doesnt exist.  The WHOLE WINDOW has to be on chatgpt to see a chatgpt tab - but they can STILL see codex tabs LOL\n\\*THEN\\*\n-assess 4958’s actual value before porting.\n\nUse [$define-goal](C:\\Users\\UltariumV3\\\\.codex\\skills\\define-goal\\SKILL.md) for these 4 things and work through them.",
+    "captured_at_utc": "2026-10-05T09:55:34.068Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "C:/Users/UltariumV3/.codex/sessions/2026/10/05/rollout-2026-10-05T04-36-41-01a10b6c-2d19-73d3-a78c-856fdf53c663.jsonl#ordinal=63683;event_msg.payload.item.id=01a10b7d-7632-72a1-bf5a-70f67458775e;authority is the exact My request text without trailing newline"
+  },
+  "baseline": {
+    "protected_ref": "b13dd6fdfde56f09bf3f07da78002970fcdbe744",
+    "sha": "b13dd6fdfde56f09bf3f07da78002970fcdbe744",
+    "retrieved_at_utc": "2026-10-05T10:00:00Z",
+    "protection_evidence": "Read-only git rev-parse HEAD and git status show main at b13dd6f with only pre-existing untracked review/contract records; source commit predates this repair and will be retained.",
+    "selection_reason": "Actual local source used by the running Plotkeeper service before any task code mutation."
+  },
+  "classification": "PRODUCTION_AFFECTING",
+  "allowed": {
+    "paths": [
+      "plotkeeper/service.py",
+      "plotkeeper/sessions.py",
+      "plotkeeper/cli.py",
+      "tests/test_backend.py",
+      "tests/test_sessions.py",
+      "tests/test_noninterference.py",
+      "README.md",
+      "integrations/codex/README.md",
+      "runtime/checkpoints/LATEST.md",
+      "runtime/checkpoints/LATEST.json",
+      "runtime/goal-contracts/PROD-20261005-plotkeeper-noninterference-local.json"
+    ],
+    "resources": [
+      "Z:/Plotkeeper local service and its existing loopback connector",
+      "exact current Plotkeeper-owned root-resume review process after PID/parent/creation/command verification",
+      "task-private proof and disposable fixtures under Z:/Plotkeeper/runtime/qa/noninterference-20261005"
+    ],
+    "semantic_changes": [
+      "Run reviews in a fresh independent session explicitly linked to the existing run and original root, without resuming or forking the original chat.",
+      "Keep check-in requests visible and queued for the existing root to read and acknowledge through its ordinary current/report workflow; do not create a root writer or claim a request was delivered merely because it was queued.",
+      "Run explicit plan recovery in an isolated session with a verified read-only locator to the original root history and enrolled repository; preserve evidence-based artifact reconstruction and exact-run sync, fail visibly if original history is unavailable.",
+      "Expose the queued check-in instruction in current/run payloads and document the non-interfering delivery boundary.",
+      "Deploy the reviewed local source through an owned service restart; release only the exact verified old interfering runner without deleting its history, reports, contract or receipt artifacts."
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "plotkeeper/ledger.py",
+      "plotkeeper/connector.py",
+      "plotkeeper/models.py",
+      "scripts/start.ps1",
+      "scripts/install.ps1",
+      "scripts/verify_public_release.py",
+      "integrations/codex/plugins/plotkeeper-guard/scripts/production_guard.py",
+      "runtime/goal-contracts/RELEASE_CONTRACT.json"
+    ],
+    "semantic_changes": [
+      "No ledger schema migration, receipt-policy weakening, fabricated PASS/CLOSEOUT, automatic pending-run reset or binding of unrelated contracts.",
+      "No original chat write, thread fork/resume, broad process kill, app restart, account/permission change or removal of unrelated work.",
+      "No public release, PR merge/push, global hook installation/trust change or new background monitoring campaign.",
+      "No LP code/package change or 4958 port in this Plotkeeper-first phase."
+    ]
+  },
+  "invariants": [
+    "Plotkeeper creates no background writer for the original root through review, check-in or plan recovery.",
+    "Reviews remain independently attached to the same run and exact original contract; only the existing validated immutable receipt gate closes a run.",
+    "Original root history is read-only; plan recovery does not replace absent authority with guesses or another task's artifacts.",
+    "Enrolled cwd and root identity remain authoritative; no inherited Plotkeeper cwd.",
+    "Closed run history, tasks, reports, contracts and unrelated processes remain intact; owner UI receives truthful pending/delivery status."
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-REVIEW",
+      "phase": "VALIDATED",
+      "promised_behavior": "Automatic and manual closeout review launch a fresh session in enrolled cwd, explicitly attach to the existing run, and carry original-root/contract/evidence locators.",
+      "forbidden_behavior": "No exec resume/fork of original root and no accidental enrollment of a replacement run.",
+      "target_and_actor": "Plotkeeper automatic watcher and dashboard review dispatch.",
+      "required_proof_ids": [
+        "PR-TARGETED"
+      ]
+    },
+    {
+      "id": "AC-CHECKIN",
+      "phase": "VALIDATED",
+      "promised_behavior": "Check-in remains queued and visible in current/run context for the existing owner; acknowledgement may be recorded through its ordinary report path.",
+      "forbidden_behavior": "No CLI root takeover, false delivered label, or replacement agent pretending to be the original root.",
+      "target_and_actor": "Dashboard request, watcher and root current/report consumers.",
+      "required_proof_ids": [
+        "PR-TARGETED"
+      ]
+    },
+    {
+      "id": "AC-RECOVERY",
+      "phase": "VALIDATED",
+      "promised_behavior": "Explicit plan reconstruction uses an isolated session with verified original root history and enrolled cwd; missing history fails visibly; idempotence remains.",
+      "forbidden_behavior": "No original writer, filename-only authority guessing, unrelated history substitution or unrelated implementation.",
+      "target_and_actor": "Dashboard reconstruct-plan request and isolated recovery session.",
+      "required_proof_ids": [
+        "PR-TARGETED"
+      ]
+    },
+    {
+      "id": "AC-GATES",
+      "phase": "VALIDATED",
+      "promised_behavior": "Existing adverse, missing/wrong receipt, valid same-run receipt and exact final-review task gates retain their behavior.",
+      "forbidden_behavior": "No direct root/session marker closes a run without the existing validator and atomic gate.",
+      "target_and_actor": "Backend/session linking and existing receipt validator.",
+      "required_proof_ids": [
+        "PR-REGRESSION"
+      ]
+    },
+    {
+      "id": "AC-LIVE",
+      "phase": "ATTESTED",
+      "promised_behavior": "Reviewed local source is active on the existing loopback connector; exact old interfering runner no longer owns the original chat; LP3930 and unrelated jobs continue.",
+      "forbidden_behavior": "No false run closure, ledger/history loss, broad kill or 4958 port.",
+      "target_and_actor": "Owner's current Plotkeeper service and original chat.",
+      "required_proof_ids": [
+        "PR-LIVE"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-TARGETED",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-REVIEW",
+        "AC-CHECKIN",
+        "AC-RECOVERY"
+      ],
+      "claim": "Reported interference is reproduced by current root-resume argv, then removed at the real service callers without losing run linking or recovery authority.",
+      "required_environment": "Disposable Z-only backend sessions/ledger, actual subprocess argv capture and source tests.",
+      "command_or_read_only_check": "Run new noninterference regression before and after correction, plus backend/session tests.",
+      "expected_observation": "Pre-fix root-resume failures; post-fix fresh-session review/recovery, zero check-in spawn, queued context, correct root/run/cwd linking and history binding."
+    },
+    {
+      "id": "PR-REGRESSION",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-GATES"
+      ],
+      "claim": "Unmodified gate semantics and proportional repository regressions remain green.",
+      "required_environment": "Z-only unittest fixtures and complete baseline-to-candidate diff.",
+      "command_or_read_only_check": "py -3 -B -m unittest discover -s tests -v with TEMP/TMP redirected under repo; git diff --check; inspect full scoped diff.",
+      "expected_observation": "Required tests pass, no forbidden-source changes or unrelated dirt absorption."
+    },
+    {
+      "id": "PR-LIVE",
+      "phase": "ATTESTED",
+      "acceptance_case_ids": [
+        "AC-LIVE"
+      ],
+      "claim": "Actual local service replacement and ownership release are verified without synthetic closeout or account writes.",
+      "required_environment": "Existing local Plotkeeper connector, exact owned process identities, LP3930 process and retained ledger state.",
+      "command_or_read_only_check": "Verify owned listener/runner PID lineage, creation and command hashes before replacement; independently review deploy-ready candidate; restart exact owned service using existing lifecycle; GET health/current and inventory preserved states/processes.",
+      "expected_observation": "Healthy reviewed service on same connector; verified old runner absent; original run not falsely closed; original history and unrelated LP/jobs retained."
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-DEPLOY",
+      "phase": "DEPLOY_READY",
+      "required_role": "Independent read-only reviewer of exact candidate, original authority, scoped diff, targeted/regression evidence and owned restart plan."
+    },
+    {
+      "id": "RR-LIVE",
+      "phase": "ATTESTED",
+      "required_role": "Independent read-only reviewer of actual local target and preserved state evidence."
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-LOCAL",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Independent DEPLOY_READY PASS for the exact local candidate and rollback/restart plan; no public release required."
+    },
+    {
+      "id": "RL-ATTEST",
+      "phase": "ATTESTED",
+      "required_receipt": "Local service/ownership attestation bound to candidate and same connector."
+    }
+  ],
+  "stop_conditions": [
+    "Unexplained overlapping source changes or attempted protected-surface mutation.",
+    "Original root/history/owned listener identity cannot be independently verified for the relevant action.",
+    "Missing required phase proof or independent PASS before live replacement.",
+    "Meaningful new semantic authority is needed; do not silently expand the repair."
+  ],
+  "known_discrepancies": [
+    "Source main b13dd6f; historical checkpoint describes earlier v0.1.12 work and is not current live authority.",
+    "Pre-existing untracked Sep1/Sep2 contracts and review artifacts are unrelated and preserved.",
+    "Current interfering Official CLI PID34932 started2026-10-05T09:31:32.7184556Z under Plotkeeper listener16744; verify afresh before action. Original run d687d503 remains REVIEW_PENDING and its earlier missing contract/cwd/task bindings are outside this interference repair.",
+    "No current global delivery hook guarantees a queued check-in wakes an idle original chat. This repair promises truthful queued context, not a new wakeup mechanism."
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  },
+  "locked_artifacts": {},
+  "requirement_trace": [],
+  "previous_contract": null
+}

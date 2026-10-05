@@ -2,7 +2,18 @@
 
 ## CURRENT
 
-Track: `PLOTKEEPER V0.1.12 LISTENER PID IDENTITY`
+Track: `PLOTKEEPER NONINTERFERING DISPATCH WORK`
+
+## PLOTKEEPER NONINTERFERING DISPATCH WORK
+
+- step: source-green-awaiting-independent-deploy-review
+- note: Isolated same-run review/recovery and truthful queued check-ins implemented. Existing full-suite test unexpectedly stopped the original owned service through start.ps1's prior-port branch; service is now offline, ledger backed up, LP3930 unchanged. Independent review must include the incident and no-kill offline start plan. Original d687d503 binding blockers remain outside repair; no LP/4958 changes.
+- branch: fix/noninterfering-local-dispatch
+- head: b13dd6fdfde56f09bf3f07da78002970fcdbe744
+- next_cmd: Independently review exact committed candidate for DEPLOY_READY before runtime/qa/noninterference-20261005/restart_owned.ps1 -Execute; then capture actual live preservation and independent ATTESTED review. Do not rerun unisolated lifecycle tests.
+- validations: Pre-fix 7 tests: 4 failures plus 1 error; post-fix 10 noninterference and 30 backend tests green; full suite 110 green with recorded live-test side effect, not live-preservation proof. Protected contract e8d768de6bcb38b868db10a3b995536b0b002a475bd4c3c09c5b932f4997782a valid. Read-only live-before snapshot and ledger backup retained; no old runner kill, no source ledger/schema/validator/lifecycle changes; generic historical worktree marker policy preserved.
+- proof: runtime/goal-contracts/PROD-20261005-plotkeeper-noninterference-local.json; owner request codex://threads/01a10b6c-2d19-73d3-a78c-856fdf53c663/user/01a10b7d-7632-72a1-bf5a-70f67458775e
+- limits: No reviewed live source start yet. Existing test stopped listener16744 before review and temporarily changed/restored startup registration; exact prior registration bytes not captured. No global hook/wakeup guarantee, pending reset, fabricated authority, public release, or LP port.
 
 ## PLOTKEEPER V0.1.12 LISTENER PID IDENTITY
 

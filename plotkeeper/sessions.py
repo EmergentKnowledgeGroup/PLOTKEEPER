@@ -398,6 +398,30 @@ class ThreadCatalog:
                 return matches[-1]
         return None
 
+    def verified_history(self, session_id: str, cwd: str) -> Path | None:
+        """Locate readable original history by session_meta identity, not its filename."""
+        metadata = self.metadata(session_id)
+        raw = metadata.get("rollout_path") if metadata else None
+        candidates = [Path(str(raw).replace("\\\\?\\", ""))] if raw else []
+        if self.sessions_root.is_dir():
+            candidates.extend(self.sessions_root.rglob("*.jsonl"))
+        normalize = lambda value: os.path.normcase(os.path.normpath(str(value).replace("\\\\?\\", "")))
+        for path in dict.fromkeys(candidates):
+            try:
+                with path.open("r", encoding="utf-8") as handle:
+                    obj = json.loads(handle.readline())
+                if not isinstance(obj, dict):
+                    continue
+                payload = _payload(obj)
+                if (obj.get("type") == "session_meta" and
+                        str(payload.get("id") or payload.get("session_id") or "") == session_id and
+                        payload.get("cwd") and normalize(payload["cwd"]) == normalize(cwd) and
+                        not any(payload.get(key) for key in ("parent_session_id", "parent_id", "parent_thread_id", "parentThreadId"))):
+                    return path.resolve(strict=True)
+            except (OSError, ValueError, UnicodeError, RuntimeError):
+                continue
+        return None
+
     def is_active(self, session_id: str) -> bool:
         """Return True only when no terminal event follows the latest turn."""
         metadata = self.metadata(session_id)

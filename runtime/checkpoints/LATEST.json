@@ -1,6 +1,16 @@
 {
-  "current_track": "PLOTKEEPER V0.1.12 LISTENER PID IDENTITY",
+  "current_track": "PLOTKEEPER NONINTERFERING DISPATCH WORK",
   "tracks": {
+    "PLOTKEEPER NONINTERFERING DISPATCH WORK": {
+      "step": "source-green-awaiting-independent-deploy-review",
+      "note": "Isolated same-run review/recovery and queued check-ins implemented. Existing full-suite test unexpectedly stopped original owned service through start.ps1 prior-port branch; now offline with ledger backup and LP3930 preserved. Review incident and no-kill offline start plan. Original d687d503 blockers remain outside repair.",
+      "branch": "fix/noninterfering-local-dispatch",
+      "head": "b13dd6fdfde56f09bf3f07da78002970fcdbe744",
+      "next_cmd": "Independently review exact committed candidate DEPLOY_READY, then runtime/qa/noninterference-20261005/restart_owned.ps1 -Execute and independent ATTESTED review. Do not rerun unisolated lifecycle tests.",
+      "validations": ["Pre-fix 7 tests: 4 failures plus 1 error; post-fix 10 noninterference, 30 backend and 110 full-suite tests green; live-test side effect recorded, not preservation proof", "Protected contract e8d768de6bcb38b868db10a3b995536b0b002a475bd4c3c09c5b932f4997782a valid", "Baseline and sole worktree verified; unrelated untracked records preserved; live-before snapshot and ledger backup retained; no gate/schema/lifecycle source change"],
+      "proof": "runtime/goal-contracts/PROD-20261005-plotkeeper-noninterference-local.json",
+      "limits": "No reviewed live start yet. Test stopped listener16744 before review and temporarily changed/restored startup registration; exact prior registry bytes not captured. No global hook/wakeup, pending reset, fabricated authority, public release or LP port."
+    },
     "PLOTKEEPER V0.1.12 LISTENER PID IDENTITY": {
       "step": "post-green-tests",
       "note": "v0.1.12 records the real socket owner, tightly migrates the legacy wrapper relationship, and waits for the authoritative owner record before installer success.",

@@ -31,18 +31,20 @@ def _ensure_connector_worker(path: str, results) -> None:
 
 
 class BackendTests(unittest.TestCase):
-    def test_plan_reconstruction_resumes_exact_root_in_enrolled_cwd_once_and_hides_after_sync(self):
+    def test_plan_reconstruction_isolates_exact_root_history_in_enrolled_cwd_once_and_hides_after_sync(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "project"
             root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
             run = service.ledger.enroll("11111111-2222-4333-8444-555555555555", str(root), service.dashboard_url)
+            (Path(td) / "history.jsonl").write_text(line("0", "session_meta", {"id": run.root_session_id, "cwd": str(root)}), encoding="utf-8")
             calls = []
             result = service.reconstruct_plan(run.run_id, runner=lambda args, **kwargs: calls.append((args, kwargs)) or mock.Mock(returncode=0))
             self.assertTrue(result["ok"])
-            self.assertEqual(calls[0][0][2:4], ["resume", run.root_session_id])
+            self.assertEqual(calls[0][0][:2], ["codex.exe", "exec"])
+            self.assertNotIn("resume", calls[0][0])
             self.assertEqual(calls[0][1]["cwd"], str(root.resolve()))
-            prompt = calls[0][0][4]
+            prompt = calls[0][0][2]
             for phrase in ("Do not guess by filename", "Verify artifact identity", "sync-plan", "Read back"):
                 self.assertIn(phrase, prompt)
             self.assertTrue(service.reconstruct_plan(run.run_id, runner=lambda *_a, **_k: self.fail("must be idempotent"))["already_requested"])
@@ -156,6 +158,7 @@ class BackendTests(unittest.TestCase):
             root.mkdir()
             service = PlotkeeperService(ledger_path=Path(td) / "ledger.sqlite", sessions_root=td)
             run = service.ledger.enroll("11111111-2222-4333-8444-555555555555", str(root), service.dashboard_url)
+            (Path(td) / "history.jsonl").write_text(line("0", "session_meta", {"id": run.root_session_id, "cwd": str(root)}), encoding="utf-8")
             started = threading.Event()
             release = threading.Event()
 
@@ -189,6 +192,7 @@ class BackendTests(unittest.TestCase):
             failed = FailedProcess()
             service2 = PlotkeeperService(ledger_path=Path(td) / "ledger-2.sqlite", sessions_root=td)
             run2 = service2.ledger.enroll("22222222-3333-4444-8555-666666666666", str(root), service2.dashboard_url)
+            (Path(td) / "history-2.jsonl").write_text(line("0", "session_meta", {"id": run2.root_session_id, "cwd": str(root)}), encoding="utf-8")
             first = service2.reconstruct_plan(run2.run_id, runner=lambda *_args, **_kwargs: failed)
             self.assertEqual(first["error"], "reconstruction_injection_failed")
             self.assertEqual(first["returncode"], 23)
@@ -550,7 +554,7 @@ class BackendTests(unittest.TestCase):
             self.assertEqual([t["status"] for t in service.ledger.tasks(run.run_id)], ["pending", "completed"])
             service.close_db()
 
-    def test_injected_resumes_preserve_enrolled_cross_repository_identity(self):
+    def test_fresh_review_preserves_enrolled_cross_repository_identity_and_checkin_does_not_spawn(self):
         with tempfile.TemporaryDirectory() as td:
             base = Path(td)
             plotkeeper_repo = base / "Plotkeeper"
@@ -582,14 +586,16 @@ class BackendTests(unittest.TestCase):
             service.ledger.mark_review_required(run.run_id)
             self.assertTrue(service.inject_check_in(run.run_id, runner=capture)["ok"])
 
-            self.assertEqual(len(launches), 2)
+            self.assertEqual(len(launches), 1)
             for launch in launches:
                 child = launch["child"]
                 self.assertEqual(Path(child["cwd"]).resolve(), moonmarket_repo.resolve())
                 self.assertEqual(Path(child["workspace_root"]).resolve(), moonmarket_repo.resolve())
                 self.assertEqual(child["project"], "MoonMarket")
                 self.assertNotEqual(Path(child["cwd"]).resolve(), Path.cwd().resolve())
-                self.assertEqual(launch["args"][:4], ["codex.exe", "exec", "resume", "moonmarket-root"])
+                self.assertEqual(launch["args"][:2], ["codex.exe", "exec"])
+                self.assertNotIn("resume", launch["args"])
+                self.assertIn("moonmarket-root", launch["args"][2])
             service.close_db()
 
     def test_injected_resumes_fail_closed_for_invalid_enrolled_cwd(self):

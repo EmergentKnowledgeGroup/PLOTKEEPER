@@ -32,15 +32,17 @@ session truth:
   successor when the same Codex task begins genuinely new SpecSwarm work;
 - injects the required closeout review after the root requests completion;
 - closes only on `verdict=PASS open_items=0` from that injected review.
-- resumes injected reviews and check-ins from the enrolled run repository, and
-  fails closed instead of inheriting Plotkeeper's own working directory.
+- launches reviews in a fresh session explicitly attached to the same run,
+  without resuming or forking the original chat; enrolled cwd remains authoritative.
+- keeps check-ins queued for the existing owner to read through `current` or the
+  run payload and acknowledge through `report`; it does not start a root writer.
 
 ## Requirements
 
 - Windows 10 or 11
 - Python 3.11 or newer
 - Codex sessions stored under `%USERPROFILE%\.codex\sessions` (configurable)
-- Codex CLI on `PATH` for automatic check-in and review injection
+- Codex CLI on `PATH` for isolated review and plan-recovery sessions
 
 Plotkeeper has no third-party runtime Python or browser dependencies.
 
@@ -60,7 +62,9 @@ Use **Pop out** to open the exact current surface as a standalone Edge or Chrome
 
 Run names come from Codex's user-visible task title, not the first prompt. If an active run predates checklist synchronization, Plotkeeper shows one explicitly labeled Codex thread task instead of an empty execution board; a synchronized SpecSwarm checklist always replaces that fallback.
 
-For that fallback state, **Reconstruct plan** resumes the exact enrolled Codex task in its enrolled repository and asks it to recover, synchronize, read back, and verify the original SpecSwarm artifacts. Plotkeeper does not guess among similarly named historical checklists.
+For that fallback state, **Reconstruct plan** starts an isolated session in the enrolled repository with a read-only original-history path verified against the exact root session ID and cwd. It asks the session to recover, synchronize the exact run, read back, and verify the original SpecSwarm artifacts. Missing or mismatched history fails visibly; Plotkeeper does not guess among similarly named historical checklists or resume the original chat.
+
+**Request check-in** queues instructions in `current` and run payloads as `check_in.status=pending`. The existing owner can acknowledge with report kind `check-in-acknowledged`. Queuing does not mean delivered and does not guarantee an idle chat wakes up. Only the existing validated immutable review-receipt gate can close the run.
 
 For an evaluation that does not touch your Codex sessions:
 
