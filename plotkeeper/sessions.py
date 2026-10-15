@@ -444,7 +444,10 @@ class ThreadCatalog:
         candidates = [Path(str(raw).replace("\\\\?\\", ""))] if raw else []
         if self.sessions_root.is_dir():
             candidates.extend(self.sessions_root.rglob("*.jsonl"))
-        normalize = lambda value: os.path.normcase(os.path.normpath(str(value).replace("\\\\?\\", "")))
+        # Windows session metadata can use an 8.3 profile path while the
+        # validated run cwd is expanded (e.g. RUNNER~1 vs runneradmin).
+        # Compare actual existing directories, not two spellings of one cwd.
+        normalize = lambda value: os.path.normcase(str(Path(str(value).replace("\\\\?\\", "")).resolve(strict=True)))
         for path in dict.fromkeys(candidates):
             try:
                 with path.open("r", encoding="utf-8") as handle:

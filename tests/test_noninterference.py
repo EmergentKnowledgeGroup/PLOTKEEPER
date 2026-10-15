@@ -40,6 +40,20 @@ class NoninterferenceTests(unittest.TestCase):
         self.assertEqual(kwargs["cwd"], str(self.cwd.resolve()))
         self.assertEqual(self.service.inject_review(self.run.run_id)["error"], "review_already_pending")
 
+    def test_verified_history_compares_resolved_directory_identity(self):
+        # CI's Windows TEMP uses RUNNER~1; validated cwd uses its long name.
+        # Model that filesystem alias without requiring 8.3 creation on Linux.
+        alias = self.base / 'SHORT~1'
+        history = self.history(cwd=alias)
+        original = Path.resolve
+        def resolve(path, *args, **kwargs):
+            if path == alias:
+                return original(self.cwd, *args, **kwargs)
+            return original(path, *args, **kwargs)
+        with mock.patch.object(Path, 'resolve', resolve):
+            found = self.service.thread_catalog.verified_history('original-root', str(self.cwd))
+        self.assertEqual(found, history.resolve())
+
     def test_failed_review_restores_required(self):
         self.service.ledger.mark_review_required(self.run.run_id)
         self.assertFalse(self.service.inject_review(self.run.run_id, runner=lambda *_a, **_k: 23)["ok"])
