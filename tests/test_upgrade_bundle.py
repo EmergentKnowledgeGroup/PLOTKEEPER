@@ -22,7 +22,7 @@ class InstallerSourceIdentityTests(unittest.TestCase):
             source = base / 'source'
             source.mkdir()
             for name in ('plotkeeper/doctor.py', 'plotkeeper/review_runner.py',
-                         'scripts/upgrade.ps1', 'docs/AGENT_REPAIR.md'):
+                         'scripts/upgrade.ps1', 'docs/AGENT_REPAIR.md', 'docs/extra.md'):
                 path = source / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text('original\n', encoding='utf-8')
@@ -44,6 +44,19 @@ class InstallerSourceIdentityTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertIn('manifest commit must match its source', result.stderr)
                     self.assertFalse(output.exists())
+            # Isolate a staged deletion: no modified file may mask this check.
+            (source / 'plotkeeper/doctor.py').write_text('original\n', encoding='utf-8')
+            subprocess.run(['git', 'add', 'plotkeeper/doctor.py'], cwd=source,
+                           check=True, capture_output=True)
+            (source / 'docs/extra.md').unlink()
+            subprocess.run(['git', 'add', 'docs/extra.md'], cwd=source,
+                           check=True, capture_output=True)
+            output = base / 'deleted-bundle'
+            result = subprocess.run([sys.executable, str(builder), '--output', str(output)],
+                                    cwd=source, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('manifest commit must match its source', result.stderr)
+            self.assertFalse(output.exists())
 
 
 @unittest.skipUnless(os.name == 'nt' and shutil.which('powershell.exe'), 'Windows installer boundary')

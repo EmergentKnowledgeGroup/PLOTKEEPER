@@ -31,7 +31,12 @@ def main():
         parser.error('Commit the new release source before building: ' + ', '.join(missing))
     # Only payload paths matter. Unrelated dirty checkpoints/tests and ignored
     # private runtime must not block a build, but the shipped files must be HEAD.
-    dirty = subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *files], cwd=root,
+    head_files = subprocess.check_output(
+        ['git', 'ls-tree', '-r', '--name-only', '-z', 'HEAD'], cwd=root).decode().split('\0')
+    head_files = [f for f in head_files if f and not f.startswith(('.github/', 'runtime/', 'tests/'))
+                  and f not in {'.gitignore', '.gitattributes'}]
+    # Include HEAD paths too: a staged deletion is absent from ls-files.
+    dirty = subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *files, *head_files], cwd=root,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if dirty.returncode:
         parser.error('Commit installer payload changes first; the manifest commit must match its source.')
