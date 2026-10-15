@@ -4,6 +4,16 @@
 
 Track: `PLOTKEEPER NONINTERFERING DISPATCH WORK`
 
+## PLOTKEEPER RESOURCE SAFE UPGRADE WORK
+
+- step: isolated-proof-green-preparing-public-review
+- note: Secondary track (`--no-set-current`); isolated clone only. Include deployed single-worker guard and Retry-review UI per explicit owner authority. No live installer/startup/runtime modification, no LP launch, no system-crash attribution.
+- branch: fix/resource-safe-runtime
+- head: 64cfc707bf0cd80df90aa0c974105c464648f739 plus staged candidate
+- next_cmd: Finish exact-head QA, public PR, CodeRabbit and CI disposition, then deliver the hash-checked installer; do not install live.
+- validations: scanner10/10; output discard and callback reaping; cross-connection single-flight; synthetic Windows fresh/repeat/stale repair and source/console parity; outer orphan cleanup/rollback/state preservation/tamper rejection; synthetic desktop1440x1000/mobile390x844 Retry UI no overflow. Mocked reviewer exit23 deliberately produces handled HTTP409 on Retry.
+- proof: runtime/goal-contracts/PROD-20261014-plotkeeper-resource-safe-upgrade.json; runtime/tmp/qa (private local proof, not installer payload).
+
 ## PLOTKEEPER NONINTERFERING DISPATCH WORK
 
 - step: source-green-awaiting-independent-deploy-review

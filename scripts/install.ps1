@@ -1,6 +1,9 @@
-param([string]$Python = "python", [int]$Port = 0)
+param(
+    [string]$Python = "python", [int]$Port = 0, [switch]$NoStartup, [string]$Sessions = "",
+    [string]$InstallRoot = "", [switch]$StopOnly, [string]$WheelPath = ""
+)
 $ErrorActionPreference = "Stop"
-$Root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+$Root = if ($InstallRoot) { [IO.Path]::GetFullPath($InstallRoot) } else { [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)) }
 $connectorPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-connector.json"))
 $ownerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-owner.json"))
 
@@ -109,17 +112,38 @@ if ($Port -gt 0) {
     $priorOwner = Read-OwnerRecord
     if ($priorOwner -and [int]$priorOwner.port -ne $Port) {
         $priorListener = Get-ListenerPid ([int]$priorOwner.port)
-        if ($priorListener) { Stop-OwnedListener $priorListener ([int]$priorOwner.port) }
+        if ($priorListener -and -not (Test-PlotkeeperOwner $priorListener ([int]$priorOwner.port))) {
+            throw "Prior Plotkeeper port is occupied by an unknown or foreign listener; refusing to stop or reuse it."
+        }
+    }
+}
+
+if ($StopOnly) {
+    $savedOwner = Read-OwnerRecord
+    $stopPorts = @()
+    if ($Port -gt 0) { $stopPorts += $Port }
+    if ($savedOwner) { $stopPorts += [int]$savedOwner.port }
+    foreach ($stopPort in ($stopPorts | Select-Object -Unique)) {
+        $ownedListener = Get-ListenerPid $stopPort
+        if ($ownedListener) { Stop-OwnedListener $ownedListener $stopPort }
+    }
+    return
+}
+
+$start = Join-Path $Root "scripts\start.ps1"
+$venv = Join-Path $Root ".venv"
+$venvPython = Join-Path $venv "Scripts\python.exe"
+if (-not $NoStartup) {
+    $existingStartup = Get-ItemProperty -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -ErrorAction SilentlyContinue
+    $expectedStartupPrefix = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port "
+    if ($existingStartup -and $existingStartup.Plotkeeper -and -not ([string]$existingStartup.Plotkeeper).StartsWith($expectedStartupPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Plotkeeper startup registration belongs to another command or checkout; refusing to overwrite it. Use -NoStartup to preserve it or review docs\AGENT_REPAIR.md."
     }
 }
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Root "runtime") | Out-Null
-$venv = Join-Path $Root ".venv"
-if (-not (Test-Path (Join-Path $venv "Scripts\python.exe"))) {
-    & $Python -m venv $venv
-}
-$venvPython = Join-Path $venv "Scripts\python.exe"
-$installTemp = Join-Path $Root "runtime\tmp\install"
+$installTempParent = Join-Path $Root "runtime\tmp\install"
+$installTemp = Join-Path $installTempParent ([Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $installTemp | Out-Null
 $priorTemp = $env:TEMP
 $priorTmp = $env:TMP
@@ -128,7 +152,27 @@ try {
     $env:TEMP = $installTemp
     $env:TMP = $installTemp
     $env:PIP_CACHE_DIR = $installTemp
-    & $venvPython -m pip install --disable-pip-version-check --upgrade $Root
+    if (-not (Test-Path $venvPython)) {
+        & $Python -I -m venv $venv
+        if ($LASTEXITCODE -ne 0) { throw "Plotkeeper virtual environment creation failed; existing runtime state was preserved." }
+    }
+    if ($WheelPath) {
+        if (-not (Test-Path -LiteralPath $WheelPath -PathType Leaf)) { throw "Plotkeeper wheel not found: $WheelPath" }
+        & $venvPython -I -m pip install --disable-pip-version-check --force-reinstall --no-deps --no-index $WheelPath
+    } else {
+        # A clean build input prevents an earlier build/lib from reintroducing removed modules.
+        $buildSource = Join-Path $installTemp "source"
+        New-Item -ItemType Directory -Force -Path $buildSource | Out-Null
+        Copy-Item -LiteralPath (Join-Path $Root "plotkeeper") -Destination $buildSource -Recurse
+        foreach ($name in @("pyproject.toml", "README.md", "LICENSE")) {
+            $sourceFile = Join-Path $Root $name
+            if (Test-Path -LiteralPath $sourceFile) { Copy-Item -LiteralPath $sourceFile -Destination $buildSource }
+        }
+        & $venvPython -I -m pip install --disable-pip-version-check --force-reinstall --no-deps $buildSource
+    }
+    if ($LASTEXITCODE -ne 0) { throw "Plotkeeper package installation failed; connector, listener and startup state were preserved. Rerun scripts\install.ps1 after fixing the pip error." }
+    & $venvPython -I -m plotkeeper.cli doctor --source-root $Root
+    if ($LASTEXITCODE -ne 0) { throw "Plotkeeper installed/source verification failed; refusing to change connector, listener or startup state. See docs\AGENT_REPAIR.md and rerun scripts\install.ps1." }
 } finally {
     $env:TEMP = $priorTemp
     $env:TMP = $priorTmp
@@ -137,8 +181,13 @@ try {
         Remove-Item -LiteralPath $installTemp -Recurse -Force
     }
 }
+$priorOwner = Read-OwnerRecord
+if ($priorOwner -and $Port -gt 0 -and [int]$priorOwner.port -ne $Port) {
+    $priorListener = Get-ListenerPid ([int]$priorOwner.port)
+    if ($priorListener) { Stop-OwnedListener $priorListener ([int]$priorOwner.port) }
+}
 $explicitPort = if ($Port -gt 0) { "$Port" } else { "0" }
-$connectorJson = & $venvPython -c "import json,sys; from plotkeeper.connector import ensure_connector; port=int(sys.argv[2]); print(json.dumps(ensure_connector(sys.argv[1], port if port else None)))" $connectorPath $explicitPort
+$connectorJson = & $venvPython -I -c "import json,sys; from plotkeeper.connector import ensure_connector; port=int(sys.argv[2]); print(json.dumps(ensure_connector(sys.argv[1], port if port else None)))" $connectorPath $explicitPort
 if ($LASTEXITCODE -ne 0) { throw "Plotkeeper connector selection failed." }
 $connector = $connectorJson | ConvertFrom-Json
 $Port = [int]$connector.port
@@ -148,10 +197,12 @@ $listener = Get-ListenerPid $Port
 if ($listener) {
     Stop-OwnedListener $listener $Port
 }
-$start = Join-Path $PSScriptRoot "start.ps1"
 $run = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port $Port"
-New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
-New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
+if ($Sessions) { $run += " -Sessions `"$Sessions`"" }
+if (-not $NoStartup) {
+    New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
+    New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
+}
 function Test-Health {
     try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$Port/health" -TimeoutSec 2
@@ -159,7 +210,10 @@ function Test-Health {
         return $response.StatusCode -eq 200 -and $payload.ok -eq $true -and $payload.service -eq "plotkeeper"
     } catch { return $false }
 }
-Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $start, "-Python", $venvPython, "-Port", "$Port")
+$startArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $start, "-Python", $venvPython, "-Port", "$Port")
+if ($Sessions) { $startArguments += @("-Sessions", $Sessions) }
+$quotedStartArguments = ($startArguments | ForEach-Object { '"' + ([string]$_).Replace('"', '\"') + '"' }) -join ' '
+Start-Process powershell.exe -WindowStyle Hidden -ArgumentList $quotedStartArguments
 $healthy = $false
 for ($attempt = 0; $attempt -lt 40 -and -not $healthy; $attempt++) {
     Start-Sleep -Milliseconds 250
@@ -173,4 +227,5 @@ for ($attempt = 0; $attempt -lt 40 -and -not $owned; $attempt++) {
     if (-not $owned) { Start-Sleep -Milliseconds 100 }
 }
 if (-not $owned) { throw "Plotkeeper became healthy on port $Port but did not publish a valid owner record." }
-Write-Output "Plotkeeper installed, running, and registered for user startup at $($connector.url)."
+$startupStatus = if ($NoStartup) { "startup registration unchanged" } else { "registered for user startup" }
+Write-Output "Plotkeeper installed, running, and $startupStatus at $($connector.url)."

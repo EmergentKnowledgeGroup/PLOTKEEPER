@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "PLOTKEEPER_PUBLIC_RELEASE",
-  "contract_id": "PROD-20260814-plotkeeper-v0112-listener-pid-identity",
-  "contract_path": "runtime/goal-contracts/PROD-20260814-plotkeeper-v0112-listener-pid-identity.json",
-  "contract_sha256": "a5568b556dbdb77c94c800a8e2416c183fdae987ca158e6ac6340e49d0792fe1"
+  "contract_id": "PROD-20261014-plotkeeper-resource-safe-upgrade",
+  "contract_path": "runtime/goal-contracts/PROD-20261014-plotkeeper-resource-safe-upgrade.json",
+  "contract_sha256": "49c08f53718b4e4d2d8eacc450edbe4a037acc5dac77769dc5415fd06d607e00"
 }

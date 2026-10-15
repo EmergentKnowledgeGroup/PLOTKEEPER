@@ -86,6 +86,14 @@ class Ledger:
                     synced_at TEXT NOT NULL,
                     FOREIGN KEY(run_id) REFERENCES runs(run_id)
                 );
+                CREATE TABLE IF NOT EXISTS root_launches (
+                    root_key TEXT PRIMARY KEY, run_id TEXT NOT NULL,
+                    token TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL,
+                    owner_pid INTEGER NOT NULL, owner_created TEXT,
+                    worker_pid INTEGER, worker_created TEXT,
+                    started_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                    returncode INTEGER, diagnostic TEXT
+                );
             """)
             self._migrate_runs_schema()
 
@@ -326,6 +334,89 @@ class Ledger:
             if not row or row[0] == RunState.CLOSED.value:
                 return False
             self.db.execute("UPDATE runs SET state=?,updated_at=?,review_injected_at=? WHERE run_id=?", (RunState.REVIEW_PENDING.value, now_iso(), now_iso(), run_id))
+            return True
+
+    def launch(self, run_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self.db.execute('SELECT * FROM root_launches WHERE run_id=?', (run_id,)).fetchone()
+            return dict(row) if row else None
+
+    def root_launch(self, run_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self.db.execute(
+                'SELECT l.* FROM root_launches l JOIN runs r ON l.root_key=r.root_key WHERE r.run_id=?',
+                (run_id,),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def claim_launch(self, run_id: str, kind: str, *, owner_pid: int,
+                     owner_created: str | None, retry: bool = False) -> tuple[str | None, str | None]:
+        """Cross-thread/process CAS. No spawn occurs before this commit.
+
+        Launch state is intentionally separate from the existing review gate.
+        Old pending runs acquire no invented worker identity or new authority.
+        """
+        with self._lock:
+            try:
+                self.db.execute('BEGIN IMMEDIATE')
+                run = self.db.execute('SELECT * FROM runs WHERE run_id=?', (run_id,)).fetchone()
+                error = None
+                if not run or run['state'] == RunState.CLOSED.value:
+                    error = 'run_not_open'
+                else:
+                    flight = self.db.execute('SELECT * FROM root_launches WHERE root_key=?', (run['root_key'],)).fetchone()
+                    if flight and flight['status'] in ('STARTING', 'RUNNING'):
+                        error = 'root_launch_active'
+                    elif flight and flight['status'] == 'FAILED' and flight['diagnostic'] == 'launch_identity_unknown':
+                        error = 'launch_identity_unknown'
+                    elif flight and flight['status'] == 'FAILED' and flight['run_id'] == run_id and (not retry or flight['kind'] != kind):
+                        error = 'launch_failed_retry_required'
+                    elif retry and kind == 'review' and not (flight and flight['run_id'] == run_id and flight['kind'] == kind and flight['status'] == 'FAILED'):
+                        error = 'review_not_failed'
+                    elif run['state'] == RunState.REVIEW_PENDING.value:
+                        error = 'review_already_pending'
+                    elif kind == 'review' and run['state'] != RunState.REVIEW_REQUIRED.value:
+                        error = 'root_not_complete'
+                if error:
+                    self.db.rollback()
+                    return None, error
+                token, stamp = str(uuid.uuid4()), now_iso()
+                self.db.execute('''INSERT INTO root_launches
+                    (root_key,run_id,token,kind,status,owner_pid,owner_created,started_at,updated_at)
+                    VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(root_key) DO UPDATE SET
+                    run_id=excluded.run_id,token=excluded.token,kind=excluded.kind,status=excluded.status,
+                    owner_pid=excluded.owner_pid,owner_created=excluded.owner_created,
+                    worker_pid=NULL,worker_created=NULL,started_at=excluded.started_at,updated_at=excluded.updated_at,
+                    returncode=NULL,diagnostic=NULL''',
+                    (run['root_key'],run_id,token,kind,'STARTING',owner_pid,owner_created,stamp,stamp))
+                if kind == 'review':
+                    self.db.execute('UPDATE runs SET state=?,updated_at=?,review_injected_at=? WHERE run_id=?',
+                                    (RunState.REVIEW_PENDING.value,stamp,stamp,run_id))
+                self.db.commit()
+                return token, None
+            except Exception:
+                self.db.rollback()
+                raise
+
+    def launch_started(self, token: str, pid: int, created: str | None) -> None:
+        with self._lock, self.db:
+            self.db.execute("UPDATE root_launches SET status='RUNNING',worker_pid=?,worker_created=?,updated_at=? WHERE token=? AND status='STARTING'",
+                            (pid,created,now_iso(),token))
+
+    def finish_launch(self, token: str, *, returncode: int | None, diagnostic: str | None = None) -> bool:
+        with self._lock, self.db:
+            row = self.db.execute('SELECT * FROM root_launches WHERE token=?', (token,)).fetchone()
+            if not row or row['status'] not in ('STARTING', 'RUNNING'):
+                return False
+            failed = diagnostic is not None or returncode != 0
+            stamp = now_iso()
+            changed = self.db.execute("UPDATE root_launches SET status=?,returncode=?,diagnostic=?,updated_at=? WHERE token=? AND status IN ('STARTING','RUNNING')",
+                                      ('FAILED' if failed else 'FINISHED',returncode,diagnostic,stamp,token))
+            if changed.rowcount != 1:
+                return False
+            if failed and row['kind'] == 'review':
+                self.db.execute('UPDATE runs SET state=?,updated_at=? WHERE run_id=? AND state=? AND review_receipt IS NULL',
+                                (RunState.REVIEW_REQUIRED.value,stamp,row['run_id'],RunState.REVIEW_PENDING.value))
             return True
 
     def mark_review_required(self, run_id: str) -> bool:

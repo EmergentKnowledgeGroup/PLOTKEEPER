@@ -172,6 +172,13 @@ class PlotkeeperService:
         payload = run.to_dict(self._identity(run, bound_session_id))
         payload["bound_session_id"] = bound_session_id
         payload["dashboard_url"] = self._dashboard_url(run, bound_session_id)
+        launch = self.ledger.launch(run.run_id)
+        if launch:
+            payload['review_launch'] = {key: launch[key] for key in
+                ('kind', 'status', 'started_at', 'updated_at', 'returncode', 'diagnostic')}
+            payload['review_launch']['retry_available'] = (
+                launch['kind'] == 'review' and launch['status'] == 'FAILED'
+                and launch['diagnostic'] != 'launch_identity_unknown')
         if self.ledger.has_report_kind(run.run_id, "check-in-request"):
             payload["check_in"] = {
                 "status": "acknowledged" if self.ledger.has_report_kind(run.run_id, "check-in-acknowledged") else "pending",
@@ -274,30 +281,134 @@ class PlotkeeperService:
         payload = self._run_payload(run, session_id=session_id)
         return {"ok": True, "run": payload, **payload}
 
-    def inject_review(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
+    def inject_review(self, run_id: str, *, runner: Callable[..., Any] | None = None,
+                      retry: bool = False) -> dict[str, Any]:
+        self._reconcile_launch(run_id)
         run = self.ledger.get(run_id)
         if not run or run.state == RunState.CLOSED:
             return {"ok": False, "error": "run_not_open"}
         if run.state not in {RunState.REVIEW_REQUIRED, RunState.REVIEW_PENDING}:
             return {"ok": False, "error": "root_not_complete"}
-        if run.state == RunState.REVIEW_PENDING:
-            return {"ok": False, "error": "review_already_pending"}
         run_cwd = self._validated_run_cwd(run.cwd)
         if run_cwd is None:
             return {"ok": False, "error": "run_cwd_invalid"}
         args = ["codex.exe", "exec", self.review_prompt(run_id), "--json", "--skip-git-repo-check"]
-        runner = runner or self._run_codex
-        self.ledger.mark_review_pending(run_id)
+        token, error = self.ledger.claim_launch(run_id, 'review', owner_pid=os.getpid(),
+                                                owner_created=self._own_process_identity(), retry=retry)
+        if error:
+            return {'ok': False, 'error': error}
         try:
-            result = runner(args, cwd=str(run_cwd))
+            if runner is None:
+                result = self._run_codex(args, cwd=str(run_cwd),
+                                         on_started=lambda process: self._launch_started(token, process))
+            else:
+                result = runner(args, cwd=str(run_cwd))
             code = getattr(result, "returncode", result if isinstance(result, int) else 0)
         except Exception as exc:
-            self.ledger.mark_review_required(run_id)
-            return {"ok": False, "error": "injection_failed", "detail": str(exc)}
+            diagnostic = self._launch_exception(exc)
+            self.ledger.finish_launch(token, returncode=None, diagnostic=diagnostic)
+            return {"ok": False, "error": "injection_failed", "detail": diagnostic}
+        self.ledger.finish_launch(token, returncode=code,
+                                  diagnostic='review_process_exit' if code != 0 else None)
         if code != 0:
-            self.ledger.mark_review_required(run_id)
             return {"ok": False, "error": "injection_failed", "returncode": code}
         return {"ok": True, "state": RunState.REVIEW_PENDING.value, "run_id": run_id}
+
+    def retry_review(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
+        """Only this explicit action can clear a known failed review launch."""
+        return self.inject_review(run_id, runner=runner, retry=True)
+
+    @staticmethod
+    def _launch_exception(exc: Exception) -> str:
+        # Never persist arbitrary exception/stdout/stderr text: it can contain
+        # credentials, prompts and user paths. Codes are sufficient to route
+        # a failed executable launch without inventing its root cause.
+        if isinstance(exc, FileNotFoundError):
+            return 'executable_not_found'
+        if isinstance(exc, PermissionError):
+            return 'executable_access_denied'
+        return 'runner_exception'
+
+    @staticmethod
+    def _process_identity(pid: int) -> str | None:
+        """Creation identity of a live PID; None means definitively exited.
+
+        Access-denied/unsupported probes raise, never mean that a worker died.
+        Native APIs avoid WMI polling and add no third-party dependency.
+        """
+        if os.name == 'nt':
+            import ctypes
+            from ctypes import wintypes
+            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+            kernel.OpenProcess.restype = wintypes.HANDLE
+            kernel.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
+            kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+            kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+            handle = kernel.OpenProcess(0x1000 | 0x100000, False, pid)
+            if not handle:
+                error = ctypes.get_last_error()
+                if error == 87:  # ERROR_INVALID_PARAMETER: no such PID
+                    return None
+                raise OSError(error, 'Process identity unavailable')
+            try:
+                wait = kernel.WaitForSingleObject(handle, 0)
+                if wait == 0:
+                    return None
+                if wait != 258:  # WAIT_TIMEOUT: still running
+                    raise OSError('Process liveness unavailable')
+                times = [wintypes.FILETIME() for _ in range(4)]
+                if not kernel.GetProcessTimes(handle, *(ctypes.byref(value) for value in times)):
+                    raise OSError(ctypes.get_last_error(), 'Process creation time unavailable')
+                return str((times[0].dwHighDateTime << 32) | times[0].dwLowDateTime)
+            finally:
+                kernel.CloseHandle(handle)
+        proc = Path('/proc') / str(pid) / 'stat'
+        try:
+            fields = proc.read_text().rsplit(')', 1)[1].split()
+            if fields[0] == 'Z':
+                return None
+            boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+            return boot + ':' + fields[19]
+        except FileNotFoundError:
+            if Path('/proc').is_dir():
+                return None
+            raise OSError('Process identity unsupported')
+
+    def _own_process_identity(self) -> str | None:
+        try:
+            return self._process_identity(os.getpid())
+        except OSError:
+            return None
+
+    def _launch_started(self, token: str, process: Any) -> None:
+        pid = getattr(process, 'pid', None)
+        if type(pid) is not int:
+            return
+        try:
+            created = self._process_identity(pid)
+        except OSError:
+            created = None
+        self.ledger.launch_started(token, pid, created)
+
+    def _reconcile_launch(self, run_id: str) -> None:
+        launch = self.ledger.root_launch(run_id)
+        if not launch or launch['status'] not in ('STARTING', 'RUNNING'):
+            return
+        # Worker identity takes priority after spawn; a restarted listener may
+        # not own the worker but must leave it running and keep the root busy.
+        pid = launch['worker_pid'] or launch['owner_pid']
+        created = launch['worker_created'] if launch['worker_pid'] else launch['owner_created']
+        try:
+            actual = self._process_identity(pid)
+        except OSError:
+            return  # Unable to prove dead: fail closed, never clear the flight.
+        if actual is not None and (created is None or actual == created):
+            return
+        # No persisted child identity after an owner crash leaves a real spawn
+        # window. Latch it, but refuse Retry rather than duplicating an orphan.
+        diagnostic = 'worker_exit_unobserved' if launch['worker_pid'] and created else 'launch_identity_unknown'
+        self.ledger.finish_launch(launch['token'], returncode=None, diagnostic=diagnostic)
 
     @staticmethod
     def _validated_run_cwd(raw_cwd: str | None) -> Path | None:
@@ -314,11 +425,14 @@ class PlotkeeperService:
         return resolved if resolved.is_dir() else None
 
     @staticmethod
-    def _run_codex(args: list[str], *, cwd: str):
-        return subprocess.run(args, cwd=cwd, capture_output=True, text=True, check=False)
+    def _run_codex(args: list[str], *, cwd: str, on_started: Callable[[Any], None] | None = None):
+        from .review_runner import run_review
+        return run_review(args, cwd=cwd, on_started=on_started)
 
     @staticmethod
     def _spawn_codex(args: list[str], *, cwd: str):
+        from .review_runner import scoped_review_args
+        args = scoped_review_args(args)
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         return subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -424,6 +538,7 @@ class PlotkeeperService:
 
     def reconstruct_plan(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         """Recover exact root artifacts in an isolated session, never a root writer."""
+        self._reconcile_launch(run_id)
         with self._repair_lock:
             run = self.ledger.get(run_id)
             if not run or run.state == RunState.CLOSED:
@@ -458,19 +573,45 @@ class PlotkeeperService:
             )
             args = ["codex.exe", "exec", prompt, "--json", "--skip-git-repo-check"]
             runner = runner or self._spawn_codex
+            token, error = self.ledger.claim_launch(run_id, 'reconstruction', owner_pid=os.getpid(),
+                                                    owner_created=self._own_process_identity(), retry=True)
+            if error:
+                return {'ok': False, 'error': error}
             self._repair_inflight.add(run_id)
         try:
             result = runner(args, cwd=str(run_cwd))
-            code = self._runner_returncode(result)
+            self._launch_started(token, result)
+            code = result if isinstance(result, int) else getattr(result, 'returncode', 0)
+            if code is None:
+                code = result.poll()
+            if code is None:
+                threading.Thread(target=self._finish_reconstruction, args=(token, result), daemon=True,
+                                 name='plotkeeper-reconstruction-reaper').start()
+            else:
+                self._runner_returncode(result)
+                self.ledger.finish_launch(token, returncode=code,
+                                          diagnostic='reconstruction_process_exit' if code != 0 else None)
             if code not in (0, None):
                 return {"ok": False, "error": "reconstruction_injection_failed", "returncode": code}
             self.ledger.add_report(run_id, "plan-repair-injected", "Isolated recovery session requested using verified read-only original root history; reconstruction and sync are not yet confirmed.", evidence=[str(history)])
             return {"ok": True, "queued": True, "run_id": run_id}
         except Exception as exc:
-            return {"ok": False, "error": "reconstruction_injection_failed", "detail": str(exc)}
+            diagnostic = self._launch_exception(exc)
+            self.ledger.finish_launch(token, returncode=None, diagnostic=diagnostic)
+            return {"ok": False, "error": "reconstruction_injection_failed", "detail": diagnostic}
         finally:
             with self._repair_lock:
                 self._repair_inflight.discard(run_id)
+
+    def _finish_reconstruction(self, token: str, process: Any) -> None:
+        try:
+            code = process.wait()
+            self.ledger.finish_launch(token, returncode=code,
+                                      diagnostic='reconstruction_process_exit' if code != 0 else None)
+        except Exception:
+            # The service may be shutting down; leave identity durable for the
+            # next listener to reconcile instead of declaring the child dead.
+            return
 
     def inject_check_in(self, run_id: str, *, runner: Callable[..., Any] | None = None) -> dict[str, Any]:
         run = self.ledger.get(run_id)
@@ -665,6 +806,9 @@ class PlotkeeperService:
                 parts = parsed.path.strip("/").split("/")
                 if len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "inject-review":
                     self._json(service.inject_review(parts[2]), 200)
+                elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "retry-review":
+                    result = service.retry_review(parts[2])
+                    self._json(result, 200 if result.get('ok') else 409)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "close":
                     self._json(service.close(parts[2]), 200)
                 elif len(parts) == 4 and parts[:2] == ["api", "runs"] and parts[3] == "reports":
@@ -689,6 +833,7 @@ class PlotkeeperService:
             try:
                 self.poll_once()
                 for run in self.ledger.list_runs(active_only=True):
+                    self._reconcile_launch(run.run_id)
                     # Check-ins remain visible in current/run context for the
                     # existing owner. The watcher neither writes the root nor
                     # repeatedly adds delivery/queue reports.

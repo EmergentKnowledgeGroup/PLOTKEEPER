@@ -1,5 +1,13 @@
 # Plotkeeper
 
+## Upgrading or troubleshooting an existing installation
+
+Version 0.1.13 fixes repeated transcript rereads, unused reviewer-output buffering
+and source/installed-package drift, and includes the deployed single-worker launch
+guard plus explicit Retry-review UI. Start with the read-only identity check and
+[agent repair / legacy-copy runbook](docs/AGENT_REPAIR.md). Use the supported
+installer/launchers rather than a global Python or an old copied package.
+
 Plotkeeper is a local, read-only run ledger and dashboard for Codex SpecSwarm.
 It watches newly written Codex session events, connects root and child agents,
 shows tasks, claims, evidence, and goal-contract context, and refuses to call a

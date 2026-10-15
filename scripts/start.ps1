@@ -1,4 +1,4 @@
-param([string]$Python = "", [int]$Port = 0)
+param([string]$Python = "", [int]$Port = 0, [string]$Sessions = "")
 $ErrorActionPreference = "Stop"
 $Root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 Set-Location -LiteralPath $Root
@@ -8,16 +8,6 @@ if (-not $Python) {
 }
 $connectorPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-connector.json"))
 $ownerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper-owner.json"))
-if ($Port -le 0) {
-    if (-not (Test-Path -LiteralPath $connectorPath)) {
-        $connectorJson = & $Python -m plotkeeper.cli --ledger (Join-Path $Root "runtime\plotkeeper.sqlite3") connector
-        if ($LASTEXITCODE -ne 0) { throw "Plotkeeper could not allocate its loopback connector." }
-        $null = $connectorJson | ConvertFrom-Json
-    }
-    $connector = Get-Content -LiteralPath $connectorPath -Raw | ConvertFrom-Json
-    if ([string]$connector.host -ne "127.0.0.1" -or [int]$connector.port -lt 1 -or [int]$connector.port -gt 65535) { throw "Plotkeeper connector is invalid; rerun scripts\install.ps1 with an explicit -Port if recovery is required." }
-    $Port = [int]$connector.port
-}
 
 function Get-ListenerPid([int]$TargetPort = $Port) {
     try {
@@ -122,6 +112,24 @@ function Test-Health {
     } catch { return $false }
 }
 
+if ($Port -gt 0) {
+    $earlyListener = Get-ListenerPid $Port
+    if ($earlyListener -and -not (Test-PlotkeeperOwner $earlyListener $Port)) {
+        throw "Port $Port is occupied by an unknown or foreign listener; refusing to stop or reuse it."
+    }
+}
+& $Python -I -m plotkeeper.cli doctor --source-root $Root
+if ($LASTEXITCODE -ne 0) { throw "Plotkeeper installed/source verification failed; no listener was changed. Rerun scripts\install.ps1; see docs\AGENT_REPAIR.md." }
+if ($Port -le 0) {
+    if (-not (Test-Path -LiteralPath $connectorPath)) {
+        $connectorJson = & $Python -I -c "import json,sys; from plotkeeper.connector import ensure_connector; print(json.dumps(ensure_connector(sys.argv[1])))" $connectorPath
+        if ($LASTEXITCODE -ne 0) { throw "Plotkeeper could not allocate its loopback connector." }
+        $null = $connectorJson | ConvertFrom-Json
+    }
+    $connector = Get-Content -LiteralPath $connectorPath -Raw | ConvertFrom-Json
+    if ([string]$connector.host -ne "127.0.0.1" -or [int]$connector.port -lt 1 -or [int]$connector.port -gt 65535) { throw "Plotkeeper connector is invalid; rerun scripts\install.ps1 with an explicit -Port if recovery is required." }
+    $Port = [int]$connector.port
+}
 $priorOwner = Read-OwnerRecord
 if ($priorOwner -and [int]$priorOwner.port -ne $Port) {
     $priorListener = Get-ListenerPid ([int]$priorOwner.port)
@@ -138,7 +146,9 @@ if ($listener) {
 }
 
 $ledgerPath = [IO.Path]::GetFullPath((Join-Path $Root "runtime\plotkeeper.sqlite3"))
-$argumentList = @("-m", "plotkeeper.cli", "--ledger", $ledgerPath, "--connector", $connectorPath, "serve", "--host", "127.0.0.1", "--port", "$Port")
+$argumentList = @("-I", "-m", "plotkeeper.cli", "--ledger", $ledgerPath, "--connector", $connectorPath)
+if ($Sessions) { $argumentList += @("--sessions", $Sessions) }
+$argumentList += @("serve", "--host", "127.0.0.1", "--port", "$Port")
 $quotedArguments = ($argumentList | ForEach-Object { $value = [string]$_; if ($value.IndexOf(' ') -ge 0 -or $value.IndexOf('"') -ge 0) { '"' + $value.Replace('"', '\"') + '"' } else { $value } }) -join ' '
 $process = Start-Process -FilePath $Python -WorkingDirectory $Root -WindowStyle Hidden -ArgumentList $quotedArguments -PassThru
 $listenerProcessId = $null

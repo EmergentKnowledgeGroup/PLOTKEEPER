@@ -1,0 +1,208 @@
+{
+  "id": "PROD-20261014-plotkeeper-resource-safe-upgrade",
+  "status": "ACTIVE",
+  "contract_hash": "dad45b95a3e9d6b3c8cc6178dff5aa5d039a915e45e9100724f77ba22898552d",
+  "origin": "DIRECT",
+  "classification": "PRODUCTION_AFFECTING",
+  "user_goal": "Fix Plotkeeper scanning, reviewer output buffering and mismatched copies on an isolated copy; provide a tested installer, public agent repair guidance and a reviewed PR. Do not launch LP or alter the live installation.",
+  "authority": {
+    "original_request_ref": "codex://threads/01a10b6c-2d19-73d3-a78c-856fdf53c663",
+    "original_request_hash": "f63b454f0927a618f2302a77bf856bcc8e34edf1a08b39f326558c8def3974d5",
+    "verbatim_text": "Yep, fix Plotkeeper’s scanning, output buffering and mismatched copies. Work on a copy and QA it first - lmk when the installer is ready.\n\nIf you update plotkeeper, make sure to update the repo as well, as ya know, other people might be using this LOL  make it so that an agent that installs it knows what to remove in case the old shit is still present on their side too.  Just imagine other public people are using that git repo lol and their agents are doing the same thing you are - how would you want to be told to fix it or how would you put into the plotkeeper code something to prevent it from happening and help other agents locate and solve issues within it!\n\nopen a PR and merge/close when coderabbit reviews and says no more critical/major issues\n\nInclude the existing deployed fixes",
+    "captured_at_utc": "2026-10-15T03:54:12Z",
+    "execution_authority": "AUTHORIZED",
+    "source_kind": "CODEX_CONVERSATION_EXPORT",
+    "immutable_locator": "session:01a10b6c-2d19-73d3-a78c-856fdf53c663/turn:01a13dab-43f4-7080-8f6f-6f38dbb6a64f"
+  },
+  "baseline": {
+    "protected_ref": "64cfc707bf0cd80df90aa0c974105c464648f739 plus explicitly authorized deployed single-worker guard files",
+    "sha": "64cfc707bf0cd80df90aa0c974105c464648f739",
+    "retrieved_at_utc": "2026-10-15T03:54:12Z",
+    "protection_evidence": "Isolated clone at Z:/Plotkeeper-resource-safe-20261014; original Z:/Plotkeeper remains untouched. Only ledger.py, service.py, review_runner.py and the deployed Retry-review UI copied from dirty baseline.",
+    "selection_reason": "Current deployed behavior must be preserved while reconciling stale site-packages. Private runtime and unrelated dirty contracts were not copied."
+  },
+  "allowed": {
+    "paths": [
+      "plotkeeper/",
+      "scripts/install.ps1",
+      "scripts/start.ps1",
+      "scripts/pk.ps1",
+      "scripts/upgrade.ps1",
+      "scripts/build-installer.py",
+      "tests/",
+      "README.md",
+      "CHANGELOG.md",
+      "docs/",
+      "pyproject.toml",
+      "runtime/goal-contracts/PROD-20261014-plotkeeper-resource-safe-upgrade.json",
+      "runtime/goal-contracts/RELEASE_CONTRACT.json",
+      "runtime/checkpoints/"
+    ],
+    "resources": [
+      "Isolated candidate",
+      "Synthetic session roots and ledgers",
+      "GitHub PR, CodeRabbit, CI",
+      "Installer staging and public source"
+    ],
+    "semantic_changes": [
+      "Change-aware and streaming scanning without changing enrollment or receipt authority",
+      "Discard unused reviewer transport output instead of buffering it",
+      "Canonical installed runtime and read-only copy diagnostics with scoped repair",
+      "Preserve and publish existing deployed single-worker guard and Retry-review UI",
+      "Hermetic upgrade tests, reversible installer and public repair instructions"
+    ]
+  },
+  "forbidden": {
+    "paths": [
+      "Z:/Plotkeeper/runtime/plotkeeper.sqlite3",
+      "Z:/Plotkeeper/runtime/plotkeeper-connector.json",
+      "Z:/Plotkeeper/runtime/plotkeeper-owner.json",
+      "User transcripts or credentials",
+      "LP installed application",
+      "VLFS and lazy-MCP installations"
+    ],
+    "semantic_changes": [
+      "No real installation, startup registration, process termination or LP launch during candidate development",
+      "No change to SpecSwarm matching, review authority, goal lifecycle or file grants",
+      "No removal of unowned packages, startup entries, foreign listeners or user work",
+      "No claim that these source issues caused the system crash",
+      "No release verifier weakening or unsigned attestation"
+    ]
+  },
+  "invariants": [
+    "Watermarks advance only through complete records; unchanged files produce no replay",
+    "Changed/new files and rotated or truncated files remain observable",
+    "Reviewer exit status, ownership callback, failure latch and receipt gates are preserved",
+    "Installed/source drift is detected before a stale package is run by supported launchers",
+    "Upgrade preserves private runtime and dirty source; live installation remains untouched until user installs",
+    "Critical/major CodeRabbit findings and required checks must be resolved before merge"
+  ],
+  "acceptance_cases": [
+    {
+      "id": "AC-SCAN",
+      "phase": "VALIDATED",
+      "promised_behavior": "Quiet files avoid rereads and changed inputs stream with complete-line watermark parity.",
+      "forbidden_behavior": "Whole backlog buffering, replay, skipped complete records or enrollment changes.",
+      "target_and_actor": "Scanner and thread title catalog",
+      "required_proof_ids": [
+        "PR-SCAN"
+      ]
+    },
+    {
+      "id": "AC-OUTPUT",
+      "phase": "VALIDATED",
+      "promised_behavior": "Reviewer output does not accumulate in memory or spool unbounded files; launch guard behavior survives.",
+      "forbidden_behavior": "PIPE communicate accumulation or automatic repeat reviewers.",
+      "target_and_actor": "Reviewer runner and service",
+      "required_proof_ids": [
+        "PR-OUTPUT"
+      ]
+    },
+    {
+      "id": "AC-UPGRADE",
+      "phase": "DEPLOY_READY",
+      "promised_behavior": "Isolated repeat upgrade reconciles stale package; doctor and supported launch paths agree; rollback preserves private state.",
+      "forbidden_behavior": "Live startup or ledger mutation, foreign deletion, stale copy execution.",
+      "target_and_actor": "Synthetic Windows install and installer bundle",
+      "required_proof_ids": [
+        "PR-UPGRADE"
+      ]
+    },
+    {
+      "id": "AC-PUBLIC",
+      "phase": "MERGE_READY",
+      "promised_behavior": "Public source includes repair guidance and deployed guard baseline; substantive review and required CI qualify merge.",
+      "forbidden_behavior": "Unreviewed merge or verifier bypass.",
+      "target_and_actor": "Public GitHub PR",
+      "required_proof_ids": [
+        "PR-PUBLIC"
+      ]
+    }
+  ],
+  "proof_requirements": [
+    {
+      "id": "PR-SCAN",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-SCAN"
+      ],
+      "claim": "Synthetic changed/quiet/partial/rotation inputs retain expected observations and do not read full backlogs.",
+      "required_environment": "Isolated Z-drive fixtures",
+      "command_or_read_only_check": "Targeted scanner tests and repository suite",
+      "expected_observation": "PASS with no live transcript access"
+    },
+    {
+      "id": "PR-OUTPUT",
+      "phase": "VALIDATED",
+      "acceptance_case_ids": [
+        "AC-OUTPUT"
+      ],
+      "claim": "Real child output is discarded without PIPE buffering; single-flight and explicit retry tests pass.",
+      "required_environment": "Synthetic child and ledger",
+      "command_or_read_only_check": "Runner and launch-guard regression tests",
+      "expected_observation": "PASS; owned child reaped on callback failure"
+    },
+    {
+      "id": "PR-UPGRADE",
+      "phase": "DEPLOY_READY",
+      "acceptance_case_ids": [
+        "AC-UPGRADE"
+      ],
+      "claim": "Package, launcher, copy diagnostic and reversible upgrade work against a stale synthetic installation.",
+      "required_environment": "Isolated Windows checkout and empty sessions with startup disabled",
+      "command_or_read_only_check": "Two installs, parity doctor, state hashes and rollback; independent QA",
+      "expected_observation": "PASS and installer hashes; live target untouched"
+    },
+    {
+      "id": "PR-PUBLIC",
+      "phase": "MERGE_READY",
+      "acceptance_case_ids": [
+        "AC-PUBLIC"
+      ],
+      "claim": "Relevant checks and CodeRabbit disposition cover authorized changes before merge.",
+      "required_environment": "Exact-head GitHub PR",
+      "command_or_read_only_check": "Read reviews, threads, checks and release gate",
+      "expected_observation": "No critical/major issues; required gates satisfied"
+    }
+  ],
+  "review_requirements": [
+    {
+      "id": "RR-QA",
+      "phase": "DEPLOY_READY",
+      "required_role": "Independent bounded release QA"
+    },
+    {
+      "id": "RR-PR",
+      "phase": "MERGE_READY",
+      "required_role": "CodeRabbit substantive review"
+    }
+  ],
+  "release_requirements": [
+    {
+      "id": "RL-READY",
+      "phase": "DEPLOY_READY",
+      "required_receipt": "Independent QA and installer identity; not live attestation"
+    },
+    {
+      "id": "RL-PR",
+      "phase": "MERGE_READY",
+      "required_receipt": "Exact-head review/check disposition and enforced release gate"
+    }
+  ],
+  "stop_conditions": [
+    "Protected live state would be modified",
+    "Unexplained source overlap or foreign ownership",
+    "Relevant regression, required check or independent QA failure",
+    "Public verifier rejects candidate; do not bypass",
+    "Three substantive correction rounds without convergence"
+  ],
+  "known_discrepancies": [
+    "Source package and venv site-packages differ; installed review_runner.py missing",
+    "Scanner opens quiet files and buffers unread backlog",
+    "Reviewer transport communicates into unused memory buffers"
+  ],
+  "delegation": {
+    "contract_id_required_in_child_prompts": true,
+    "allowed_surfaces_must_be_explicit": true
+  }
+}

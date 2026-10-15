@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -132,7 +133,8 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
     """
     path = str(path)
     sid = str((metadata or {}).get("session_id") or (metadata or {}).get("id") or "")
-    parent = (metadata or {}).get("parent_session_id") or (metadata or {}).get("parent_id")
+    parent = ((metadata or {}).get("parent_session_id") or (metadata or {}).get("parent_id") or
+              (metadata or {}).get("parent_thread_id") or (metadata or {}).get("parentThreadId"))
     cwd = (metadata or {}).get("cwd")
     canonical_root_id = _canonical_id(metadata or {})
     parsed: _Parsed | None = None
@@ -150,8 +152,9 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
             cwd = mcwd
         if mcanonical:
             canonical_root_id = mcanonical
-        task_id = _task_id(_payload(obj), allow_session_id=obj.get("type") == "session_meta") or (parsed.task_id if parsed else None)
-        task_label = _task_label(_payload(obj)) or (parsed.task_label if parsed else None)
+        task_id = (_task_id(_payload(obj), allow_session_id=obj.get("type") == "session_meta") or
+                   (parsed.task_id if parsed else _task_id(metadata or {}, allow_session_id=True)))
+        task_label = _task_label(_payload(obj)) or (parsed.task_label if parsed else _task_label(metadata or {}))
         if not sid:
             continue
         if parsed is None:
@@ -207,6 +210,17 @@ def parse_session(path: str | os.PathLike[str], data: Iterable[str], *, delta_on
     )
 
 
+def _file_signature(stat: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+@dataclass
+class _ScanState:
+    signature: tuple[int, int, int, int, int]
+    offset: int
+    head_digest: bytes | None = None
+
+
 class SessionScanner:
     """Byte-watermarked scanner for Codex session JSONL files."""
 
@@ -214,12 +228,17 @@ class SessionScanner:
         self.root = Path(root)
         self._get = watermark_get
         self._set = watermark_set
+        self._files: dict[str, _ScanState] = {}
 
     def initialize(self) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
         for path in self.root.rglob("*.jsonl"):
             try:
-                self._set(str(path), path.stat().st_size)
+                signature = _file_signature(path.stat())
+                self._set(str(path), signature[2])
+                # Initialization deliberately excludes historical events,
+                # without opening or loading the existing transcripts.
+                self._files[str(path)] = _ScanState(signature, signature[2])
             except OSError:
                 continue
 
@@ -229,12 +248,24 @@ class SessionScanner:
             return found
         for path in self.root.rglob("*.jsonl"):
             try:
-                size = path.stat().st_size
-                offset = int(self._get(str(path)) or 0)
+                key = str(path)
+                signature = _file_signature(path.stat())
+                previous = self._files.get(key)
+                if previous and previous.signature == signature:
+                    continue
+                size = signature[2]
+                offset = previous.offset if previous else int(self._get(key) or 0)
+                previous_offset = offset
+                if previous and (signature[:2] != previous.signature[:2] or
+                                 size <= previous.signature[2]):
+                    offset = 0
                 if size < offset:
                     offset = 0  # truncated/rotated file; process current contents
                 with path.open("rb") as handle:
                     head = handle.readline()
+                    head_digest = hashlib.sha256(head).digest()
+                    if previous and previous.head_digest is not None and previous.head_digest != head_digest:
+                        offset = 0  # same-path rewrite, including one that grew
                     metadata = {}
                     try:
                         obj = json.loads(head.decode("utf-8", "ignore"))
@@ -243,13 +274,20 @@ class SessionScanner:
                     except (ValueError, UnicodeError):
                         pass
                     handle.seek(offset if offset > 0 else 0)
-                    raw = handle.read()
-                consumed = raw.rfind(b"\n") + 1
-                if consumed == 0:
-                    continue
-                lines = raw[:consumed].decode("utf-8", "ignore").splitlines()
-                obs = parse_session(path, lines, delta_only=offset > 0, metadata=metadata)
-                self._set(str(path), offset + consumed)
+                    consumed_offset = offset
+
+                    def complete_lines():
+                        nonlocal consumed_offset
+                        while raw := handle.readline():
+                            if not raw.endswith(b"\n"):
+                                break
+                            consumed_offset = handle.tell()
+                            yield raw.decode("utf-8", "ignore")
+
+                    obs = parse_session(path, complete_lines(), delta_only=offset > 0, metadata=metadata)
+                if consumed_offset != previous_offset:
+                    self._set(key, consumed_offset)
+                self._files[key] = _ScanState(signature, consumed_offset, head_digest)
                 if obs:
                     found.append(obs)
             except (OSError, UnicodeError):
@@ -275,7 +313,7 @@ class ThreadCatalog:
         self.session_index_path = Path(session_index_path) if session_index_path is not None else Path.home() / ".codex" / "session_index.jsonl"
         self._metadata_cache: dict[str, dict[str, Any] | None] = {}
         self._active_cache: dict[str, tuple[int, bool]] = {}
-        self._title_cache: tuple[str, dict[str, str]] | None = None
+        self._title_cache: tuple[tuple[int, int, int, int, int], dict[str, str]] | None = None
 
     @property
     def available(self) -> bool:
@@ -339,26 +377,27 @@ class ThreadCatalog:
 
     def _thread_titles(self) -> dict[str, str]:
         try:
-            contents = self.session_index_path.read_text(encoding="utf-8", errors="ignore")
+            signature = _file_signature(self.session_index_path.stat())
         except OSError:
             self._title_cache = None
             return {}
-        if self._title_cache and self._title_cache[0] == contents:
+        if self._title_cache and self._title_cache[0] == signature:
             return self._title_cache[1]
         titles: dict[str, str] = {}
         try:
-            for line in contents.splitlines():
-                try:
-                    row = json.loads(line)
-                except ValueError:
-                    continue
-                session_id = row.get("id")
-                title = row.get("thread_name")
-                if isinstance(session_id, str) and isinstance(title, str) and title.strip():
-                    titles[session_id] = " ".join(title.split())
+            with self.session_index_path.open("r", encoding="utf-8", errors="ignore") as handle:
+                for line in handle:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    session_id = row.get("id")
+                    title = row.get("thread_name")
+                    if isinstance(session_id, str) and isinstance(title, str) and title.strip():
+                        titles[session_id] = " ".join(title.split())
         except OSError:
             return {}
-        self._title_cache = (contents, titles)
+        self._title_cache = (signature, titles)
         return titles
 
     @staticmethod

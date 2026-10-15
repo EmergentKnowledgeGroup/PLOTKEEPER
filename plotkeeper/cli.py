@@ -17,6 +17,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("status")
     sub.add_parser("connector")
+    doctor = sub.add_parser("doctor", help="Read-only package identity and stale-copy diagnosis")
+    doctor.add_argument("--source-root")
     current = sub.add_parser("current")
     current.add_argument("--cwd", default=None)
     current.add_argument("--run-id", default=None)
@@ -40,6 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "doctor":
+        from .doctor import main as doctor_main
+        return doctor_main(args.source_root)
     connector_file = Path(args.connector).resolve() if args.connector else connector_path(Path(args.ledger).resolve().parent.parent)
     connector = ensure_connector(connector_file, args.port if args.command == "serve" else None)
     service = PlotkeeperService(ledger_path=args.ledger, sessions_root=args.sessions,

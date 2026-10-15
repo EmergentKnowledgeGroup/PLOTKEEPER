@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.13
+
+- Stat-cache quiet transcripts and the title index; stream changed complete JSONL
+  records instead of buffering the whole unread tail. Preserve append watermarks.
+- Discard unused reviewer stdout/stderr without RAM capture or a disk spool.
+- Publish the deployed per-root persistent launch guard, privacy-safe exit
+  diagnostics and explicit Retry-review control; no automatic retry storm.
+- Make supported Windows launchers use the verified installed package in isolated
+  import mode. Force-reinstall from clean staging or a wheel; fail on copy drift.
+- Add read-only `doctor`, public agent repair guidance, a hash-checked reversible
+  source+wheel upgrade bundle, and hermetic Windows install tests.
+
 ## 0.1.12 - 2026-08-14
 
 - Persist the process that actually owns Plotkeeper's TCP listener rather than

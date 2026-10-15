@@ -401,7 +401,8 @@ class BackendTests(unittest.TestCase):
             self.assertFalse(service.close(run.run_id)["ok"])
             self.assertEqual(service.inject_review(run.run_id, runner=lambda _args, **_kwargs: 1)["error"], "injection_failed")
             self.assertEqual(service.ledger.get(run.run_id).state, RunState.REVIEW_REQUIRED)
-            self.assertTrue(service.inject_review(run.run_id, runner=lambda _args, **_kwargs: 0)["ok"])
+            self.assertFalse(service.inject_review(run.run_id, runner=lambda _args, **_kwargs: 0)["ok"])
+            self.assertTrue(service.retry_review(run.run_id, runner=lambda _args, **_kwargs: 0)["ok"])
             self.assertFalse(service.close(run.run_id)["ok"])
             self.assertFalse(service.record_review_receipt(run.run_id, {"terminal": True, "injected": True, "verdict": "FAIL", "open_items": 1})["ok"])
             contract_path = Path(td) / "contract.json"
@@ -575,7 +576,10 @@ class BackendTests(unittest.TestCase):
             )
 
             def capture(args, *, cwd):
-                result = service._run_codex([sys.executable, "-c", probe], cwd=cwd)
+                # This synthetic runner probes cwd, not the production Codex
+                # transport (which deliberately discards unused stdout).
+                result = __import__("subprocess").run(
+                    [sys.executable, "-c", probe], cwd=cwd, capture_output=True, text=True)
                 launches.append({"args": args, "child": json.loads(result.stdout)})
                 return result
 

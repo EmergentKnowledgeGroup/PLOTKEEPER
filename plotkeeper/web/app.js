@@ -45,6 +45,38 @@
     $('#run-progress-bar').style.width = run.progress === null ? '0%' : `${Math.max(0, Math.min(100, run.progress))}%`;
     const state = $('#run-state'); state.className = `run-state ${statusClass(run.status)}`; state.textContent = statusLabel(run.status).toUpperCase();
     $('#working-meta').textContent = run.updatedAt ? `Updated ${formatDate(run.updatedAt)}` : `Run ${run.id || 'without an id'}`;
+    renderReviewLaunch(run);
+  }
+  function renderReviewLaunch(run) {
+    let strip = $('#review-launch');
+    if (!strip) {
+      strip = document.createElement('section'); strip.id = 'review-launch'; strip.className = 'review-launch'; strip.setAttribute('aria-label', 'Review launch');
+      $('.working-strip').after(strip);
+    }
+    strip.replaceChildren();
+    const launch = run?.review_launch;
+    strip.hidden = !launch || launch.status === 'FINISHED';
+    if (strip.hidden) return;
+    const message = document.createElement('p'); message.setAttribute('role', 'status');
+    const label = launch.kind === 'reconstruction' ? 'Plan reconstruction' : 'Review';
+    if (launch.status === 'FAILED') {
+      message.textContent = `${label} launch failed${launch.returncode === null ? '' : ` (exit ${launch.returncode})`}. ${launch.diagnostic === 'launch_identity_unknown' ? 'Worker identity could not be recovered; verify the orphaned process before recovery. Retry is blocked.' : `Automatic retries are paused. ${statusLabel(launch.diagnostic)}.`}`;
+    } else { message.textContent = `${label} ${launch.status === 'STARTING' ? 'is starting' : 'is running'}. This root is reserved until the worker exits.`; }
+    strip.appendChild(message);
+    if (launch.retry_available) {
+      const button = document.createElement('button'); button.type = 'button'; button.id = 'retry-review'; button.className = 'button button-outline'; button.textContent = 'Retry review';
+      button.addEventListener('click', async () => {
+        const runId = run.id; button.disabled = true; button.textContent = 'Retrying…';
+        try {
+          const result = await getJson(`/api/runs/${encodeURIComponent(runId)}/retry-review`, { method: 'POST' });
+          if (!result.ok) throw new Error(result.error || 'Retry failed');
+          if (state.run?.id === runId) await loadRun(runId);
+        } catch (error) {
+          if (state.run?.id === runId) { message.textContent = `Review retry was not completed (${error.message}). Refresh to inspect its current status.`; button.textContent = 'Retry review'; button.disabled = false; }
+        }
+      });
+      strip.appendChild(button);
+    }
   }
   function renderContract(contract) {
     state.contract = contract;
@@ -80,6 +112,7 @@
     setPickerValue(null);
     renderBoard([]); $('#board-message').hidden = false; $('#board-message').textContent = message;
     $('#reconstruct-plan').hidden = true;
+    renderReviewLaunch(null);
     $('#run-goal').textContent = 'Select an active run'; $('#run-state').textContent = 'SELECTION REQUIRED'; $('#run-state').className = 'run-state state-unknown';
     $('#working-title').textContent = 'No run selected'; $('#working-meta').textContent = 'Plotkeeper will not guess between active tasks.'; $('#check-in').disabled = true;
     renderContract(null); clearDetail();

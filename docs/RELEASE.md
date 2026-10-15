@@ -2,7 +2,9 @@
 
 ## Current patch
 
-This release is `0.1.12`. Before declaring the local dashboard ready, verify
+This candidate is `0.1.13`. See [agent upgrade and rollback instructions](AGENT_REPAIR.md).
+The installer bundle is qualified in an isolated Windows checkout; it does not
+claim the user's live installation has been upgraded. Before declaring the local dashboard ready, verify
 that `/health` is healthy and `/` returns HTTP 200 with a non-empty HTML body
 containing `<html` and the exact `data-testid="plotkeeper-app"` marker. The installer/startup scripts replace a
 listener only when its process is Plotkeeper-owned; a foreign process on the

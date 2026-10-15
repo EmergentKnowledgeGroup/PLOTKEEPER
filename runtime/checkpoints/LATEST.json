@@ -1,6 +1,14 @@
 {
   "current_track": "PLOTKEEPER NONINTERFERING DISPATCH WORK",
   "tracks": {
+    "PLOTKEEPER RESOURCE SAFE UPGRADE WORK": {
+      "step": "isolated-proof-green-preparing-public-review",
+      "note": "Secondary track (--no-set-current). Source/package identity, scanner and output fixes implemented only in isolated clone. Public baseline includes explicitly authorized deployed guards/UI. Original installation untouched; no LP launch.",
+      "branch": "fix/resource-safe-runtime",
+      "head": "64cfc707bf0cd80df90aa0c974105c464648f739 plus staged candidate",
+      "next_cmd": "Finish exact-head QA, create PR and disposition CodeRabbit/CI; provide final hash-checked installer. Do not install live.",
+      "validations": ["10 scanner tests pass; real reviewer output discard/callback and single-flight tests pass", "Hermetic repeated Windows install and package drift repair pass", "Outer fresh/repeat/orphan cleanup/rollback/tamper test passes; no live startup mutation", "Synthetic Retry-review UI checked desktop1440x1000/mobile390x844 with no overflow; expected mocked exit23 returns handled HTTP409"]
+    },
     "PLOTKEEPER NONINTERFERING DISPATCH WORK": {
       "step": "source-green-awaiting-independent-deploy-review",
       "note": "Isolated same-run review/recovery and queued check-ins implemented. Existing full-suite test unexpectedly stopped original owned service through start.ps1 prior-port branch; now offline with ledger backup and LP3930 preserved. Review incident and no-kill offline start plan. Original d687d503 blockers remain outside repair.",

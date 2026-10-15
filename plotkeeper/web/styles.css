@@ -17,6 +17,10 @@
 }
 
 * { box-sizing: border-box; }
+.review-launch { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--line); color: var(--amber); }
+.review-launch[hidden] { display: none; }
+.review-launch p { flex: 1 1 18rem; font-size: .875rem; overflow-wrap: anywhere; }
+.review-launch .button { flex: 0 0 auto; }
 html { background: var(--bg); }
 body { margin: 0; min-width: 320px; background: var(--bg); color: var(--ink); font-size: 1rem; line-height: 1.45; }
 button, input { font: inherit; }
