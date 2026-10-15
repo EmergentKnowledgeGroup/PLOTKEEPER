@@ -38,8 +38,8 @@ session truth:
   picker by project with real task labels and IDs;
 - preserves closed runs as immutable history and creates a predecessor-linked
   successor when the same Codex task begins genuinely new SpecSwarm work;
-- injects the required closeout review after the root requests completion;
-- closes only on `verdict=PASS open_items=0` from that injected review.
+- launches the required closeout review in a fresh, same-run session after the root requests completion;
+- closes only on a verified `verdict=PASS open_items=0` receipt from that review.
 - launches reviews in a fresh session explicitly attached to the same run,
   without resuming or forking the original chat; enrolled cwd remains authoritative.
 - keeps check-ins queued for the existing owner to read through `current` or the

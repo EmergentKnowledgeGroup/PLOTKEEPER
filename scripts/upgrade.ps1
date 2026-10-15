@@ -5,6 +5,7 @@ param(
     [string]$Backup,
     [switch]$NoStartup,
     [string]$Sessions,
+    [string]$Python = '',
     [string]$StartupRegistryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
     [switch]$ConfirmInstall
 )
@@ -153,6 +154,11 @@ try {
         Copy-Item -LiteralPath (Resolve-Child $payload $entry.path) -Destination $destination -Force
     }
     $installOptions = @{WheelPath=$wheel; NoStartup=$NoStartup; StartupRegistryPath=$StartupRegistryPath}
+    if ($Python) { $installOptions.Python = $Python }
+    elseif (Test-Path -LiteralPath (Join-Path $Saved 'venv/pyvenv.cfg')) {
+        $homeLine = Get-Content -LiteralPath (Join-Path $Saved 'venv/pyvenv.cfg') | Where-Object { $_ -match '^\s*home\s*=' } | Select-Object -First 1
+        if ($homeLine) { $installOptions.Python = Join-Path ($homeLine -replace '^\s*home\s*=\s*', '') 'python.exe' }
+    }
     if (-not $NoStartup) { $installOptions.StartupSnapshotPath = Join-Path $Saved 'startup.json' }
     if ($Sessions) { $installOptions.Sessions = $Sessions }
     & (Join-Path $TargetRoot 'scripts/install.ps1') @installOptions

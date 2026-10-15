@@ -66,6 +66,10 @@ are not deleted or overwritten. A failed install attempts source/environment
 restoration and leaves the service stopped; keep the printed backup path. The
 target-bound `runtime/plotkeeper-install.json` marker is retained so an interrupted
 fresh installation can be repaired in place. Preserve it with the runtime.
+An upgrade reuses the prior environment's base Python; `-Python '<python.exe>'`
+can explicitly select an interpreter. Fresh installs require the documented
+Python command or this override. The builder refuses uncommitted payload edits
+so its recorded Git commit identifies the shipped source.
 
 Select **2** and supply that backup path to restore the previous source and
 environment. Runtime data is deliberately **not** rolled back: this preserves
@@ -115,6 +119,14 @@ or arbitrary exception text). A failure latches: automatic polls cannot create
 a new reviewer. The existing **Retry review** action is explicit. Unknown child
 identity is not permission to retry an orphan. One root's review and plan
 reconstruction share the persistent single-flight launch guard.
+The existing `REVIEW_PENDING` state also fences reconstruction until receipt
+settlement; it is not a back door around a pending review.
+
+Unknown source `.py`/web assets are not automatically classified as obsolete.
+Doctor reports source/package differences and the upgrade rolls back. Preserve
+that work, establish its owner and reconcile it with the intended release before
+retrying; do not delete it just because a new manifest omits it. This release
+removes no package file shipped by v0.1.12.
 
 Optional LocalTools lazy-MCP proxies remain process-scoped. Set
 `PLOTKEEPER_LAZY_MCP_ROOT` to an installed, catalog-pinned proxy directory when

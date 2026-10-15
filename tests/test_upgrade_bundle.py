@@ -13,6 +13,39 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 
 
+class InstallerSourceIdentityTests(unittest.TestCase):
+    def test_rejects_staged_and_unstaged_payload_before_creating_bundle(self):
+        temporary_parent = ROOT / 'runtime/tmp'
+        temporary_parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=temporary_parent) as td:
+            base = Path(td)
+            source = base / 'source'
+            source.mkdir()
+            for name in ('plotkeeper/doctor.py', 'plotkeeper/review_runner.py',
+                         'scripts/upgrade.ps1', 'docs/AGENT_REPAIR.md'):
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('original\n', encoding='utf-8')
+            builder = source / 'scripts/build-installer.py'
+            shutil.copy2(ROOT / 'scripts/build-installer.py', builder)
+            for command in (['git', 'init'], ['git', 'add', '.'],
+                            ['git', '-c', 'user.name=Installer Fixture', '-c',
+                             'user.email=fixture@example.invalid', 'commit', '-m', 'fixture']):
+                subprocess.run(command, cwd=source, check=True, capture_output=True)
+            for staged in (False, True):
+                with self.subTest(staged=staged):
+                    (source / 'plotkeeper/doctor.py').write_text('changed\n', encoding='utf-8')
+                    if staged:
+                        subprocess.run(['git', 'add', 'plotkeeper/doctor.py'], cwd=source,
+                                       check=True, capture_output=True)
+                    output = base / ('staged-bundle' if staged else 'unstaged-bundle')
+                    result = subprocess.run([sys.executable, str(builder), '--output', str(output)],
+                                            cwd=source, capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn('manifest commit must match its source', result.stderr)
+                    self.assertFalse(output.exists())
+
+
 @unittest.skipUnless(os.name == 'nt' and shutil.which('powershell.exe'), 'Windows installer boundary')
 class UpgradeBundleTests(unittest.TestCase):
     def test_fresh_repeat_orphan_repair_rollback_and_tamper(self):
@@ -49,6 +82,12 @@ class UpgradeBundleTests(unittest.TestCase):
                 orphan = target / '.venv/Lib/site-packages/plotkeeper/obsolete.py'
                 orphan.write_text('old module', encoding='utf-8')
                 before_connector = connector.read_bytes()
+                # Upgrades reuse the old venv's base interpreter even when a
+                # WindowsApps-style PATH alias would fail to create a venv.
+                stub = base / 'alias-stub'
+                stub.mkdir()
+                (stub / 'python.cmd').write_text('@echo off\nexit /b 42\n', encoding='utf-8')
+                env['PATH'] = str(stub) + os.pathsep + env['PATH']
                 second = subprocess.run(command, env=env, capture_output=True, text=True)
                 self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
                 self.assertFalse(orphan.exists())

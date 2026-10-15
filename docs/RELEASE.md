@@ -62,27 +62,20 @@ Pre-push checks:
 
 ```powershell
 git status --short --branch
-git diff 73c89e7d402a0c498207e07299685ac729ecfde7..HEAD --check
+git diff b13dd6fdfde56f09bf3f07da78002970fcdbe744..HEAD --check
 py -3 -m unittest discover -s tests -v
 ```
 
 ## Rollback
 
 The protected public baseline for this release is
-`467692a14e7060df4be992857b61791452c78ebb` (`v0.1.11`). If the `v0.1.12` release
-is defective, preserve the failed release commit for audit and
-restore the public branch to that baseline with a lease-bound update:
-
-```powershell
-git fetch origin main
-git push --force-with-lease=refs/heads/main:<REMOTE_FAILED_SHA> origin `
-  467692a14e7060df4be992857b61791452c78ebb:refs/heads/main
-```
-
-Replace `<REMOTE_FAILED_SHA>` with the SHA independently read from GitHub. Do
-not use an unqualified force push. Then verify that GitHub's default branch
-resolves to the baseline and record a new live attestation. This rollback
-returns public code to `v0.1.11`. It does not authorize opening a migrated ledger
-with the older schema after successors exist; retain the failed release and
-migrated ledger for audit and restore the pre-release ledger copy only if no
-post-release run data must be preserved.
+`b13dd6fdfde56f09bf3f07da78002970fcdbe744` (public main before 0.1.13,
+including v0.1.12). If the `v0.1.13` release is defective, preserve its exact
+commit for audit and prepare a reviewed revert PR restoring that baseline's
+code. Do not use the historical v0.1.11 force-push recipe for this candidate.
+Requalify the revert under the active release gate and verify public main after
+merging it. A source revert does not authorize overwriting a newer live ledger.
+Use the private installer backup for a local environment/source rollback as
+described in `AGENT_REPAIR.md`; retain current runtime data and any post-upgrade
+work. The old 2026-10-05 local-only contract remains immutable historical evidence;
+only the tracked release pointer selects the current 2026-10-14 authority.

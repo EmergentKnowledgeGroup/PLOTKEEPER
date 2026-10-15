@@ -21,7 +21,6 @@ def main():
     output = args.output.resolve()
     if output.exists():
         parser.error('Choose a new output directory; existing bundles are never overwritten.')
-    output.mkdir(parents=True)
     files = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().split('\0')
     # Runtime records and checkpoints are source-review artifacts, not install payload.
     files = [f for f in files if f and not f.startswith(('.github/', 'runtime/', 'tests/'))
@@ -29,7 +28,14 @@ def main():
     missing = [f for f in ('plotkeeper/doctor.py', 'plotkeeper/review_runner.py',
                            'scripts/upgrade.ps1', 'docs/AGENT_REPAIR.md') if f not in files]
     if missing:
-        parser.error('Stage the new release source before building: ' + ', '.join(missing))
+        parser.error('Commit the new release source before building: ' + ', '.join(missing))
+    # Only payload paths matter. Unrelated dirty checkpoints/tests and ignored
+    # private runtime must not block a build, but the shipped files must be HEAD.
+    dirty = subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', *files], cwd=root,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if dirty.returncode:
+        parser.error('Commit installer payload changes first; the manifest commit must match its source.')
+    output.mkdir(parents=True)
     records = []
     for name in sorted(files):
         source = root / name
