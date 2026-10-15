@@ -1,6 +1,8 @@
 param(
     [string]$Python = "python", [int]$Port = 0, [switch]$NoStartup, [string]$Sessions = "",
-    [string]$InstallRoot = "", [switch]$StopOnly, [string]$WheelPath = ""
+    [string]$InstallRoot = "", [switch]$StopOnly, [string]$WheelPath = "",
+    [string]$StartupRegistryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+    [string]$StartupSnapshotPath = ""
 )
 $ErrorActionPreference = "Stop"
 $Root = if ($InstallRoot) { [IO.Path]::GetFullPath($InstallRoot) } else { [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)) }
@@ -134,9 +136,12 @@ $start = Join-Path $Root "scripts\start.ps1"
 $venv = Join-Path $Root ".venv"
 $venvPython = Join-Path $venv "Scripts\python.exe"
 if (-not $NoStartup) {
-    $existingStartup = Get-ItemProperty -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -ErrorAction SilentlyContinue
+    $startupKey = Get-Item -LiteralPath $StartupRegistryPath -ErrorAction SilentlyContinue
+    $startupExisted = $startupKey -and ($startupKey.GetValueNames() -contains 'Plotkeeper')
+    $previousStartup = if ($startupExisted) { $startupKey.GetValue('Plotkeeper', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames) } else { $null }
+    $previousStartupKind = if ($startupExisted) { [string]$startupKey.GetValueKind('Plotkeeper') } else { 'String' }
     $expectedStartupPrefix = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port "
-    if ($existingStartup -and $existingStartup.Plotkeeper -and -not ([string]$existingStartup.Plotkeeper).StartsWith($expectedStartupPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+    if ($startupExisted -and -not ([string]$previousStartup).StartsWith($expectedStartupPrefix, [StringComparison]::OrdinalIgnoreCase)) {
         throw "Plotkeeper startup registration belongs to another command or checkout; refusing to overwrite it. Use -NoStartup to preserve it or review docs\AGENT_REPAIR.md."
     }
 }
@@ -200,8 +205,19 @@ if ($listener) {
 $run = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$start`" -Python `"$venvPython`" -Port $Port"
 if ($Sessions) { $run += " -Sessions `"$Sessions`"" }
 if (-not $NoStartup) {
-    New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Force | Out-Null
-    New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
+    $currentKey = Get-Item -LiteralPath $StartupRegistryPath -ErrorAction SilentlyContinue
+    $currentExisted = $currentKey -and ($currentKey.GetValueNames() -contains 'Plotkeeper')
+    $currentStartup = if ($currentExisted) { $currentKey.GetValue('Plotkeeper', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames) } else { $null }
+    if ([bool]$currentExisted -ne [bool]$startupExisted -or ($currentExisted -and -not [StringComparer]::Ordinal.Equals([string]$currentStartup, [string]$previousStartup))) {
+        throw 'Plotkeeper startup registration changed during installation; refusing to overwrite it.'
+    }
+    if ($StartupSnapshotPath) {
+        @{schema='plotkeeper.startup-backup.v1'; target=$Root; registry_path=$StartupRegistryPath;
+          existed=[bool]$startupExisted; previous_value=$previousStartup; previous_kind=$previousStartupKind;
+          installed_value=$run} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $StartupSnapshotPath -Encoding UTF8
+    }
+    New-Item -Path $StartupRegistryPath -Force | Out-Null
+    New-ItemProperty -Path $StartupRegistryPath -Name Plotkeeper -Value $run -PropertyType String -Force | Out-Null
 }
 function Test-Health {
     try {

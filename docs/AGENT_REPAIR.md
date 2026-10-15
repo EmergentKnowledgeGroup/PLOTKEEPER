@@ -63,7 +63,9 @@ only the exact owned listener is stopped, source files being overwritten are
 backed up, and the old `.venv` is moved into that private backup. Unknown source
 files, `.git`, ledger, connector, credentials, browser profile and transcripts
 are not deleted or overwritten. A failed install attempts source/environment
-restoration and leaves the service stopped; keep the printed backup path.
+restoration and leaves the service stopped; keep the printed backup path. The
+target-bound `runtime/plotkeeper-install.json` marker is retained so an interrupted
+fresh installation can be repaired in place. Preserve it with the runtime.
 
 Select **2** and supply that backup path to restore the previous source and
 environment. Runtime data is deliberately **not** rolled back: this preserves
@@ -71,10 +73,14 @@ new writes and avoids restoring stale SQLite/WAL state. This release adds no
 destructive data migration. For an older release with incompatible schema,
 do not open the current ledger with old code without a separate data plan.
 Restart explicitly with the restored `scripts/start.ps1` after inspecting it.
+Rollback restores/removes the exact sign-in value saved before upgrade, but
+refuses to overwrite a foreign replacement. Reapplying a successfully restored
+backup is a no-op; it cannot move the restored environment out a second time.
 
 The installer never opens/closes LP. Normal install registers the same owned
-checkout for Windows sign-in. `-NoStartup` skips registry mutation; tests always
-use it and an empty `-Sessions` directory. A startup command belonging to another
+checkout for Windows sign-in. `-NoStartup` skips registry access; ordinary service
+tests use it and an empty `-Sessions` directory. Startup rollback tests use only a
+disposable test registry key, never the actual Windows sign-in key. A command belonging to another
 checkout or foreign listener must be reconciled explicitly, not overwritten.
 
 To stop this checkout without changing packages or startup:

@@ -2,11 +2,11 @@
   "current_track": "PLOTKEEPER NONINTERFERING DISPATCH WORK",
   "tracks": {
     "PLOTKEEPER RESOURCE SAFE UPGRADE WORK": {
-      "step": "isolated-proof-green-preparing-public-review",
+      "step": "public-review-corrections-qualified",
       "note": "Secondary track (--no-set-current). Source/package identity, scanner and output fixes implemented only in isolated clone. Public baseline includes explicitly authorized deployed guards/UI. Original installation untouched; no LP launch.",
       "branch": "fix/resource-safe-runtime",
-      "head": "64cfc707bf0cd80df90aa0c974105c464648f739 plus staged candidate",
-      "next_cmd": "Finish exact-head QA, create PR and disposition CodeRabbit/CI; provide final hash-checked installer. Do not install live.",
+      "head": "81ed42ca8779aa6eb5b2a5b7795ee0f983bc8b64 plus startup rollback correction",
+      "next_cmd": "Commit qualified rollback correction, rebuild final bundle, finish PR7 CodeRabbit/CI and independent signed release gate; provide installer without live install.",
       "validations": ["10 scanner tests pass; real reviewer output discard/callback and single-flight tests pass", "Hermetic repeated Windows install and package drift repair pass", "Outer fresh/repeat/orphan cleanup/rollback/tamper test passes; no live startup mutation", "Synthetic Retry-review UI checked desktop1440x1000/mobile390x844 with no overflow; expected mocked exit23 returns handled HTTP409"]
     },
     "PLOTKEEPER NONINTERFERING DISPATCH WORK": {

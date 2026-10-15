@@ -5,6 +5,7 @@ param(
     [string]$Backup,
     [switch]$NoStartup,
     [string]$Sessions,
+    [string]$StartupRegistryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
     [switch]$ConfirmInstall
 )
 $ErrorActionPreference = 'Stop'
@@ -35,6 +36,36 @@ function Resolve-Child([string]$Base, [string]$Relative) {
 function Restore-Backup([string]$Saved) {
     $record = Get-Content -LiteralPath (Join-Path $Saved 'backup.json') -Raw | ConvertFrom-Json
     if (-not [StringComparer]::OrdinalIgnoreCase.Equals([string]$record.target, $TargetRoot)) { throw 'Backup belongs to another installation.' }
+    $restoredMarker = Join-Path $Saved 'rollback-complete'
+    if (Test-Path -LiteralPath $restoredMarker) {
+        Write-Host 'This backup was already restored; no startup, source or environment changes were made.'
+        return
+    }
+    $startupSnapshot = Join-Path $Saved 'startup.json'
+    if (-not $NoStartup -and (Test-Path -LiteralPath $startupSnapshot)) {
+        $startup = Get-Content -LiteralPath $startupSnapshot -Raw | ConvertFrom-Json
+        if ($startup.schema -ne 'plotkeeper.startup-backup.v1' -or
+            -not [StringComparer]::OrdinalIgnoreCase.Equals([string]$startup.target, $TargetRoot) -or
+            -not [StringComparer]::OrdinalIgnoreCase.Equals([string]$startup.registry_path, $StartupRegistryPath)) {
+            throw 'Startup backup belongs to another installation or registry key.'
+        }
+        $startupKey = Get-Item -LiteralPath $StartupRegistryPath -ErrorAction SilentlyContinue
+        $currentExists = $startupKey -and ($startupKey.GetValueNames() -contains 'Plotkeeper')
+        $currentValue = if ($currentExists) { $startupKey.GetValue('Plotkeeper', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames) } else { $null }
+        $currentKind = if ($currentExists) { [string]$startupKey.GetValueKind('Plotkeeper') } else { $null }
+        $alreadyPrevious = [bool]$currentExists -eq [bool]$startup.existed -and
+            (-not $currentExists -or ([StringComparer]::Ordinal.Equals([string]$currentValue, [string]$startup.previous_value) -and $currentKind -eq $startup.previous_kind))
+        if (-not $alreadyPrevious) {
+            if (-not $currentExists -or -not [StringComparer]::Ordinal.Equals([string]$currentValue, [string]$startup.installed_value)) {
+                throw 'Plotkeeper startup registration changed after installation; refusing rollback over a foreign entry.'
+            }
+            if ($startup.existed) {
+                New-ItemProperty -LiteralPath $StartupRegistryPath -Name Plotkeeper -Value $startup.previous_value -PropertyType $startup.previous_kind -Force | Out-Null
+            } else {
+                Remove-ItemProperty -LiteralPath $StartupRegistryPath -Name Plotkeeper
+            }
+        }
+    }
     # Stop only the target listener using the new, exact-identity stop route.
     & (Join-Path $BundleRoot 'source/scripts/install.ps1') -InstallRoot $TargetRoot -StopOnly
     $failedEnv = Resolve-Child $TargetRoot '.venv'
@@ -50,6 +81,7 @@ function Restore-Backup([string]$Saved) {
             Remove-Item -LiteralPath $destination -Force
         }
     }
+    Set-Content -LiteralPath $restoredMarker -Value 'Restored; do not apply this backup twice.' -Encoding UTF8
     Write-Host "Previous source and environment restored. Runtime data was NOT overwritten. Backup: $Saved"
     Write-Host 'The restored service is stopped. Start it explicitly after reviewing the rollback.'
 }
@@ -76,8 +108,15 @@ foreach ($entry in $manifest.files) {
 }
 $wheel = Resolve-Child $BundleRoot $manifest.wheel.path
 if ((Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifest.wheel.sha256) { throw 'Wheel hash mismatch.' }
+$installMarker = Resolve-Child $TargetRoot 'runtime/plotkeeper-install.json'
 if ((Test-Path -LiteralPath $TargetRoot) -and -not (Test-Path -LiteralPath (Join-Path $TargetRoot 'plotkeeper/cli.py'))) {
-    if (Get-ChildItem -LiteralPath $TargetRoot -Force | Select-Object -First 1) { throw 'Nonempty target is not a Plotkeeper checkout.' }
+    $knownTarget = $false
+    if (Test-Path -LiteralPath $installMarker) {
+        $marker = Get-Content -LiteralPath $installMarker -Raw | ConvertFrom-Json
+        $knownTarget = $marker.schema -eq 'plotkeeper.install.v1' -and
+            [StringComparer]::OrdinalIgnoreCase.Equals([string]$marker.target, $TargetRoot)
+    }
+    if (-not $knownTarget -and (Get-ChildItem -LiteralPath $TargetRoot -Force | Select-Object -First 1)) { throw 'Nonempty target is not a Plotkeeper checkout or a marked interrupted installation.' }
 }
 $backupParent = Join-Path (Split-Path -Parent $TargetRoot) 'Plotkeeper-upgrade-backups'
 $null = Resolve-Child (Split-Path -Parent $TargetRoot) 'Plotkeeper-upgrade-backups'
@@ -101,6 +140,9 @@ foreach ($entry in $manifest.files) {
     }
 }
 @{target=$TargetRoot; files=$records; version=$manifest.version} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $Saved 'backup.json') -Encoding UTF8
+# Keep only this target-bound repair marker through rollback; runtime remains private.
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $installMarker) | Out-Null
+@{schema='plotkeeper.install.v1'; target=$TargetRoot} | ConvertTo-Json | Set-Content -LiteralPath $installMarker -Encoding UTF8
 & (Join-Path $payload 'scripts/install.ps1') -InstallRoot $TargetRoot -StopOnly
 $oldEnv = Resolve-Child $TargetRoot '.venv'
 if (Test-Path -LiteralPath $oldEnv) { Move-Item -LiteralPath $oldEnv -Destination (Join-Path $Saved 'venv') }
@@ -110,7 +152,8 @@ try {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
         Copy-Item -LiteralPath (Resolve-Child $payload $entry.path) -Destination $destination -Force
     }
-    $installOptions = @{WheelPath=$wheel; NoStartup=$NoStartup}
+    $installOptions = @{WheelPath=$wheel; NoStartup=$NoStartup; StartupRegistryPath=$StartupRegistryPath}
+    if (-not $NoStartup) { $installOptions.StartupSnapshotPath = Join-Path $Saved 'startup.json' }
     if ($Sessions) { $installOptions.Sessions = $Sessions }
     & (Join-Path $TargetRoot 'scripts/install.ps1') @installOptions
     Write-Host "Plotkeeper $($manifest.version) installed and verified. Reversible backup: $Saved"

@@ -18,6 +18,15 @@ The prior unsafe installer test that touched real sign-in registration now uses
 `-NoStartup`, an empty session root and a disposable checkout. Foreign listener
 regressions remain required. No release guard or verifier has been weakened.
 
+Clean Windows CI exposed short-name versus expanded cwd spelling in recovery;
+both existing directories are now resolved before identity comparison. Public
+review exposed missing sign-in restoration during rollback. A private snapshot
+now binds the prior value/type and exact installed command to the target/key;
+foreign changes are refused. Isolated registry fixtures prove restoration,
+fresh removal, post-registration failure recovery and repeat rollback. A retained
+target-bound install marker permits repair after a failed fresh install without
+accepting arbitrary nonempty directories.
+
 The only UI diff is the already-deployed launch-status/Retry-review strip,
 explicitly included by the owner. Synthetic browser QA at 1440×1000 and 390×844
 shows readable controls without horizontal overflow. Retry receives a deliberately
